@@ -8,4 +8,5 @@ import (
 //Get a polynomial that satisfy all x and y
 func Lagrange(degree int, x []*gmp.Int, y []*gmp.Int, mod *gmp.Int) (Poly, error) {
 	return Poly{}, nil
+
 }
