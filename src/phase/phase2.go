@@ -1,6 +1,8 @@
 package phase
 
-//written by ljr
-func test() {
+import "github.com/Alan-Lxc/crypto_contest/src/nodes"
+
+// Phase2 written by Gary
+func (node *nodes.Node) Phase2() {
+	//test
 }
-func test2() {}
