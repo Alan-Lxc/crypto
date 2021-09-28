@@ -5,14 +5,14 @@ import (
 	"github.com/ncw/gmp"
 )
 
-type point struct {
+type Point struct {
 	x       *gmp.Int
 	y       *gmp.Int
 	PolyWit *pbc.Element
 }
 
-func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *point {
-	return &point{
+func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *Point {
+	return &Point{
 		x:       x,
 		y:       y,
 		PolyWit: w,
@@ -21,5 +21,20 @@ func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *point {
 
 type Pointmsg struct {
 	index int
-	point point
+	point *Point
+}
+
+func (pointmsg *Pointmsg) GetIndex() int {
+	if pointmsg != nil {
+		return pointmsg.index
+	} else {
+		return 0
+	}
+}
+func (pointmsg *Pointmsg) GetPoint() *Point {
+	if pointmsg != nil {
+		return pointmsg.point
+	} else {
+		return nil
+	}
 }

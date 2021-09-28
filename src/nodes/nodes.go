@@ -1,7 +1,9 @@
 package nodes
 
 import (
+	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
 	"github.com/ncw/gmp"
+	"log"
 	"math/rand"
 )
 
@@ -16,4 +18,13 @@ type Node struct {
 	p *gmp.Int
 	// Rand source
 	randstate *rand.Rand
+	//To store the point(shares) sent from other node
+	recPoint []*point.Point
+	//To recode the share that have already received
+	recCounter int
+}
+
+func (node Node) GetMsgFromNode(pointmsg point.Pointmsg) {
+	index := pointmsg.
+		log.Println()
 }
