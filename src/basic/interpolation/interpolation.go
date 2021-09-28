@@ -2,11 +2,12 @@ package interpolation
 
 import (
 	"errors"
-	. "github.com/Alan-Lxc/crypto_contest/basic/poly"
+	_ "github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/ncw/gmp"
 )
 
 //Get a polynomial that satisfy all x and y
+//degree
 func LagrangeInterpolate(degree int, x []*gmp.Int, y []*gmp.Int, mod *gmp.Int) (Polynomial, error) {
 
 	//使用多项式l_i来存储中间多项式l_i(x),l_i[i]=l_i(i)
