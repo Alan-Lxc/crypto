@@ -20,23 +20,26 @@ func LagrangeInterpolate(degree int, x []*gmp.Int, y []*gmp.Int, mod *gmp.Int) (
 	//初始化变量
 
 	//tmp为临时多项式，初始化为默认一次多项式
-	tmp, err := NewPoly(1)
+	tmpPoly, err := NewPoly(1)
 	numerator, err := NewPoly(degree)
-	product := NewConstant(1)
+	permutation := NewConstant(1)
 	//resultPoly为结果多项式，即拉格朗日插值多项式
 	resultPoly, err := NewPoly(degree)
 
+	if err != nil {
+		return Poly{}, err
+	}
 	//denominator初始化为Int0
 	denominator := gmp.NewInt(0)
 
 	//求得product
 	//首先置tmp一次项为1
-	tmp.SetCoeffWithInt(1, 1)
-	tmpInt, err := tmp.GetCoeff(0)
+	tmpPoly.SetCoeffWithInt(1, 1)
+	tmpInt, err := tmpPoly.GetCoeff(0)
 	for i := 0; i <= degree; i++ {
-		tmpInt, err = tmp.GetCoeff(0)
-		tmp.SetCoeffWithGmp(0, tmpInt.Neg(x[i]))
-		product.Multiply(product, tmp)
+		tmpInt, err = tmpPoly.GetCoeff(0)
+		tmpPoly.SetCoeffWithGmp(0, tmpInt.Neg(x[i]))
+		permutation.Multiply(permutation, tmpPoly)
 	}
 
 	//依此求得拉格朗日分式，并相加，注意要模mod
@@ -45,10 +48,10 @@ func LagrangeInterpolate(degree int, x []*gmp.Int, y []*gmp.Int, mod *gmp.Int) (
 		denominator.Set(gmp.NewInt(1))
 
 		//计算分母多项式
-		tmpInt, err = tmp.GetCoeff(0)
-		tmp.SetCoeffWithGmp(0, tmpInt.Neg(x[i]))
+		tmpInt, err = tmpPoly.GetCoeff(0)
+		tmpPoly.SetCoeffWithGmp(0, tmpInt.Neg(x[i]))
 
-		err = numerator.Div2(product, tmp)
+		err = numerator.Divide(permutation, tmpPoly)
 		if err != nil {
 			return Poly{}, err
 		}

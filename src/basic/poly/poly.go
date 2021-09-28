@@ -202,10 +202,10 @@ func (poly Poly) EvalMod(x *gmp.Int, p *gmp.Int, result *gmp.Int) {
 }
 
 //op2一定是一次多项式形式
-// Div2 sets poly to op1 / op2. **op2 must be of format x+a **
+// Divide sets poly to op1 / op2. **op2 must be of format x+a **
 //
 // Complexity is O(deg1)
-func (poly *Poly) Div2(op1 Poly, op2 Poly) error {
+func (poly *Poly) Divide(op1 Poly, op2 Poly) error {
 	degree1 := op1.GetDegree()
 	degree2 := op2.GetDegree()
 
