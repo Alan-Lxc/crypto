@@ -19,7 +19,7 @@ func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *point {
 	}
 }
 
-type pointmsg struct {
+type Pointmsg struct {
 	index int
 	point point
 }
