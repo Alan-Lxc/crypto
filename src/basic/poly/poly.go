@@ -185,3 +185,59 @@ func (poly Poly) Mod(p *gmp.Int) {
 		poly.coeff[i].Mod(poly.coeff[i], p)
 	}
 }
+
+//求解多项式的值
+// EvalMod returns poly(x) using Horner's rule. If p != nil, returns poly(x) mod p
+func (poly Poly) EvalMod(x *gmp.Int, p *gmp.Int, result *gmp.Int) {
+	result.Set(poly.coeff[poly.GetDegree()])
+
+	for i := poly.GetDegree(); i >= 1; i-- {
+		result.Mul(result, x)
+		result.Add(result, poly.coeff[i-1])
+	}
+
+	if p != nil {
+		result.Mod(result, p)
+	}
+}
+
+//op2一定是一次多项式形式
+// Div2 sets poly to op1 / op2. **op2 must be of format x+a **
+//
+// Complexity is O(deg1)
+func (poly *Poly) Div2(op1 Poly, op2 Poly) error {
+	degree1 := op1.GetDegree()
+	degree2 := op2.GetDegree()
+
+	poly.ResetDegree(degree1)
+
+	if degree2 != 1 {
+		return errors.New("op2 must be of format x-a")
+	}
+
+	if len(poly.coeff) < degree1-1 {
+		return errors.New("receiver too small")
+	}
+
+	tmp := gmp.NewInt(0)
+
+	numerator, err := NewPoly(degree1)
+	if err != nil {
+		return errors.New("unknown error")
+	}
+
+	for i := 0; i <= degree1; i++ {
+		numerator.coeff[i].Set(op1.coeff[i])
+	}
+
+	for i := degree1; i > 0; i-- {
+		poly.coeff[i-1].Div(numerator.coeff[i], op2.coeff[degree2])
+		for j := degree2; j >= 0; j-- {
+			tmp.Mul(poly.coeff[i-1], op2.coeff[j])
+			numerator.coeff[i+j-degree2].Sub(numerator.coeff[i+j-degree2], tmp)
+		}
+	}
+
+	poly.coeff = poly.coeff[:poly.GetDegree()+1]
+	return nil
+}
