@@ -18,3 +18,8 @@ func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *point {
 		PolyWit: w,
 	}
 }
+
+type pointmsg struct {
+	index int
+	point point
+}
