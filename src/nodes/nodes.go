@@ -25,6 +25,6 @@ type Node struct {
 }
 
 func (node Node) GetMsgFromNode(pointmsg point.Pointmsg) {
-	index := pointmsg.
-		log.Println()
+	index := pointmsg.GetIndex()
+	log.Println("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
 }
