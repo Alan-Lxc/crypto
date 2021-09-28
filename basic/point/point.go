@@ -18,7 +18,3 @@ func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *point {
 		PolyWit: w,
 	}
 }
-
-func testfunc() {}
-
-func test1() {}

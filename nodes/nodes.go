@@ -14,7 +14,6 @@ type Node struct {
 	degree int
 	//the polynomial was set on Z_p
 	p *gmp.Int
-
 	// Rand source
 	randstate *rand.Rand
 }
