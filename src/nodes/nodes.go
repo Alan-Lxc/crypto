@@ -24,7 +24,7 @@ type Node struct {
 	//the polynomial was set on Z_p
 	p *gmp.Int
 	// Rand source
-	randstate *rand.Rand
+	randState *rand.Rand
 	//To store the point(shares) sent from other node
 	recPoint []*point.Point
 	//To recode the share that have already received
@@ -33,6 +33,8 @@ type Node struct {
 	recPoly poly.Poly
 	//Mutex to control
 	mutex sync.Mutex
+	//Secret shares of node p(a0,y)
+	secretShare []*point.Point
 }
 
 func (node *Node) GetMsgFromNode(pointmsg point.Pointmsg) {
@@ -49,6 +51,32 @@ func (node *Node) GetMsgFromNode(pointmsg point.Pointmsg) {
 		node.recCounter = 0
 		node.Phase1()
 	}
+}
+func (node *Node) SendMsgToNode() {
+	p := point.Point{
+		X:       node.secretShare[node.label-1].X,
+		Y:       node.secretShare[node.label-1].Y,
+		PolyWit: node.secretShare[node.label-1].PolyWit,
+	}
+	node.mutex.Lock()
+	node.recPoint[node.recCounter] = &p
+	node.recCounter = node.recCounter + 1
+	flag := (node.recCounter == node.total)
+	node.mutex.Unlock()
+	if flag {
+		node.recCounter = 0
+		node.Phase1()
+	}
+	for i := 0; i < node.total; i++ {
+		if i != node.label-1 {
+			log.Printf("[Node %d] send point message to [Node %d]", node.label, i+1)
+			msg := point.Pointmsg{}
+			msg.SetIndex(node.label)
+			msg.SetPoint(node.secretShare[i])
+			//node.sent(msg)
+		}
+	}
+
 }
 func (node *Node) Phase1() {
 	log.Printf("[Node %d] now start phase1", node.label)
@@ -79,7 +107,7 @@ func (node *Node) GetLabel() int {
 	}
 }
 
-func New(degree, label, counter int, logPath string) (Node, error) {
+func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error) {
 	if label < 0 {
 		return Node{}, errors.New("Label must be a non-negative number!")
 	}
@@ -89,16 +117,17 @@ func New(degree, label, counter int, logPath string) (Node, error) {
 		return Node{}, errors.New("Counter must be a non-negative number!")
 	}
 	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
-	p := gmp.NewInt(0)
+	//p := gmp.NewInt(0)
 	//Maybe We can generate a big prime?
-	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
+	//p.SetString(rand.)
+	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 
 	return Node{
 		label:      label,
 		total:      counter,
 		degree:     degree,
-		p:          p,
-		randstate:  randState,
+		p:          modp,
+		randState:  randState,
 		recPoint:   nil,
 		recCounter: 0,
 		recPoly:    poly.Poly{},
