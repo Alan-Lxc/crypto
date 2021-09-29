@@ -1,68 +1,54 @@
 package nodes
 
 import (
-	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
+	"errors"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/ncw/gmp"
-	"log"
 	"math/rand"
+	"os"
+	"strconv"
+	"time"
 )
 
 type Node struct {
-	//label of Node
-	label int
+	//Label of Node
+	Label int
 	//Total number of Nodes
-	total int
-	//degree of polynomial
-	degree int
+	Total int
+	//Degree of polynomial
+	Degree int
 	//the polynomial was set on Z_p
-	p *gmp.Int
+	P *gmp.Int
 	// Rand source
-	randstate *rand.Rand
+	Randstate *rand.Rand
 	//To store the point(shares) sent from other node
-	recPoint []*point.Point
+	RecPoint []*point.Point
 	//To recode the share that have already received
-	recCounter int
+	RecCounter int
 	//The poly reconstructed with the shares
-	recPoly poly.Poly
+	RecPoly poly.Poly
 }
 
-func (node Node) GetMsgFromNode(pointmsg point.Pointmsg) {
-	index := pointmsg.GetIndex()
-	log.Println("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
-	p := pointmsg.GetPoint()
-	//Receive the point and store
-	node.recPoint[node.recCounter] = p
-	node.recCounter += 1
-
-	if node.recCounter == node.total {
-		node.recCounter = 0
-		node.Phase1()
+func (node *Node) GetLabel() int {
+	if node != nil {
+		return node.Label
+	} else {
+		return 0
 	}
 }
-func (node Node) Phase1() {
-	log.Printf("[Node %d] now start phase1", node.label)
-	x_point := make([]*gmp.Int, node.degree+1)
-	y_point := make([]*gmp.Int, node.degree+1)
-	for i := 0; i <= node.degree; i++ {
-		x_point[i] = node.recPoint[i].X
-		y_point[i] = node.recPoint[i].Y
-	}
-	p, err := interpolation.LagrangeInterpolate(node.degree, x_point, y_point, node.p)
-	if err != nil {
-		for i := 0; i <= node.degree; i++ {
-			log.Print(x_point[i])
-			log.Print(y_point[i])
-		}
-		log.Print(err)
-		panic("Interpolation failed")
-	}
-	node.recPoly = p
-	log.Printf("Interpolation finished")
-	node.Phase2()
-}
 
-func (node Node) Phase2() {
+func New(degree, label, counter int, modbase string, logPath string) (Node, error) {
+	if label < 0 {
+		return Node{}, errors.New("Label must be a non-negative number!")
+	}
+	file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
+	defer file.Close()
+	if counter < 0 {
+		return Node{}, errors.New("Counter must be a non-negative number!")
+	}
+	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
+
+	p := gmp.NewInt(0)
 
 }
