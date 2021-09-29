@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -30,6 +31,8 @@ type Node struct {
 	recCounter int
 	//The poly reconstructed with the shares
 	recPoly poly.Poly
+	//Mutex to control
+	mutex sync.Mutex
 }
 
 func (node Node) GetMsgFromNode(pointmsg point.Pointmsg) {
@@ -37,10 +40,12 @@ func (node Node) GetMsgFromNode(pointmsg point.Pointmsg) {
 	log.Println("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
 	p := pointmsg.GetPoint()
 	//Receive the point and store
+	node.mutex.Lock()
 	node.recPoint[node.recCounter] = p
 	node.recCounter += 1
-
-	if node.recCounter == node.total {
+	flag := (node.recCounter == node.total)
+	node.mutex.Unlock()
+	if flag {
 		node.recCounter = 0
 		node.Phase1()
 	}
