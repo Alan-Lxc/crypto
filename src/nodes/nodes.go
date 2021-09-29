@@ -35,7 +35,7 @@ type Node struct {
 	mutex sync.Mutex
 }
 
-func (node Node) GetMsgFromNode(pointmsg point.Pointmsg) {
+func (node *Node) GetMsgFromNode(pointmsg point.Pointmsg) {
 	index := pointmsg.GetIndex()
 	log.Println("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
 	p := pointmsg.GetPoint()
@@ -50,7 +50,7 @@ func (node Node) GetMsgFromNode(pointmsg point.Pointmsg) {
 		node.Phase1()
 	}
 }
-func (node Node) Phase1() {
+func (node *Node) Phase1() {
 	log.Printf("[Node %d] now start phase1", node.label)
 	x_point := make([]*gmp.Int, node.degree+1)
 	y_point := make([]*gmp.Int, node.degree+1)
