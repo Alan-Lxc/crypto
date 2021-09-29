@@ -27,4 +27,17 @@ type Node struct {
 func (node Node) GetMsgFromNode(pointmsg point.Pointmsg) {
 	index := pointmsg.GetIndex()
 	log.Println("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
+	p := pointmsg.GetPoint()
+	//Receive the point and store
+	node.recPoint[node.recCounter] = p
+	node.recCounter += 1
+
+	if node.recCounter == node.total {
+		node.recCounter = 0
+		node.Phase1()
+	}
+}
+func (node Node) Phase1() {
+	log.Printf("[Node %d] now start phase1", node.label)
+
 }
