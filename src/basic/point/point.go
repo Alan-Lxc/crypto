@@ -6,15 +6,15 @@ import (
 )
 
 type Point struct {
-	x       *gmp.Int
-	y       *gmp.Int
+	X       *gmp.Int
+	Y       *gmp.Int
 	PolyWit *pbc.Element
 }
 
 func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *Point {
 	return &Point{
-		x:       x,
-		y:       y,
+		X:       x,
+		Y:       y,
 		PolyWit: w,
 	}
 }
