@@ -38,7 +38,7 @@ func (node *Node) GetLabel() int {
 	}
 }
 
-func New(degree, label, counter int, modbase string, logPath string) (Node, error) {
+func New(degree, label, counter int, logPath string) (Node, error) {
 	if label < 0 {
 		return Node{}, errors.New("Label must be a non-negative number!")
 	}
@@ -48,7 +48,17 @@ func New(degree, label, counter int, modbase string, logPath string) (Node, erro
 		return Node{}, errors.New("Counter must be a non-negative number!")
 	}
 	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
-
 	p := gmp.NewInt(0)
+	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 
+	return Node{
+		Label:      label,
+		Total:      counter,
+		Degree:     degree,
+		P:          p,
+		Randstate:  randState,
+		RecPoint:   nil,
+		RecCounter: 0,
+		RecPoly:    poly.Poly{},
+	}, nil
 }
