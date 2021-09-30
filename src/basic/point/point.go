@@ -38,13 +38,3 @@ func (pointmsg *Pointmsg) GetPoint() *Point {
 		return nil
 	}
 }
-func (pointmsg Pointmsg) SetPoint(point *Point) {
-	if point != nil {
-		pointmsg.point = point
-	}
-}
-func (pointmsg Pointmsg) SetIndex(index int) {
-	if index > 0 {
-		pointmsg.index = index
-	}
-}
