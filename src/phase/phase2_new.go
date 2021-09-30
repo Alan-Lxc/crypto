@@ -61,10 +61,10 @@ func (node *Node) ClientSharePhase2() {
 	node.mutex.Lock()
 	node._0ShareSum.Add(node._0ShareSum, node._0Shares[node.label-1])
 	*node._0ShareCount = *node._0ShareCount + 1
-	flag := *node._0ShareCount == node.total
+	_0shareSumFinish := *node._0ShareCount == node.total
 	node.mutex.Unlock()
 
-	if flag {
+	if _0shareSumFinish {
 		*node._0ShareCount = 0
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
 
@@ -108,10 +108,10 @@ func (node *Node) SharePhase2(ctx context.Context, msg *pb.ZeroMsg) (*pb.AckMsg,
 	node.mutex.Lock()
 	node._0ShareSum.Add(node._0ShareSum, node._0Shares[node.label-1])
 	*node._0ShareCount = *node._0ShareCount + 1
-	flag := *node._0ShareCount == node.total
+	_0shareSumFinish := *node._0ShareCount == node.total
 	node.mutex.Unlock()
 
-	if flag {
+	if _0shareSumFinish {
 		*node._0ShareCount = 0
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
 
