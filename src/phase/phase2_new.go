@@ -13,38 +13,38 @@ import (
 	"time"
 )
 
-type Node struct {
-	//Label of Node
-	label int
-	//Total number of Nodes
-	total int
-	//Degree of polynomial
-	degree int
-	//the polynomial was set on Z_p
-	p *gmp.Int
-	// Rand source
-	randState *rand.Rand
-	//To store the point(shares) sent from other node
-	recPoint []*point.Point
-	//To recode the share that have already received
-	recCounter int
-	//The poly reconstructed with the shares
-	recPoly poly.Poly
-	//Mutex to control
-	mutex sync.Mutex
-	//Secret shares of node p(a0,y)
-	secretShare []*point.Point
-
-	// Lagrange Coefficient
-	lambda []*gmp.Int
-	//	0Shares
-	_0Shares     []*gmp.Int
-	_0ShareSum   *gmp.Int
-	_0ShareCount *int
-
-	//poly Q
-	proPoly poly.Poly
-}
+//type Node struct {
+//	//Label of Node
+//	label int
+//	//Total number of Nodes
+//	total int
+//	//Degree of polynomial
+//	degree int
+//	//the polynomial was set on Z_p
+//	p *gmp.Int
+//	// Rand source
+//	randState *rand.Rand
+//	//To store the point(shares) sent from other node
+//	recPoint []*point.Point
+//	//To recode the share that have already received
+//	recCounter int
+//	//The poly reconstructed with the shares
+//	recPoly poly.Poly
+//	//Mutex to control
+//	mutex sync.Mutex
+//	//Secret shares of node p(a0,y)
+//	secretShare []*point.Point
+//
+//	// Lagrange Coefficient
+//	lambda []*gmp.Int
+//	//	0Shares
+//	_0Shares     []*gmp.Int
+//	_0ShareSum   *gmp.Int
+//	_0ShareCount *int
+//
+//	//poly Q
+//	proPoly poly.Poly
+//}
 
 func (node *Node) ClientSharePhase2() {
 	// Generate Random Numbers

@@ -11,29 +11,28 @@ import (
 	"time"
 )
 
-
-type Node struct {
-	//Label of Node
-	label int
-	//Total number of Nodes
-	total int
-	//Degree of polynomial
-	degree int
-	//the polynomial was set on Z_p
-	p *gmp.Int
-	// Rand source
-	randState *rand.Rand
-	//To store the point(shares) sent from other node
-	recPoint []*point.Point
-	//To recode the share that have already received
-	recCounter int
-	//The poly reconstructed with the shares
-	recPoly poly.Poly
-	//Mutex to control
-	mutex sync.Mutex
-	//Secret shares of node p(a0,y)
-	secretShare []*point.Point
-}
+//type Node struct {
+//	//Label of Node
+//	label int
+//	//Total number of Nodes
+//	total int
+//	//Degree of polynomial
+//	degree int
+//	//the polynomial was set on Z_p
+//	p *gmp.Int
+//	// Rand source
+//	randState *rand.Rand
+//	//To store the point(shares) sent from other node
+//	recPoint []*point.Point
+//	//To recode the share that have already received
+//	recCounter int
+//	//The poly reconstructed with the shares
+//	recPoly poly.Poly
+//	//Mutex to control
+//	mutex sync.Mutex
+//	//Secret shares of node p(a0,y)
+//	secretShare []*point.Point
+//}
 //parameter should have t,
 //and optimistic or not
 
@@ -63,7 +62,7 @@ type Node struct {
 
 // Phase2 written by Gary
 
-func (node *Node) ClientSharePhase2()  {
+func (node *Node) ClientSharePhase2() {
 	// Generate Random Numbers
 	for i := 0; i < node.counter-1; i++ {
 		node.zeroShares[i].Rand(node.randState, gmp.NewInt(10))
@@ -86,7 +85,7 @@ func (node *Node) ClientSharePhase2()  {
 	node.mutex.Unlock()
 
 	if flag {
-	*node.zeroCnt = 0
+		*node.zeroCnt = 0
 		node.zeroShare.Mod(node.zeroShare, node.p)
 		//get a rand poly with 0-share
 		//rand a poly polynomial
@@ -104,20 +103,21 @@ func (node *Node) ClientSharePhase2()  {
 		if i != node.label-1 {
 			log.Printf("[node %d] send message to [node %d] in phase 2", node.label, i+1)
 			msg := &pb.ZeroMsg{
-			Index: int32(node.label),
-			Share: node.zeroShares[i].Bytes(),
-		}
-		wg.Add(1)
-		go func(i int, msg *pb.ZeroMsg) {
-			defer wg.Done()
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			node.nClient[i].SharePhase2(ctx, msg)
+				Index: int32(node.label),
+				Share: node.zeroShares[i].Bytes(),
+			}
+			wg.Add(1)
+			go func(i int, msg *pb.ZeroMsg) {
+				defer wg.Done()
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				node.nClient[i].SharePhase2(ctx, msg)
 			}(i, msg)
 		}
 	}
 	wg.Wait()
 }
+
 // Share Phase 2
 // The server function which takes the sent message of zero shares and sum them up to get the final share and generate the proactivization polynomial according to the zero share. It then calls ClientWritePhase2 to write the commitment of zeroshare, zeropolynomial and the witness at zero on the bulletinboard.
 func (node *Node) SharePhase2(ctx context.Context, msg *pb.ZeroMsg) (*pb.AckMsg, error) {
@@ -147,6 +147,7 @@ func (node *Node) SharePhase2(ctx context.Context, msg *pb.ZeroMsg) (*pb.AckMsg,
 	}
 	return &pb.AckMsg{}, nil
 }
+
 //
 //func (node *Node) ClientWritePhase2() {
 //  log.Printf("[node %d] write bulletinboard in phase 2", node.label)
