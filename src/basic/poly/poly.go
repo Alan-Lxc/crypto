@@ -42,8 +42,8 @@ func (poly Poly) GetCoeff(i int) (gmp.Int, error) {
 	}
 	return *poly.coeff[i], nil
 }
-func (poly Poly) GetCoeffConstant() gmp.Int {
-	return *poly.coeff[0]
+func (poly Poly) GetCoeffConstant() *gmp.Int {
+	return poly.coeff[0]
 }
 func (poly *Poly) SetCoeffWithInt(i int, ci int64) error {
 	if i < 0 || i > len(poly.coeff)-1 {
