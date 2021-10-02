@@ -245,7 +245,7 @@ func (poly *Poly) Divide(op1 Poly, op2 Poly) error {
 	return nil
 }
 
-func (poly Poly) DeepCopy() Poly {
+func (poly Poly) Copy() Poly {
 	tmp, _ := NewPoly(poly.GetDegree())
 
 	for i := 0; i < len(tmp.coeff); i++ {
