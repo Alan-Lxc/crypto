@@ -254,3 +254,11 @@ func (poly Poly) DeepCopy() Poly {
 
 	return tmp
 }
+func (poly Poly) GetAllCoeff() []*gmp.Int {
+	res := make([]*gmp.Int, poly.GetDegree()+1)
+	for i := range res {
+		res[i] = gmp.NewInt(0)
+		res[i] = poly.coeff[i]
+	}
+	return res
+}
