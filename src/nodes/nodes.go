@@ -45,11 +45,11 @@ type Node struct {
 	//clientconn
 	clinetConn []*grpc.ClientConn
 	//nodeService
-	nodeService []pb.nodeservice
+	//nodeService []pb.nodeservice
 	//boardconn
 	boardConn *grpc.ClientConn
 	//boardService
-	boardService pb.boardservice
+	//boardService pb.boardservice
 }
 
 func (node *Node) GetMsgFromNode(pointmsg point.Pointmsg) {

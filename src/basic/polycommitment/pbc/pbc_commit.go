@@ -1,4 +1,4 @@
-package polycommitment
+package pbc
 
 import (
 	"bytes"
