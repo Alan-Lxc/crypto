@@ -6,8 +6,11 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/ncw/gmp"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log"
 	"math/rand"
+	"net"
 	"os"
 	"strconv"
 	"sync"
@@ -35,6 +38,18 @@ type Node struct {
 	mutex sync.Mutex
 	//Secret shares of node p(a0,y)
 	secretShare []*point.Point
+	//IP_address of node
+	ipAddress []string
+	//board IP address
+	ipOfBoard string
+	//clientconn
+	clinetConn []*grpc.ClientConn
+	//nodeService
+	nodeService []pb.nodeservice
+	//boardconn
+	boardConn *grpc.ClientConn
+	//boardService
+	boardService pb.boardservice
 }
 
 func (node *Node) GetMsgFromNode(pointmsg point.Pointmsg) {
@@ -99,6 +114,7 @@ func (node *Node) Phase1() {
 	log.Printf("Interpolation finished")
 	//node.Phase2()
 }
+
 func (node *Node) GetLabel() int {
 	if node != nil {
 		return node.label
@@ -107,7 +123,40 @@ func (node *Node) GetLabel() int {
 	}
 }
 
-//var modp:= getprime.Getprime(256)
+func (node *Node) NodeConnect() {
+	boradConn, err := grpc.Dial(node.ipOfBoard, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("Fail to connect board:%v", err)
+	}
+	node.boardConn = boradConn
+	//node.boardService = pb
+	for i := 0; i < node.total; i++ {
+		if i != node.label-1 {
+			clientconn, err := grpc.Dial(node.ipAddress[i], grpc.WithInsecure())
+			if err != nil {
+				log.Fatalf("[Node %d] Fail to connect to other node:%v", node.label, err)
+			}
+			node.clinetConn[i] = clientconn
+			//node.nodeService[i] = pb
+		}
+	}
+}
+func (node *Node) Service() {
+	port := node.ipAddress[node.label-1]
+	listener, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatalf("[Node %d] fail to listen:%v", node.label, err)
+	}
+	server := grpc.NewServer()
+	//pb.re	(s,node)
+	reflection.Register(server)
+	err = server.Serve(listener)
+	if err != nil {
+		log.Fatalf("[Node %d] fail to provide service", node.label)
+	}
+	log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
+}
+
 func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error) {
 	if label < 0 {
 		return Node{}, errors.New("Label must be a non-negative number!")
@@ -122,7 +171,7 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 	//Maybe We can generate a big prime?
 	//p.SetString(rand.)
 	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-
+	//var modp:= getprime.Getprime(256)
 	return Node{
 		label:      label,
 		total:      counter,
