@@ -340,7 +340,7 @@ func (node *Node) ClientReadPhase2() {
 	log.Printf("[node %d] read bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	stream, err := node.boardService.ReadPhase2(ctx, &pb.EmptyMsg{})
+	stream, err := node.boardService.ReadPhase2(ctx, &pb.RequestMsg{})
 	if err != nil {
 		log.Fatalf("client failed to read phase2: %v", err)
 	}
@@ -384,8 +384,8 @@ func (node *Node) ClientReadPhase2() {
 	if !flag {
 		panic("Proactivization Verification 2 failed")
 	}
-	*node.e2 = time.Now()
-	*node.s3 = time.Now()
+	//*node.e2 = time.Now()
+	//*node.s3 = time.Now()
 	node.ClientSharePhase3()
 }
 
@@ -556,42 +556,71 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 //最后重建多项式
 
 //重建secretShare
-func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) error {
+func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.ResponseMsg, error) {
 	index := msg.GetIndex()
 	Y := msg.GetY()
-
+	log.Printf("[node %d] receive point message from [node %d] in phase3", node.label, index)
 	node.secretShares[index-1].Y.SetBytes(Y)
+	witness := msg.GetWitness()
+	node.secretShares[index-1].PolyWit.SetCompressedBytes(witness)
+	node.mutex.Lock()
 	*node.shareCnt = *node.shareCnt + 1
 	flag := (*node.shareCnt == node.counter)
+	node.mutex.Unlock()
 	if flag {
 		log.Printf("%d has finish sharePhase3", node.label)
 		*node.shareCnt = 0
-
+		//node.clientwritephase3
 	}
-	return nil
-
+	return &pb.ResponseMsg{}, nil
 }
 func (node *Node) ClientSharePhase3() {
 	node.newPoly.Add(*node.recPoly, *node.proPoly)
 	//fmt.Println(*node.recPoly)
+	var wg sync.WaitGroup
 	for i := 0; i < node.counter; i++ {
 		value := gmp.NewInt(0)
 		node.newPoly.EvalMod(gmp.NewInt(int64(i+1)), node.p, value)
+		//witness
 
 		if i != node.label-1 {
 			log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
 			msg := &pb.PointMsg{
 				Index: int32(node.label),
-				X:     int32(i + 1),
+				X:     gmp.NewInt(int64(i + 1)).Bytes(),
 				Y:     value.Bytes(),
 			}
 			//把消息发送给不同的节点
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			node.Client[i].Phase3SendMsg(ctx, msg)
+			wg.Add(1)
+			go func(i int, msg *pb.PointMsg) {
+				defer wg.Done()
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				node.Client[i].Phase3SendMsg(ctx, msg)
+			}(i, msg)
 		} else {
 			node.secretShares[i].Y.Set(value)
+			//node.secretShares[i].PolyWit.Set(witness)
+			node.mutex.Lock()
+			*node.shareCnt = *node.shareCnt + 1
+			flag := (*node.shareCnt == node.counter)
+			node.mutex.Unlock()
+			if flag {
+				*node.shareCnt = 0
+				//node.clientwritephase3()
+			}
 		}
-
 	}
+}
+func (node Node) Phase3WriteOnBorad() {
+	log.Printf("[node %d] write bulletinboard in phase 3", node.label)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	C := node.dpc.NewG1()
+	node.dpc.Commit(C, *node.newPoly)
+	msg := &pb.Cmt1Msg{
+		Index:   int32(node.label),
+		Polycmt: C.CompressedBytes(),
+	}
+	node.boardService.WritePhase3(ctx, msg)
 }
