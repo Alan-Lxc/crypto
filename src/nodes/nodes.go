@@ -129,7 +129,7 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) {
 	}
 	//Receive the point and store
 	node.mutex.Lock()
-	node.recPoint[node.recCounter] = p
+	//node.recPoint[node.recCounter] = p
 	node.recPoint[node.recCounter] = &p
 	//fmt.Println(p)
 	node.recCounter += 1
@@ -335,7 +335,7 @@ func Demo_test() {
 	var modp *gmp.Int
 	modp = GetPrime(256)
 	for i := 0; i < 3; i++ {
-		nodes[i], _ = New(1, i+1, 3, "/home/kzl/Desktop", modp)
+		nodes[i], _ = New(1, i+1, 3, "/home/alan/Desktop", modp)
 	}
 
 	for i := 0; i < 3; i++ {
@@ -419,7 +419,7 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 		tmpPoly.EvalMod(gmp.NewInt(int64(x)), modp, y)
 		//dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
 
-		secretShares[i] = point.NewPoint(x, y)
+		secretShares[i] = point.NewPoint(gmp.NewInt(int64(x)), y)
 	}
 
 	proPoly, _ := poly.NewPoly(degree)
