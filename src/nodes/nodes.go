@@ -197,10 +197,10 @@ func (node *Node) Phase1() {
 	x_point := make([]*gmp.Int, node.degree+1)
 	y_point := make([]*gmp.Int, node.degree+1)
 	for i := 0; i <= node.degree; i++ {
-		point := node.recPoint[i]
+		p := node.recPoint[i]
 		//x_point = append(x_point, gmp.NewInt(int64(point.X)))
-		x_point[i] = point.X
-		y_point[i] = point.Y
+		x_point[i] = p.X
+		y_point[i] = p.Y
 		//y_point = append(y_point, point.Y)
 	}
 	p, err := interpolation.LagrangeInterpolate(node.degree, x_point, y_point, node.p)
