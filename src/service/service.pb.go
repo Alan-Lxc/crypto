@@ -297,6 +297,61 @@ func (x *CommitMsg) GetZeroWitness() []byte {
 	return nil
 }
 
+type Cmt1Msg struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Index   int32  `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	Polycmt []byte `protobuf:"bytes,2,opt,name=polycmt,proto3" json:"polycmt,omitempty"`
+}
+
+func (x *Cmt1Msg) Reset() {
+	*x = Cmt1Msg{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_service_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Cmt1Msg) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Cmt1Msg) ProtoMessage() {}
+
+func (x *Cmt1Msg) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Cmt1Msg.ProtoReflect.Descriptor instead.
+func (*Cmt1Msg) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *Cmt1Msg) GetIndex() int32 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
+func (x *Cmt1Msg) GetPolycmt() []byte {
+	if x != nil {
+		return x.Polycmt
+	}
+	return nil
+}
+
 var File_service_proto protoreflect.FileDescriptor
 
 var file_service_proto_rawDesc = []byte{
@@ -320,24 +375,51 @@ var file_service_proto_rawDesc = []byte{
 	0x6c, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0a,
 	0x50, 0x6f, 0x6c, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x12, 0x20, 0x0a, 0x0b, 0x5a, 0x65,
 	0x72, 0x6f, 0x57, 0x69, 0x74, 0x6e, 0x65, 0x73, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0c, 0x52,
-	0x0b, 0x5a, 0x65, 0x72, 0x6f, 0x57, 0x69, 0x74, 0x6e, 0x65, 0x73, 0x73, 0x32, 0x82, 0x02, 0x0a,
-	0x0b, 0x4e, 0x6f, 0x64, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x3d, 0x0a, 0x0e,
-	0x50, 0x68, 0x61, 0x73, 0x65, 0x31, 0x47, 0x65, 0x74, 0x73, 0x74, 0x61, 0x72, 0x74, 0x12, 0x13,
-	0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x4d, 0x73, 0x67, 0x1a, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x12, 0x3f, 0x0a, 0x12, 0x50,
-	0x68, 0x61, 0x73, 0x65, 0x31, 0x53, 0x65, 0x6e, 0x64, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x4d, 0x73,
-	0x67, 0x12, 0x11, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x50, 0x6f, 0x69, 0x6e,
+	0x0b, 0x5a, 0x65, 0x72, 0x6f, 0x57, 0x69, 0x74, 0x6e, 0x65, 0x73, 0x73, 0x22, 0x39, 0x0a, 0x07,
+	0x43, 0x6d, 0x74, 0x31, 0x4d, 0x73, 0x67, 0x12, 0x14, 0x0a, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x18, 0x0a,
+	0x07, 0x70, 0x6f, 0x6c, 0x79, 0x63, 0x6d, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07,
+	0x70, 0x6f, 0x6c, 0x79, 0x63, 0x6d, 0x74, 0x32, 0x82, 0x02, 0x0a, 0x0b, 0x4e, 0x6f, 0x64, 0x65,
+	0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x3d, 0x0a, 0x0e, 0x50, 0x68, 0x61, 0x73, 0x65,
+	0x31, 0x47, 0x65, 0x74, 0x73, 0x74, 0x61, 0x72, 0x74, 0x12, 0x13, 0x2e, 0x73, 0x65, 0x72, 0x76,
+	0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4d, 0x73, 0x67, 0x1a, 0x14,
+	0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x12, 0x3f, 0x0a, 0x12, 0x50, 0x68, 0x61, 0x73, 0x65, 0x31,
+	0x53, 0x65, 0x6e, 0x64, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x4d, 0x73, 0x67, 0x12, 0x11, 0x2e, 0x73,
+	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x4d, 0x73, 0x67, 0x1a,
+	0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x12, 0x37, 0x0a, 0x0b, 0x50, 0x68, 0x61, 0x73, 0x65,
+	0x32, 0x53, 0x68, 0x61, 0x72, 0x65, 0x12, 0x10, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
+	0x2e, 0x5a, 0x65, 0x72, 0x6f, 0x4d, 0x73, 0x67, 0x1a, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69,
+	0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4d, 0x73, 0x67, 0x22, 0x00,
+	0x12, 0x3a, 0x0a, 0x0c, 0x50, 0x68, 0x61, 0x73, 0x65, 0x32, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79,
+	0x12, 0x12, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x43, 0x6f, 0x6d, 0x6d, 0x69,
 	0x74, 0x4d, 0x73, 0x67, 0x1a, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x12, 0x37, 0x0a, 0x0b,
-	0x50, 0x68, 0x61, 0x73, 0x65, 0x32, 0x53, 0x68, 0x61, 0x72, 0x65, 0x12, 0x10, 0x2e, 0x73, 0x65,
-	0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x5a, 0x65, 0x72, 0x6f, 0x4d, 0x73, 0x67, 0x1a, 0x14, 0x2e,
-	0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x4d, 0x73, 0x67, 0x22, 0x00, 0x12, 0x3a, 0x0a, 0x0c, 0x50, 0x68, 0x61, 0x73, 0x65, 0x32, 0x56,
-	0x65, 0x72, 0x69, 0x66, 0x79, 0x12, 0x12, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e,
-	0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x4d, 0x73, 0x67, 0x1a, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76,
-	0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4d, 0x73, 0x67, 0x22,
-	0x00, 0x42, 0x0c, 0x5a, 0x0a, 0x2e, 0x2e, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x62,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x32, 0xf2, 0x02, 0x0a,
+	0x14, 0x42, 0x75, 0x6c, 0x6c, 0x65, 0x74, 0x69, 0x6e, 0x42, 0x6f, 0x61, 0x72, 0x64, 0x53, 0x65,
+	0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x39, 0x0a, 0x0a, 0x53, 0x74, 0x61, 0x72, 0x74, 0x45, 0x70,
+	0x6f, 0x63, 0x68, 0x12, 0x13, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x4d, 0x73, 0x67, 0x1a, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69,
+	0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4d, 0x73, 0x67, 0x22, 0x00,
+	0x12, 0x37, 0x0a, 0x0a, 0x52, 0x65, 0x61, 0x64, 0x50, 0x68, 0x61, 0x73, 0x65, 0x31, 0x12, 0x13,
+	0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x4d, 0x73, 0x67, 0x1a, 0x10, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x43, 0x6d,
+	0x74, 0x31, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x30, 0x01, 0x12, 0x39, 0x0a, 0x0b, 0x57, 0x72, 0x69,
+	0x74, 0x65, 0x50, 0x68, 0x61, 0x73, 0x65, 0x32, 0x12, 0x12, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69,
+	0x63, 0x65, 0x2e, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x4d, 0x73, 0x67, 0x1a, 0x14, 0x2e, 0x73,
+	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4d,
+	0x73, 0x67, 0x22, 0x00, 0x12, 0x39, 0x0a, 0x0a, 0x52, 0x65, 0x61, 0x64, 0x50, 0x68, 0x61, 0x73,
+	0x65, 0x32, 0x12, 0x13, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x4d, 0x73, 0x67, 0x1a, 0x12, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63,
+	0x65, 0x2e, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x30, 0x01, 0x12,
+	0x37, 0x0a, 0x0b, 0x57, 0x72, 0x69, 0x74, 0x65, 0x50, 0x68, 0x61, 0x73, 0x65, 0x33, 0x12, 0x10,
+	0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x43, 0x6d, 0x74, 0x31, 0x4d, 0x73, 0x67,
+	0x1a, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x12, 0x37, 0x0a, 0x0a, 0x52, 0x65, 0x61, 0x64,
+	0x50, 0x68, 0x61, 0x73, 0x65, 0x33, 0x12, 0x13, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
+	0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4d, 0x73, 0x67, 0x1a, 0x10, 0x2e, 0x73, 0x65,
+	0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x43, 0x6d, 0x74, 0x31, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x30,
+	0x01, 0x42, 0x0c, 0x5a, 0x0a, 0x2e, 0x2e, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x62,
 	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
@@ -353,28 +435,41 @@ func file_service_proto_rawDescGZIP() []byte {
 	return file_service_proto_rawDescData
 }
 
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_service_proto_goTypes = []interface{}{
 	(*RequestMsg)(nil),  // 0: service.RequestMsg
 	(*ResponseMsg)(nil), // 1: service.ResponseMsg
 	(*PointMsg)(nil),    // 2: service.PointMsg
 	(*ZeroMsg)(nil),     // 3: service.ZeroMsg
 	(*CommitMsg)(nil),   // 4: service.CommitMsg
+	(*Cmt1Msg)(nil),     // 5: service.Cmt1Msg
 }
 var file_service_proto_depIdxs = []int32{
-	0, // 0: service.NodeService.Phase1Getstart:input_type -> service.RequestMsg
-	2, // 1: service.NodeService.Phase1SendPointMsg:input_type -> service.PointMsg
-	3, // 2: service.NodeService.Phase2Share:input_type -> service.ZeroMsg
-	4, // 3: service.NodeService.Phase2Verify:input_type -> service.CommitMsg
-	1, // 4: service.NodeService.Phase1Getstart:output_type -> service.ResponseMsg
-	1, // 5: service.NodeService.Phase1SendPointMsg:output_type -> service.ResponseMsg
-	1, // 6: service.NodeService.Phase2Share:output_type -> service.ResponseMsg
-	1, // 7: service.NodeService.Phase2Verify:output_type -> service.ResponseMsg
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: service.NodeService.Phase1Getstart:input_type -> service.RequestMsg
+	2,  // 1: service.NodeService.Phase1SendPointMsg:input_type -> service.PointMsg
+	3,  // 2: service.NodeService.Phase2Share:input_type -> service.ZeroMsg
+	4,  // 3: service.NodeService.Phase2Verify:input_type -> service.CommitMsg
+	0,  // 4: service.BulletinBoardService.StartEpoch:input_type -> service.RequestMsg
+	0,  // 5: service.BulletinBoardService.ReadPhase1:input_type -> service.RequestMsg
+	4,  // 6: service.BulletinBoardService.WritePhase2:input_type -> service.CommitMsg
+	0,  // 7: service.BulletinBoardService.ReadPhase2:input_type -> service.RequestMsg
+	5,  // 8: service.BulletinBoardService.WritePhase3:input_type -> service.Cmt1Msg
+	0,  // 9: service.BulletinBoardService.ReadPhase3:input_type -> service.RequestMsg
+	1,  // 10: service.NodeService.Phase1Getstart:output_type -> service.ResponseMsg
+	1,  // 11: service.NodeService.Phase1SendPointMsg:output_type -> service.ResponseMsg
+	1,  // 12: service.NodeService.Phase2Share:output_type -> service.ResponseMsg
+	1,  // 13: service.NodeService.Phase2Verify:output_type -> service.ResponseMsg
+	1,  // 14: service.BulletinBoardService.StartEpoch:output_type -> service.ResponseMsg
+	5,  // 15: service.BulletinBoardService.ReadPhase1:output_type -> service.Cmt1Msg
+	1,  // 16: service.BulletinBoardService.WritePhase2:output_type -> service.ResponseMsg
+	4,  // 17: service.BulletinBoardService.ReadPhase2:output_type -> service.CommitMsg
+	1,  // 18: service.BulletinBoardService.WritePhase3:output_type -> service.ResponseMsg
+	5,  // 19: service.BulletinBoardService.ReadPhase3:output_type -> service.Cmt1Msg
+	10, // [10:20] is the sub-list for method output_type
+	0,  // [0:10] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_service_proto_init() }
@@ -443,6 +538,18 @@ func file_service_proto_init() {
 				return nil
 			}
 		}
+		file_service_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Cmt1Msg); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -450,9 +557,9 @@ func file_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_service_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_service_proto_goTypes,
 		DependencyIndexes: file_service_proto_depIdxs,
@@ -649,5 +756,347 @@ var _NodeService_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
+	Metadata: "service.proto",
+}
+
+// BulletinBoardServiceClient is the client API for BulletinBoardService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type BulletinBoardServiceClient interface {
+	// Start a epoch
+	StartEpoch(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
+	// BulletinBoard RPC for recontruction phase
+	ReadPhase1(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase1Client, error)
+	// BulletinBoard RPC for proactivization phase
+	WritePhase2(ctx context.Context, in *CommitMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
+	ReadPhase2(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase2Client, error)
+	// BulletinBoard RPC for share distribution phase
+	WritePhase3(ctx context.Context, in *Cmt1Msg, opts ...grpc.CallOption) (*ResponseMsg, error)
+	ReadPhase3(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase3Client, error)
+}
+
+type bulletinBoardServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBulletinBoardServiceClient(cc grpc.ClientConnInterface) BulletinBoardServiceClient {
+	return &bulletinBoardServiceClient{cc}
+}
+
+func (c *bulletinBoardServiceClient) StartEpoch(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error) {
+	out := new(ResponseMsg)
+	err := c.cc.Invoke(ctx, "/service.BulletinBoardService/StartEpoch", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bulletinBoardServiceClient) ReadPhase1(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase1Client, error) {
+	stream, err := c.cc.NewStream(ctx, &_BulletinBoardService_serviceDesc.Streams[0], "/service.BulletinBoardService/ReadPhase1", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bulletinBoardServiceReadPhase1Client{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type BulletinBoardService_ReadPhase1Client interface {
+	Recv() (*Cmt1Msg, error)
+	grpc.ClientStream
+}
+
+type bulletinBoardServiceReadPhase1Client struct {
+	grpc.ClientStream
+}
+
+func (x *bulletinBoardServiceReadPhase1Client) Recv() (*Cmt1Msg, error) {
+	m := new(Cmt1Msg)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *bulletinBoardServiceClient) WritePhase2(ctx context.Context, in *CommitMsg, opts ...grpc.CallOption) (*ResponseMsg, error) {
+	out := new(ResponseMsg)
+	err := c.cc.Invoke(ctx, "/service.BulletinBoardService/WritePhase2", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bulletinBoardServiceClient) ReadPhase2(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase2Client, error) {
+	stream, err := c.cc.NewStream(ctx, &_BulletinBoardService_serviceDesc.Streams[1], "/service.BulletinBoardService/ReadPhase2", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bulletinBoardServiceReadPhase2Client{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type BulletinBoardService_ReadPhase2Client interface {
+	Recv() (*CommitMsg, error)
+	grpc.ClientStream
+}
+
+type bulletinBoardServiceReadPhase2Client struct {
+	grpc.ClientStream
+}
+
+func (x *bulletinBoardServiceReadPhase2Client) Recv() (*CommitMsg, error) {
+	m := new(CommitMsg)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *bulletinBoardServiceClient) WritePhase3(ctx context.Context, in *Cmt1Msg, opts ...grpc.CallOption) (*ResponseMsg, error) {
+	out := new(ResponseMsg)
+	err := c.cc.Invoke(ctx, "/service.BulletinBoardService/WritePhase3", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bulletinBoardServiceClient) ReadPhase3(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase3Client, error) {
+	stream, err := c.cc.NewStream(ctx, &_BulletinBoardService_serviceDesc.Streams[2], "/service.BulletinBoardService/ReadPhase3", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bulletinBoardServiceReadPhase3Client{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type BulletinBoardService_ReadPhase3Client interface {
+	Recv() (*Cmt1Msg, error)
+	grpc.ClientStream
+}
+
+type bulletinBoardServiceReadPhase3Client struct {
+	grpc.ClientStream
+}
+
+func (x *bulletinBoardServiceReadPhase3Client) Recv() (*Cmt1Msg, error) {
+	m := new(Cmt1Msg)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// BulletinBoardServiceServer is the server API for BulletinBoardService service.
+type BulletinBoardServiceServer interface {
+	// Start a epoch
+	StartEpoch(context.Context, *RequestMsg) (*ResponseMsg, error)
+	// BulletinBoard RPC for recontruction phase
+	ReadPhase1(*RequestMsg, BulletinBoardService_ReadPhase1Server) error
+	// BulletinBoard RPC for proactivization phase
+	WritePhase2(context.Context, *CommitMsg) (*ResponseMsg, error)
+	ReadPhase2(*RequestMsg, BulletinBoardService_ReadPhase2Server) error
+	// BulletinBoard RPC for share distribution phase
+	WritePhase3(context.Context, *Cmt1Msg) (*ResponseMsg, error)
+	ReadPhase3(*RequestMsg, BulletinBoardService_ReadPhase3Server) error
+}
+
+// UnimplementedBulletinBoardServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedBulletinBoardServiceServer struct {
+}
+
+func (*UnimplementedBulletinBoardServiceServer) StartEpoch(context.Context, *RequestMsg) (*ResponseMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartEpoch not implemented")
+}
+func (*UnimplementedBulletinBoardServiceServer) ReadPhase1(*RequestMsg, BulletinBoardService_ReadPhase1Server) error {
+	return status.Errorf(codes.Unimplemented, "method ReadPhase1 not implemented")
+}
+func (*UnimplementedBulletinBoardServiceServer) WritePhase2(context.Context, *CommitMsg) (*ResponseMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WritePhase2 not implemented")
+}
+func (*UnimplementedBulletinBoardServiceServer) ReadPhase2(*RequestMsg, BulletinBoardService_ReadPhase2Server) error {
+	return status.Errorf(codes.Unimplemented, "method ReadPhase2 not implemented")
+}
+func (*UnimplementedBulletinBoardServiceServer) WritePhase3(context.Context, *Cmt1Msg) (*ResponseMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WritePhase3 not implemented")
+}
+func (*UnimplementedBulletinBoardServiceServer) ReadPhase3(*RequestMsg, BulletinBoardService_ReadPhase3Server) error {
+	return status.Errorf(codes.Unimplemented, "method ReadPhase3 not implemented")
+}
+
+func RegisterBulletinBoardServiceServer(s *grpc.Server, srv BulletinBoardServiceServer) {
+	s.RegisterService(&_BulletinBoardService_serviceDesc, srv)
+}
+
+func _BulletinBoardService_StartEpoch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestMsg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BulletinBoardServiceServer).StartEpoch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.BulletinBoardService/StartEpoch",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BulletinBoardServiceServer).StartEpoch(ctx, req.(*RequestMsg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BulletinBoardService_ReadPhase1_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RequestMsg)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BulletinBoardServiceServer).ReadPhase1(m, &bulletinBoardServiceReadPhase1Server{stream})
+}
+
+type BulletinBoardService_ReadPhase1Server interface {
+	Send(*Cmt1Msg) error
+	grpc.ServerStream
+}
+
+type bulletinBoardServiceReadPhase1Server struct {
+	grpc.ServerStream
+}
+
+func (x *bulletinBoardServiceReadPhase1Server) Send(m *Cmt1Msg) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _BulletinBoardService_WritePhase2_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CommitMsg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BulletinBoardServiceServer).WritePhase2(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.BulletinBoardService/WritePhase2",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BulletinBoardServiceServer).WritePhase2(ctx, req.(*CommitMsg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BulletinBoardService_ReadPhase2_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RequestMsg)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BulletinBoardServiceServer).ReadPhase2(m, &bulletinBoardServiceReadPhase2Server{stream})
+}
+
+type BulletinBoardService_ReadPhase2Server interface {
+	Send(*CommitMsg) error
+	grpc.ServerStream
+}
+
+type bulletinBoardServiceReadPhase2Server struct {
+	grpc.ServerStream
+}
+
+func (x *bulletinBoardServiceReadPhase2Server) Send(m *CommitMsg) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _BulletinBoardService_WritePhase3_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Cmt1Msg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BulletinBoardServiceServer).WritePhase3(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.BulletinBoardService/WritePhase3",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BulletinBoardServiceServer).WritePhase3(ctx, req.(*Cmt1Msg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BulletinBoardService_ReadPhase3_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RequestMsg)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BulletinBoardServiceServer).ReadPhase3(m, &bulletinBoardServiceReadPhase3Server{stream})
+}
+
+type BulletinBoardService_ReadPhase3Server interface {
+	Send(*Cmt1Msg) error
+	grpc.ServerStream
+}
+
+type bulletinBoardServiceReadPhase3Server struct {
+	grpc.ServerStream
+}
+
+func (x *bulletinBoardServiceReadPhase3Server) Send(m *Cmt1Msg) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+var _BulletinBoardService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "service.BulletinBoardService",
+	HandlerType: (*BulletinBoardServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "StartEpoch",
+			Handler:    _BulletinBoardService_StartEpoch_Handler,
+		},
+		{
+			MethodName: "WritePhase2",
+			Handler:    _BulletinBoardService_WritePhase2_Handler,
+		},
+		{
+			MethodName: "WritePhase3",
+			Handler:    _BulletinBoardService_WritePhase3_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ReadPhase1",
+			Handler:       _BulletinBoardService_ReadPhase1_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ReadPhase2",
+			Handler:       _BulletinBoardService_ReadPhase2_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ReadPhase3",
+			Handler:       _BulletinBoardService_ReadPhase3_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "service.proto",
 }

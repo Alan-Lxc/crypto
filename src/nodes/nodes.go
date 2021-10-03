@@ -82,7 +82,7 @@ type Node struct {
 	//boardconn
 	boardConn *grpc.ClientConn
 	//boardService
-	//boardService pb.boardservice
+	boardService pb.BulletinBoardServiceClient
 }
 
 func (node *Node) GetLabel() int {
@@ -328,8 +328,7 @@ func (node *Node) Phase2Write() {
 		PolyCommit:  node.zeroPolyCmt.CompressedBytes(),
 		ZeroWitness: node.zeroPolyWit.CompressedBytes(),
 	}
-	//node.bClient.Writephase2(ctx,msg)
-
+	node.boardService.WritePhase2(ctx, msg)
 }
 
 //phase3
@@ -377,7 +376,7 @@ func (node *Node) NodeConnect() {
 		log.Fatalf("Fail to connect board:%v", err)
 	}
 	node.boardConn = boradConn
-	//node.boardService = pb
+	node.boardService = pb.NewBulletinBoardServiceClient(boradConn)
 	for i := 0; i < node.counter; i++ {
 		if i != node.label-1 {
 			clientconn, err := grpc.Dial(node.ipAddress[i], grpc.WithInsecure())
