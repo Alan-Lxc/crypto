@@ -64,8 +64,8 @@ type Node struct {
 	//the other nodes in the committee
 	Client []*Node
 
-	//Secret shares of node p(a0,y)
-	secretShare []*point.Point
+	////Secret shares of node p(a0,y)
+	//secretShare []*point.Point
 	//IP_address of node
 	ipAddress []string
 	//board IP address
@@ -146,7 +146,7 @@ func (node *Node) SendMsgToNode() {
 	p := point.Point{
 		X:       node.secretShares[node.label-1].X,
 		Y:       node.secretShares[node.label-1].Y,
-		PolyWit: node.secretShare[node.label-1].PolyWit,
+		PolyWit: node.secretShares[node.label-1].PolyWit,
 	}
 	node.mutex.Lock()
 	node.recPoint[node.recCounter] = &p
@@ -166,20 +166,21 @@ func (node *Node) SendMsgToNode() {
 			//msg.SetPoint(node.secretShares[i])
 			//(*node.Client[i]).GetMsgFromNode(msg)
 			msg := &pb.PointMsg{
-				Index:   int32(node.label),
-				X:       node.secretShare[i].X.Bytes(),
-				Y:       node.secretShare[i].Y.Bytes(),
-				Witness: node.secretShare[i].PolyWit.Bytes(),
+				Index: int32(node.label),
+				X:     node.secretShares[i].X.Bytes(),
+				Y:     node.secretShares[i].Y.Bytes(),
+				//Witness: node.secretShares[i].PolyWit.Bytes(),
+				Witness: nil,
 			}
 			wg.Add(1)
 			go func(i int, msg *pb.PointMsg) {
 				defer wg.Done()
-				ctx, cancel := context.WithCancel(context.Background())
-				_, err := node.nodeService[i].Phase1SendPointMsg(ctx, msg)
-				if err != nil {
-					panic(err)
-				}
-				defer cancel()
+				//ctx, cancel := context.WithCancel(context.Background())
+				//_, err := node.nodeService[i].Phase1SendPointMsg(ctx, msg)
+				//if err != nil {
+				//	panic(err)
+				//}
+				//defer cancel()
 			}(i, msg)
 		}
 	}
@@ -208,7 +209,6 @@ func (node *Node) Phase1() {
 	node.recPoly = &p
 	fmt.Printf("Interpolation finished\n")
 	//node.Phase2()
-
 }
 
 type ZeroMsg struct {
