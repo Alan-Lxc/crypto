@@ -138,6 +138,7 @@ func (poly *Poly) ResetDegree(degree int) error {
 			extra[i] = gmp.NewInt(0)
 		}
 		poly.coeff = append(poly.coeff, extra...)
+
 	}
 	poly.Reset()
 	return nil
@@ -152,7 +153,7 @@ func (poly *Poly) ResetTo(other Poly) {
 	}
 }
 
-func (poly Poly) Add(poly1 Poly, poly2 Poly) {
+func (poly *Poly) Add(poly1 Poly, poly2 Poly) {
 	if poly1.GetDegree() > poly2.GetDegree() {
 		poly.ResetTo(poly1)
 		for i := 0; i < poly2.GetDegree(); i++ {
@@ -167,7 +168,7 @@ func (poly Poly) Add(poly1 Poly, poly2 Poly) {
 	} //let the poly as long as the longest (highest end =longest)
 	//and then add poly1 + poly2
 }
-func (poly Poly) Sub(poly1 Poly, poly2 Poly) {
+func (poly *Poly) Sub(poly1 Poly, poly2 Poly) {
 	if poly1.GetDegree() > poly2.GetDegree() {
 		poly.ResetTo(poly1)
 		for i := 0; i < poly2.GetDegree(); i++ {
@@ -183,7 +184,7 @@ func (poly Poly) Sub(poly1 Poly, poly2 Poly) {
 	//and then add poly1 - poly2
 
 }
-func (poly Poly) Multiply(poly1 Poly, poly2 Poly) {
+func (poly *Poly) Multiply(poly1 Poly, poly2 Poly) error {
 	deg1 := poly1.GetDegree()
 	deg2 := poly2.GetDegree()
 	err := poly.ResetDegree(deg1 + deg2)
@@ -196,7 +197,7 @@ func (poly Poly) Multiply(poly1 Poly, poly2 Poly) {
 		}
 	}
 	poly.coeff = poly.coeff[:poly.GetDegree()+1]
-
+	return err
 }
 
 func (poly Poly) DeepCopy() Poly {
@@ -213,19 +214,20 @@ func (poly Poly) DeepCopy() Poly {
 }
 
 // MulSelf set poly to poly * op
-func (poly *Poly) MulSelf(op Poly) {
+func (poly *Poly) MulSelf(op Poly) error {
 	op1 := poly.DeepCopy()
 	poly.Multiply(op1, op)
+	return nil
 }
 
 //AddMul  return to self + k * poly2
-func (poly Poly) AddMul(poly2 Poly, k *gmp.Int) {
+func (poly *Poly) AddMul(poly2 Poly, k *gmp.Int) {
 	for i := 0; i <= poly2.GetDegree(); i++ {
 		poly.coeff[i].AddMul(poly2.coeff[i], k)
 	}
 }
 
-func (poly Poly) Mod(p *gmp.Int) {
+func (poly *Poly) Mod(p *gmp.Int) {
 	for i := 0; i < len(poly.coeff); i++ {
 		poly.coeff[i].Mod(poly.coeff[i], p)
 	}
@@ -303,4 +305,37 @@ func (poly Poly) GetAllCoeff() []*gmp.Int {
 		res[i] = poly.coeff[i]
 	}
 	return res
+}
+func FromVec(coeff ...int64) Poly {
+	if len(coeff) == 0 {
+		return NewConstant(0)
+	}
+	deg := len(coeff) - 1
+
+	poly, err := NewPoly(deg)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for i := range poly.coeff {
+		poly.coeff[i].SetInt64(coeff[i])
+	}
+
+	return poly
+}
+func NewEmpty() Poly {
+	return NewConstant(0)
+}
+func (poly Poly) IsSame(op Poly) bool {
+	if op.GetDegree() != poly.GetDegree() {
+		return false
+	}
+
+	for i := 0; i <= op.GetDegree(); i++ {
+		if op.coeff[i].Cmp(poly.coeff[i]) != 0 {
+			return false
+		}
+	}
+
+	return true
 }

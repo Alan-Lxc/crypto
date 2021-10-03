@@ -348,7 +348,7 @@ func (node *Node) NodeConnect() {
 	}
 	node.boardConn = boradConn
 	//node.boardService = pb
-	for i := 0; i < node.total; i++ {
+	for i := 0; i < node.counter; i++ {
 		if i != node.label-1 {
 			clientconn, err := grpc.Dial(node.ipAddress[i], grpc.WithInsecure())
 			if err != nil {
