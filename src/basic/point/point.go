@@ -6,16 +6,16 @@ import (
 )
 
 type Point struct {
-	X       *gmp.Int
+	X       int32
 	Y       *gmp.Int
 	PolyWit *pbc.Element
 }
 
-func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *Point {
+func NewPoint(x int32, y *gmp.Int) *Point {
 	return &Point{
-		X:       x,
-		Y:       y,
-		PolyWit: w,
+		X: x,
+		Y: y,
+		//PolyWit: w,
 	}
 }
 
@@ -38,12 +38,14 @@ func (pointmsg *Pointmsg) GetPoint() *Point {
 		return nil
 	}
 }
-func (pointmsg Pointmsg) SetPoint(point *Point) {
+func (pointmsg *Pointmsg) SetPoint(point *Point) {
 	if point != nil {
 		pointmsg.point = point
 	}
 }
-func (pointmsg Pointmsg) SetIndex(index int) {
+
+//transport a object value to a method must use pointer
+func (pointmsg *Pointmsg) SetIndex(index int) {
 	if index > 0 {
 		pointmsg.index = index
 	}

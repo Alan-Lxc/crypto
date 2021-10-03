@@ -36,13 +36,35 @@ func (poly Poly) GetDegree() int {
 	}
 	return deg
 }
+
+// GetCoefficient returns coeff[i]
 func (poly Poly) GetCoeff(i int) (gmp.Int, error) {
-	if i < 0 || i > len(poly.coeff)-1 {
-		return *gmp.NewInt(0), errors.New("the parameter is out of range")
+	if i < 0 || i >= len(poly.coeff) {
+		return *gmp.NewInt(0), errors.New("out of boundary")
 	}
+
 	return *poly.coeff[i], nil
 }
 func (poly Poly) GetCoeffConstant() *gmp.Int {
+	return poly.coeff[0]
+}
+
+// GetAllCoeffcients returns a copy of
+func (poly Poly) GetAllCoeffs() (all []*gmp.Int) {
+	all = make([]*gmp.Int, poly.GetDegree()+1)
+
+	for i := range all {
+		all[i] = gmp.NewInt(0)
+		all[i] = poly.coeff[i]
+	}
+
+	return all
+}
+func (poly Poly) GetPtrtoCoeff(i int) (*gmp.Int, error) {
+	return poly.coeff[i], nil
+}
+
+func (poly Poly) GetPtrtoConstant() *gmp.Int {
 	return poly.coeff[0]
 }
 func (poly *Poly) SetCoeffWithInt(i int, ci int64) error {
@@ -117,6 +139,7 @@ func (poly *Poly) ResetDegree(degree int) error {
 		}
 		poly.coeff = append(poly.coeff, extra...)
 	}
+	poly.Reset()
 	return nil
 }
 func (poly *Poly) ResetTo(other Poly) {
@@ -168,12 +191,31 @@ func (poly Poly) Multiply(poly1 Poly, poly2 Poly) {
 		panic(err.Error())
 	}
 	for i := 0; i <= deg1; i++ {
-		for j := 0; i <= deg2; j++ {
+		for j := 0; j <= deg2; j++ {
 			poly.coeff[i+j].AddMul(poly1.coeff[i], poly2.coeff[j])
 		}
 	}
 	poly.coeff = poly.coeff[:poly.GetDegree()+1]
 
+}
+
+func (poly Poly) DeepCopy() Poly {
+	dst, err := NewPoly(poly.GetDegree())
+	if err != nil {
+		panic("deepcopy failed: " + err.Error())
+	}
+
+	for i := 0; i < len(dst.coeff); i++ {
+		dst.coeff[i].Set(poly.coeff[i])
+	}
+
+	return dst
+}
+
+// MulSelf set poly to poly * op
+func (poly *Poly) MulSelf(op Poly) {
+	op1 := poly.DeepCopy()
+	poly.Multiply(op1, op)
 }
 
 //AddMul  return to self + k * poly2
