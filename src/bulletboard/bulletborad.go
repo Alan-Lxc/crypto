@@ -92,7 +92,7 @@ func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardSe
 }
 
 func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.AckMsg, error) {
-	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
+	//*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	log.Print("[bulletinboard] is being written in phase 3")
 	index := msg.GetIndex()
 	bb.reconstructionContent[index-1] = msg
@@ -195,7 +195,7 @@ func (bb *BulletinBoard) ClientStartVerifPhase3() {
 			defer wg.Done()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			bb.nClient[i].StartVerifPhase3(ctx, &pb.RequestMsg{})
+			bb.nClient[i].Phase3Verify(ctx, &pb.RequestMsg{})
 		}(i)
 	}
 	wg.Wait()

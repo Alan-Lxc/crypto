@@ -9,8 +9,8 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/Nik-U/pbc"
+	"github.com/golang/protobuf/proto"
 	"math/big"
-
 	//"github.com/Nik-U/pbc"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
 	"github.com/ncw/gmp"
@@ -612,7 +612,7 @@ func (node *Node) ClientSharePhase3() {
 		}
 	}
 }
-func (node Node) Phase3WriteOnBorad() {
+func (node *Node) Phase3WriteOnBorad() {
 	log.Printf("[node %d] write bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -623,4 +623,52 @@ func (node Node) Phase3WriteOnBorad() {
 		Polycmt: C.CompressedBytes(),
 	}
 	node.boardService.WritePhase3(ctx, msg)
+}
+func (node *Node) Phase3Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
+	log.Printf("[node %d] start verification in phase 3", node.label)
+	node.Phase3Readboard()
+	return &pb.ResponseMsg{}, nil
+}
+
+func (node *Node) Phase3Readboard() {
+	log.Printf("[node %d] read bulletinboard in phase 3", node.label)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stream, err := node.boardService.ReadPhase3(ctx, &pb.EmptyMsg{})
+	if err != nil {
+		log.Fatalf("client failed to read phase3: %v", err)
+	}
+	for i := 0; i < node.counter; i++ {
+		msg, err := stream.Recv()
+		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
+		if err != nil {
+			log.Fatalf("client failed to receive in read phase1: %v", err)
+		}
+		index := msg.GetIndex()
+		polycmt := msg.GetPolycmt()
+		node.newPolyCmt[index-1].SetCompressedBytes(polycmt)
+	}
+	for i := 0; i < node.counter; i++ {
+		tmp := node.dpc.NewG1()
+		if !node.newPolyCmt[i].Equals(tmp.Mul(node.oldPolyCmt[i], node.midPolyCmt[i])) {
+			panic("Share Distribution Verification 1 failed")
+		}
+		if !node.dpc.VerifyEval(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit) {
+			panic("Share Distribution Verification 2 failed")
+		}
+
+	}
+	//*node.e3 = time.Now()
+	f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	defer f.Close()
+	//fmt.Fprintf(f, "totMsgSize,%d\n", *node.totMsgSize)
+	//fmt.Fprintf(f, "epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
+	//fmt.Fprintf(f, "reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
+	//fmt.Fprintf(f, "proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
+	//fmt.Fprintf(f, "sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+	//*node.totMsgSize = 0
+	for i := 0; i < node.counter; i++ {
+		node.zeroShares[i].SetInt64(0)
+	}
+	node.zeroShare.SetInt64(0)
 }
