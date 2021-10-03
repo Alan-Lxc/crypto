@@ -6,6 +6,8 @@ service NodeService{
     rpc Phase1Getstart(RequestMsg)  returns (ResponseMsg) {}
     rpc Phase1SendPointMsg (PointMsg)    returns (ResponseMsg){}
     rpc Phase2Share(ZeroMsg)    returns(ResponseMsg){}
+    rpc Phase2Verify(CommitMsg) returns(ResponseMsg){}
+
 }
 
 message RequestMsg{}
@@ -21,4 +23,10 @@ message PointMsg{
 message ZeroMsg{
     int32 index = 1 ;
     bytes share = 2 ;
+}
+message CommitMsg{
+    int32 Index = 1;
+    bytes ShareCommit = 2;
+    bytes PolyCommit = 3;
+    bytes ZeroWitness = 4;
 }
