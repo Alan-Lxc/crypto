@@ -8,6 +8,8 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
+	"github.com/Nik-U/pbc"
+
 	//"github.com/Nik-U/pbc"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
 	"github.com/ncw/gmp"
@@ -57,7 +59,10 @@ type Node struct {
 	_0Shares     []*gmp.Int
 	_0ShareSum   *gmp.Int
 	_0ShareCount *int
-
+	//Commitment & Witness in Phase 2
+	zeroShareCmt *pbc.Element
+	zeroPolyCmt  *pbc.Element
+	zeroPolyWit  *pbc.Element
 	// Counter for New Secret Shares
 	shareCnt *int
 
@@ -234,7 +239,6 @@ func (node *Node) ClientSharePhase2() {
 	node._0Shares[node.counter-1].Mod(node._0Shares[node.counter-1], node.p)
 	node._0Shares[node.counter-1].Mul(node._0Shares[node.counter-1], gmp.NewInt(0).ModInverse(node.lambda[node.counter-1], node.p))
 	node._0Shares[node.counter-1].Mod(node._0Shares[node.counter-1], node.p)
-
 	//to get sum for \sum_counter
 	node.mutex.Lock()
 	node._0ShareSum.Add(node._0ShareSum, node._0Shares[node.label-1])
@@ -314,6 +318,19 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 	}
 	return &pb.ResponseMsg{}, nil
 }
+func (node *Node) Phase2Write() {
+	//log.printf("
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	msg := &pb.CommitMsg{
+		Index:       int32(node.label),
+		ShareCommit: node.zeroShareCmt.CompressedBytes(),
+		PolyCommit:  node.zeroPolyCmt.CompressedBytes(),
+		ZeroWitness: node.zeroPolyWit.CompressedBytes(),
+	}
+	//node.bClient.Writephase2(ctx,msg)
+
+}
 
 //phase3
 type message struct {
@@ -337,9 +354,7 @@ func Demo_test() {
 	for i := 0; i < 3; i++ {
 		nodes[i], _ = New(1, i+1, 3, "/home/alan/Desktop", modp)
 	}
-
 	for i := 0; i < 3; i++ {
-
 		nodes[i].connect([]*Node{&nodes[0], &nodes[1], &nodes[2]})
 	}
 	for i := 0; i < 3; i++ {
