@@ -8,6 +8,8 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
+	//"github.com/Nik-U/pbc"
+	pb "github.com/Alan-Lxc/crypto_contest/src/service"
 	"github.com/ncw/gmp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -71,7 +73,7 @@ type Node struct {
 	//clientconn
 	clinetConn []*grpc.ClientConn
 	//nodeService
-	//nodeService []pb.nodeservice
+	nodeService []pb.NodeServiceClient
 	//boardconn
 	boardConn *grpc.ClientConn
 	//boardService
@@ -96,15 +98,39 @@ func (node *Node) connect(ptrs []*Node) {
 	}
 }
 
-//phase1
-func (node *Node) GetMsgFromNode(pointmsg point.Pointmsg) {
+//Server Handler
+func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
+	log.Printf("[Node %d] Now Get start Phase1", node.label)
+	return &pb.ResponseMsg{}, nil
+}
+
+func (node *Node) Phase1SendPointMsg(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
+	log.Printf("[Node %d] Now start to send pointMsg to other point")
+	node.SendMsgToNode()
+	return &pb.ResponseMsg{}, nil
+}
+func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (response *pb.ResponseMsg, err error) {
+	node.GetMsgFromNode(msg)
+	return &pb.ResponseMsg{}, nil
+}
+
+func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) {
 	index := pointmsg.GetIndex()
 	log.Printf("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
-	p := pointmsg.GetPoint()
+	x := gmp.NewInt(0)
+	x.SetBytes(pointmsg.GetX())
+	y := gmp.NewInt(0)
+	y.SetBytes(pointmsg.GetY())
+	//witness := pbc.Element{nil}	///tmp
+	p := point.Point{
+		X:       x,
+		Y:       y,
+		PolyWit: nil,
+	}
 	//Receive the point and store
 	node.mutex.Lock()
-	node.recPoint[node.recCounter] = p
-	fmt.Println(p)
+	node.recPoint[node.recCounter] = &p
+	//fmt.Println(p)
 	node.recCounter += 1
 	flag := (node.recCounter == node.counter)
 	node.mutex.Unlock()
@@ -113,11 +139,13 @@ func (node *Node) GetMsgFromNode(pointmsg point.Pointmsg) {
 		node.Phase1()
 	}
 }
-func (node *Node) SendMsgToNode(nodes [3]Node) {
+
+//client
+func (node *Node) SendMsgToNode() {
 	p := point.Point{
-		X: node.secretShares[node.label-1].X,
-		Y: node.secretShares[node.label-1].Y,
-		//PolyWit: node.secretShare[node.label-1].PolyWit,
+		X:       node.secretShares[node.label-1].X,
+		Y:       node.secretShares[node.label-1].Y,
+		PolyWit: node.secretShare[node.label-1].PolyWit,
 	}
 	node.mutex.Lock()
 	node.recPoint[node.recCounter] = &p
@@ -128,18 +156,33 @@ func (node *Node) SendMsgToNode(nodes [3]Node) {
 		node.recCounter = 0
 		node.Phase1()
 	}
+	var wg sync.WaitGroup
 	for i := 0; i < node.counter; i++ {
 		if i != node.label-1 {
 			log.Printf("[Node %d] send point message to [Node %d]", node.label, i+1)
-			msg := point.Pointmsg{}
-			msg.SetIndex(node.label)
-			msg.SetPoint(node.secretShares[i])
-			(*node.Client[i]).GetMsgFromNode(msg)
-
-			//node.sent(msg)
+			//msg := point.Pointmsg{}
+			//msg.SetIndex(node.label)
+			//msg.SetPoint(node.secretShares[i])
+			//(*node.Client[i]).GetMsgFromNode(msg)
+			msg := &pb.PointMsg{
+				Index:   int32(node.label),
+				X:       node.secretShare[i].X.Bytes(),
+				Y:       node.secretShare[i].Y.Bytes(),
+				Witness: node.secretShare[i].PolyWit.Bytes(),
+			}
+			wg.Add(1)
+			go func(i int, msg *pb.PointMsg) {
+				defer wg.Done()
+				ctx, cancel := context.WithCancel(context.Background())
+				_, err := node.nodeService[i].Phase1SendPointMsg(ctx, msg)
+				if err != nil {
+					panic(err)
+				}
+				defer cancel()
+			}(i, msg)
 		}
 	}
-
+	wg.Wait()
 }
 func (node *Node) Phase1() {
 	log.Printf("[Node %d] now start phase1", node.label)
@@ -148,7 +191,7 @@ func (node *Node) Phase1() {
 	for i := 0; i <= node.degree; i++ {
 		point := node.recPoint[i]
 		//x_point = append(x_point, gmp.NewInt(int64(point.X)))
-		x_point[i] = gmp.NewInt(int64(point.X))
+		x_point[i] = point.X
 		y_point[i] = point.Y
 		//y_point = append(y_point, point.Y)
 	}
@@ -167,7 +210,7 @@ func (node *Node) Phase1() {
 	}
 	node.recPoly = &p
 	fmt.Printf("Interpolation finished")
-	//node.Phase2()
+	node.ClientSharePhase2()
 
 }
 
@@ -206,17 +249,17 @@ func (node *Node) Phase1() {
 //	log.Printf("Interpolation finished")
 //	//Phase2(node)
 //}
-type ZeroMsg struct {
-	Index int32
-	Share []byte
-}
-
-func (msg *ZeroMsg) GetIndex() int32 {
-	return msg.Index
-}
-func (msg *ZeroMsg) GetShare() []byte {
-	return msg.Share
-}
+//type ZeroMsg struct {
+//	Index int32
+//	Share []byte
+//}
+//
+//func (msg *ZeroMsg) GetIndex() int32 {
+//	return msg.Index
+//}
+//func (msg *ZeroMsg) GetShare() []byte {
+//	return msg.Share
+//}
 
 //phase2
 func (node *Node) ClientSharePhase2() {
@@ -244,34 +287,39 @@ func (node *Node) ClientSharePhase2() {
 		//get a rand poly_tmp with 0-share
 		//rand a poly_tmp polynomial
 		polyTmp, _ := poly.NewRand(node.degree, node.randState, node.p)
-		polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
+		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
+		if err != nil {
+			return
+		}
 		node.proPoly.ResetTo(polyTmp.DeepCopy())
 
 		//node.ClientWritePhase2()
 	}
-
 	// share 0-share
 	var wg sync.WaitGroup
 	for i := 0; i < node.counter; i++ {
 		if i != node.label-1 {
 			log.Printf("[node %d] send message to [node %d] in phase 2", node.label, i+1)
-			msg := ZeroMsg{
+			msg := &pb.ZeroMsg{
 				Index: int32(node.label),
 				Share: node._0Shares[i].Bytes(),
 			}
 			wg.Add(1)
-			go func(i int, msg ZeroMsg) {
+			go func(i int, msg *pb.ZeroMsg) {
 				defer wg.Done()
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
-				node.Client[i].SharePhase2(ctx, msg)
+				_, err := node.Client[i].Phase2Share(ctx, msg)
+				if err != nil {
+					return
+				}
 			}(i, msg)
 		}
 	}
 	wg.Wait()
 }
 
-func (node *Node) SharePhase2(ctx context.Context, msg ZeroMsg) error {
+func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.ResponseMsg, error) {
 	//*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 	index := msg.GetIndex()
 	log.Printf("[node %d] receive zero message from [node %d] in phase 2", node.counter, index)
@@ -292,12 +340,15 @@ func (node *Node) SharePhase2(ctx context.Context, msg ZeroMsg) error {
 		//get a rand polyTmp with 0-share
 		//rand a polyTm
 		polyTmp, _ := poly.NewRand(node.degree, node.randState, node.p)
-		polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
+		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
+		if err != nil {
+			return &pb.ResponseMsg{}, err
+		}
 
 		node.proPoly.ResetTo(polyTmp)
 		//node.ClientWritePhase2()
 	}
-	return nil
+	return &pb.ResponseMsg{}, nil
 }
 
 //phase3
@@ -328,7 +379,7 @@ func Demo_test() {
 		nodes[i].connect([]*Node{&nodes[0], &nodes[1], &nodes[2]})
 	}
 	for i := 0; i < 3; i++ {
-		nodes[i].SendMsgToNode(nodes)
+		nodes[i].SendMsgToNode()
 	}
 
 	for i := 0; i < 3; i++ {
@@ -355,7 +406,7 @@ func (node *Node) NodeConnect() {
 				log.Fatalf("[Node %d] Fail to connect to other node:%v", node.label, err)
 			}
 			node.clinetConn[i] = clientconn
-			//node.nodeService[i] = pb
+			node.nodeService[i] = pb.NewNodeServiceClient(clientconn)
 		}
 	}
 }

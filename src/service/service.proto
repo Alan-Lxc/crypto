@@ -1,4 +1,24 @@
 syntax = "proto3";
-option go_package = "service";
+option go_package = "../service";
 package service;
 
+service NodeService{
+    rpc Phase1Getstart(RequestMsg)  returns (ResponseMsg) {}
+    rpc Phase1SendPointMsg (PointMsg)    returns (ResponseMsg){}
+    rpc Phase2Share(ZeroMsg)    returns(ResponseMsg){}
+}
+
+message RequestMsg{}
+
+message ResponseMsg{}
+
+message PointMsg{
+    int32 index  = 1;
+    bytes x = 2;
+    bytes y = 3;
+    bytes witness = 4;
+}
+message ZeroMsg{
+    int32 index = 1 ;
+    bytes share = 2 ;
+}

@@ -6,12 +6,12 @@ import (
 )
 
 type Point struct {
-	X       int32
+	X       *gmp.Int
 	Y       *gmp.Int
 	PolyWit *pbc.Element
 }
 
-func NewPoint(x int32, y *gmp.Int) *Point {
+func NewPoint(x *gmp.Int, y *gmp.Int) *Point {
 	return &Point{
 		X: x,
 		Y: y,
