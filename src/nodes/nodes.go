@@ -129,6 +129,7 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) {
 	}
 	//Receive the point and store
 	node.mutex.Lock()
+	node.recPoint[node.recCounter] = p
 	node.recPoint[node.recCounter] = &p
 	//fmt.Println(p)
 	node.recCounter += 1
@@ -197,69 +198,30 @@ func (node *Node) Phase1() {
 	}
 	p, err := interpolation.LagrangeInterpolate(node.degree, x_point, y_point, node.p)
 	if err != nil {
-		for i := 0; i < 3; i++ {
-			num, _ := p.GetCoeff(i)
-			log.Println(num.Int64())
+		for i := 0; i <= node.degree; i++ {
+			log.Print(x_point[i])
+			log.Print(y_point[i])
 		}
-		//for i := 0; i <= node.degree; i++ {
-		//	log.Print(x_point[i])
-		//	log.Print(y_point[i])
-		//}
 		log.Print(err)
 		panic("Interpolation failed")
 	}
 	node.recPoly = &p
-	fmt.Printf("Interpolation finished")
-	node.ClientSharePhase2()
+	fmt.Printf("Interpolation finished\n")
+	//node.Phase2()
 
 }
 
-////phase1
-//func GetMsgFromNode(nodeReceive Node, nodeSend Node, pointmsg point.Pointmsg) {
-//	index := pointmsg.GetIndex()
-//	log.Printf("Phase 1 :[Node %d] receive point message from [Node %d]\n", nodeReceive.GetLabel, index)
-//	p := pointmsg.GetPoint()
-//	//Receive the point and store
-//	nodeReceive.recPoint[nodeReceive.recCounter] = p
-//	nodeReceive.recCounter += 1
-//
-//	if nodeReceive.recCounter == nodeReceive.counter {
-//		nodeReceive.recCounter = 0
-//		Phase1(nodeReceive)
-//	}
-//}
-//func Phase1(node Node) {
-//	log.Printf("[Node %d] now start phase1", node.label)
-//	x_point := make([]*gmp.Int, node.degree+1)
-//	y_point := make([]*gmp.Int, node.degree+1)
-//	for i := 0; i <= node.degree; i++ {
-//		x_point[i] = node.recPoint[i].X
-//		y_point[i] = node.recPoint[i].Y
-//	}
-//	p, err := interpolation.LagrangeInterpolate(node.Degree, x_point, y_point, node.P)
-//	if err != nil {
-//		for i := 0; i <= node.Degree; i++ {
-//			log.Print(x_point[i])
-//			log.Print(y_point[i])
-//		}
-//		log.Print(err)
-//		panic("Interpolation failed")
-//	}
-//	node.RecPoly = p
-//	log.Printf("Interpolation finished")
-//	//Phase2(node)
-//}
-//type ZeroMsg struct {
-//	Index int32
-//	Share []byte
-//}
-//
-//func (msg *ZeroMsg) GetIndex() int32 {
-//	return msg.Index
-//}
-//func (msg *ZeroMsg) GetShare() []byte {
-//	return msg.Share
-//}
+type ZeroMsg struct {
+	Index int32
+	Share []byte
+}
+
+func (msg *ZeroMsg) GetIndex() int32 {
+	return msg.Index
+}
+func (msg *ZeroMsg) GetShare() []byte {
+	return msg.Share
+}
 
 //phase2
 func (node *Node) ClientSharePhase2() {
@@ -281,6 +243,7 @@ func (node *Node) ClientSharePhase2() {
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
+		log.Printf("%d has finish _0ShareSum", node.label)
 		*node._0ShareCount = 0
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
 
@@ -322,7 +285,7 @@ func (node *Node) ClientSharePhase2() {
 func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.ResponseMsg, error) {
 	//*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 	index := msg.GetIndex()
-	log.Printf("[node %d] receive zero message from [node %d] in phase 2", node.counter, index)
+	log.Printf("[node %d] receive zero message from [node %d] in phase 2", node.label, index)
 	inter := gmp.NewInt(0)
 	inter.SetBytes(msg.GetShare())
 
@@ -334,6 +297,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
+		log.Printf("%d has finish _0ShareSum", node.label)
 		*node._0ShareCount = 0
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
 
@@ -383,11 +347,11 @@ func Demo_test() {
 	}
 
 	for i := 0; i < 3; i++ {
-		//nodes[i].ClientSharePhase2()
+		nodes[i].ClientSharePhase2()
 	}
 
 	for i := 0; i < 3; i++ {
-		//nodes[i].ClientSharePhase3()
+		nodes[i].ClientSharePhase3()
 	}
 
 }
@@ -493,6 +457,7 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 	recPoint := make([]*point.Point, counter)
 	recCounter := 0
 	Client := make([]*Node, 3)
+	shareCnt := 0
 	return Node{
 		label:        label,
 		counter:      counter,
@@ -509,6 +474,7 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 		_0ShareCount: &_0ShareCount,
 		_0ShareSum:   _0ShareSum,
 		lambda:       lambda,
+		shareCnt:     &shareCnt,
 	}, nil
 
 }
@@ -518,7 +484,7 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 //最后重建多项式
 
 //重建secretShare
-func (node *Node) SharePhase3(msg message) error {
+func (node *Node) SharePhase3(msg *message) error {
 	index := msg.getIndex()
 	Y := msg.getY()
 
@@ -526,6 +492,7 @@ func (node *Node) SharePhase3(msg message) error {
 	*node.shareCnt = *node.shareCnt + 1
 	flag := (*node.shareCnt == node.counter)
 	if flag {
+		log.Printf("%d has finish sharePhase3", node.label)
 		*node.shareCnt = 0
 
 	}
@@ -534,8 +501,8 @@ func (node *Node) SharePhase3(msg message) error {
 }
 func (node *Node) ClientSharePhase3() {
 	node.newPoly.Add(*node.recPoly, *node.proPoly)
-	fmt.Println(*node.recPoly)
-	for i := 1; i < node.counter; i++ {
+	//fmt.Println(*node.recPoly)
+	for i := 0; i < node.counter; i++ {
 		value := gmp.NewInt(0)
 		node.newPoly.EvalMod(gmp.NewInt(int64(i+1)), node.p, value)
 
@@ -547,7 +514,7 @@ func (node *Node) ClientSharePhase3() {
 				Y:     value.Bytes(),
 			}
 			//把消息发送给不同的节点
-			node.Client[i].SharePhase3(*msg)
+			node.Client[i].SharePhase3(msg)
 
 		} else {
 			node.secretShares[i].Y.Set(value)

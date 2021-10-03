@@ -109,7 +109,6 @@ func LagrangeInterpolate(degree int, x []*gmp.Int, y []*gmp.Int, mod *gmp.Int) (
 		product.MulSelf(tmp)
 	}
 
-	return product, errors.New("test")
 	for i := 0; i <= degree; i++ {
 		denominator.Set(gmp.NewInt(1))
 		// compute denominator and numerator
