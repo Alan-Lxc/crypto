@@ -47,10 +47,10 @@ type BulletinBoard struct {
 	totMsgSize *int
 }
 
-func (bb *BulletinBoard) StartEpoch(ctx context.Context, in *pb.RequestMsg) (*pb.AckMsg, error) {
+func (bb *BulletinBoard) StartEpoch(ctx context.Context, in *pb.RequestMsg) (*pb.ResponseMsg, error) {
 	log.Print("[bulletinboard] start epoch")
 	bb.ClientStartPhase1()
-	return &pb.AckMsg{}, nil
+	return &pb.ResponseMsg{}, nil
 }
 
 func (bb *BulletinBoard) ReadPhase1(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase1Server) error {
@@ -64,7 +64,7 @@ func (bb *BulletinBoard) ReadPhase1(in *pb.RequestMsg, stream pb.BulletinBoardSe
 	return nil
 }
 
-func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.Cmt2Msg) (*pb.AckMsg, error) {
+func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.Cmt2Msg) (*pb.ResponseMsg, error) {
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	log.Print("[bulletinboard] is being written in phase 2")
 	index := msg.GetIndex()
@@ -77,7 +77,7 @@ func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.Cmt2Msg) (*pb.
 		*bb.proCnt = 0
 		bb.ClientStartVerifPhase2()
 	}
-	return &pb.AckMsg{}, nil
+	return &pb.ResponseMsg{}, nil
 }
 
 func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase2Server) error {
@@ -104,7 +104,7 @@ func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.
 		*bb.shaCnt = 0
 		bb.ClientStartVerifPhase3()
 	}
-	return &pb.AckMsg{}, nil
+	return &pb.ResponseMsg{}, nil
 }
 
 func (bb *BulletinBoard) ReadPhase3(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase3Server) error {
@@ -180,7 +180,7 @@ func (bb *BulletinBoard) ClientStartVerifPhase2() {
 			defer wg.Done()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			bb.nClient[i].StartVerifPhase2(ctx, &pb.RequestMsg{})
+			bb.nClient[i].Phase2Verify(ctx, &pb.RequestMsg{})
 		}(i)
 	}
 	wg.Wait()

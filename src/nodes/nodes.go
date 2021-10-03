@@ -9,6 +9,7 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/Nik-U/pbc"
+	"math/big"
 
 	//"github.com/Nik-U/pbc"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
@@ -330,6 +331,63 @@ func (node *Node) Phase2Write() {
 	}
 	node.boardService.WritePhase2(ctx, msg)
 }
+func (node *Node) Phase2Verify(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
+	log.Printf("[Node %d] start verification in phase 2")
+	node.ClientReadPhase2()
+	return &pb.ResponseMsg{}, nil
+}
+func (node *Node) ClientReadPhase2() {
+	log.Printf("[node %d] read bulletinboard in phase 2", node.label)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stream, err := node.boardService.ReadPhase2(ctx, &pb.EmptyMsg{})
+	if err != nil {
+		log.Fatalf("client failed to read phase2: %v", err)
+	}
+	for i := 0; i < node.counter; i++ {
+		msg, err := stream.Recv()
+		//*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
+		if err != nil {
+			log.Fatalf("client failed to receive in read phase1: %v", err)
+		}
+		index := msg.GetIndex()
+		sharecmt := msg.GetShareCommit()
+		polycmt := msg.GetPolyCommit()
+		zerowitness := msg.GetZeroWitness()
+		node.zerosumShareCmt[index-1].SetCompressedBytes(sharecmt)
+		inter := node.dpc.NewG1()
+		inter.SetString(node.zerosumShareCmt[index-1].String(), 10)
+		node.zerosumPolyCmt[index-1].SetCompressedBytes(polycmt)
+		node.midPolyCmt[index-1].Mul(inter, node.zerosumPolyCmt[index-1])
+		node.zerosumPolyWit[index-1].SetCompressedBytes(zerowitness)
+	}
+	exponentSum := node.dc.NewG1()
+	exponentSum.Set1()
+	for i := 0; i < node.counter; i++ {
+		lambda := big.NewInt(0)
+		lambda.SetString(node.lambda[i].String(), 10)
+		tmp := node.dc.NewG1()
+		tmp.PowBig(node.zerosumShareCmt[i], lambda)
+		// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
+		exponentSum.Mul(exponentSum, tmp)
+	}
+	// log.Printf("%d exponentSum: %s", node.label, exponentSum.String())
+	if !exponentSum.Is1() {
+		panic("Proactivization Verification 1 failed")
+	}
+	flag := true
+	for i := 0; i < node.counter; i++ {
+		if !node.dpc.VerifyEval(node.zerosumPolyCmt[i], gmp.NewInt(0), gmp.NewInt(0), node.zerosumPolyWit[i]) {
+			flag = false
+		}
+	}
+	if !flag {
+		panic("Proactivization Verification 2 failed")
+	}
+	*node.e2 = time.Now()
+	*node.s3 = time.Now()
+	node.ClientSharePhase3()
+}
 
 //phase3
 type message struct {
@@ -498,9 +556,9 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 //最后重建多项式
 
 //重建secretShare
-func (node *Node) SharePhase3(msg *message) error {
-	index := msg.getIndex()
-	Y := msg.getY()
+func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) error {
+	index := msg.GetIndex()
+	Y := msg.GetY()
 
 	node.secretShares[index-1].Y.SetBytes(Y)
 	*node.shareCnt = *node.shareCnt + 1
@@ -522,14 +580,15 @@ func (node *Node) ClientSharePhase3() {
 
 		if i != node.label-1 {
 			log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
-			msg := &message{
+			msg := &pb.PointMsg{
 				Index: int32(node.label),
 				X:     int32(i + 1),
 				Y:     value.Bytes(),
 			}
 			//把消息发送给不同的节点
-			node.Client[i].SharePhase3(msg)
-
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			node.Client[i].Phase3SendMsg(ctx, msg)
 		} else {
 			node.secretShares[i].Y.Set(value)
 		}
