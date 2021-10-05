@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Alan-Lxc/crypto_contest/src/basic/commitment"
 	. "github.com/Alan-Lxc/crypto_contest/src/basic/getprime"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
@@ -92,6 +93,10 @@ type Node struct {
 	zerosumPolyWit  []*pbc.Element
 	midPolyCmt      []*pbc.Element
 	newPolyCmt      []*pbc.Element
+
+	// [+] Commitment
+	dc  *commitment.DLCommit
+	dpc *commitment.DLPolyCommit
 }
 
 func (node *Node) GetLabel() int {
@@ -263,7 +268,12 @@ func (node *Node) ClientSharePhase2() {
 
 		//get a rand poly_tmp with 0-share
 		//rand a poly_tmp polynomial
+		node.dc.Commit(node.zeroShareCmt, node._0ShareSum)
 		polyTmp, _ := poly.NewRand(node.degree, node.randState, node.p)
+		polyTmp.SetCoeffWithInt(0, 0)
+		node.dpc.Commit(node.zeroPolyCmt, polyTmp)
+		node.dpc.CreateWitness(node.zeroPolyWit, polyTmp, gmp.NewInt(0))
+
 		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
 		if err != nil {
 			return
@@ -591,6 +601,8 @@ func (node *Node) ClientSharePhase3() {
 		value := gmp.NewInt(0)
 		node.newPoly.EvalMod(gmp.NewInt(int64(i+1)), node.p, value)
 		//witness
+		witness := node.dpc.NewG1()
+		node.dpc.CreateWitness(witness, *node.newPoly, gmp.NewInt(int64(i+1)))
 
 		if i != node.label-1 {
 			log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
