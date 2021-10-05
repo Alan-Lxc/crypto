@@ -52,7 +52,7 @@ type Node struct {
 	// Proactivization Polynomial
 	proPoly *poly.Poly
 	//New Polynomials after phase3
-	newPoly poly.Poly
+	newPoly *poly.Poly
 
 	// Lagrange Coefficient
 	lambda []*gmp.Int
@@ -84,6 +84,14 @@ type Node struct {
 	boardConn *grpc.ClientConn
 	//boardService
 	boardService pb.BulletinBoardServiceClient
+
+	// Commitment and Witness from BulletinBoard
+	oldPolyCmt      []*pbc.Element
+	zerosumShareCmt []*pbc.Element
+	zerosumPolyCmt  []*pbc.Element
+	zerosumPolyWit  []*pbc.Element
+	midPolyCmt      []*pbc.Element
+	newPolyCmt      []*pbc.Element
 }
 
 func (node *Node) GetLabel() int {
@@ -200,7 +208,8 @@ func (node *Node) Phase1() {
 		p := node.recPoint[i]
 		//x_point = append(x_point, gmp.NewInt(int64(point.X)))
 		x_point[i] = p.X
-		y_point[i] = p.Y
+		polyTmp.
+			y_point[i] = p.Y
 		//y_point = append(y_point, point.Y)
 	}
 	p, err := interpolation.LagrangeInterpolate(node.degree, x_point, y_point, node.p)
@@ -259,9 +268,9 @@ func (node *Node) ClientSharePhase2() {
 		if err != nil {
 			return
 		}
-		node.proPoly.ResetTo(polyTmp.DeepCopy())
+		node.proPoly.ResetTo(polyTmp.Copy())
 
-		//node.ClientWritePhase2()
+		node.Phase2Write()
 	}
 	// share 0-share
 	var wg sync.WaitGroup
@@ -315,14 +324,14 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 		}
 
 		node.proPoly.ResetTo(polyTmp)
-		//node.ClientWritePhase2()
+		node.Phase2Write()
 	}
 	return &pb.ResponseMsg{}, nil
 }
 func (node *Node) Phase2Write() {
 	//log.printf("
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	defer cancel() // Commitment and Witness from BulletinBoard
 	msg := &pb.CommitMsg{
 		Index:       int32(node.label),
 		ShareCommit: node.zeroShareCmt.CompressedBytes(),
