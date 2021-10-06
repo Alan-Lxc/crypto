@@ -265,14 +265,14 @@ func (node *Node) ClientReadPhase1() {
 	polyCmt := node.dpc.NewG1()
 	polyCmt.Set(node.oldPolyCmt[node.label-1])
 	for i := 0; i <= node.degree; i++ {
-		point := node.recPoint[i]
-		x = append(x, point.X)
-		y = append(y, point.Y)
-		if !node.dpc.VerifyEval(polyCmt, point.X, point.Y, point.PolyWit) {
+		p := node.recPoint[i]
+		x = append(x, p.X)
+		y = append(y, p.Y)
+		if !node.dpc.VerifyEval(polyCmt, p.X, p.Y, p.PolyWit) {
 			panic("Reconstruction Verification failed")
 		}
 	}
-	poly, err := interpolation.LagrangeInterpolate(node.degree, x, y, node.p)
+	polyp, err := interpolation.LagrangeInterpolate(node.degree, x, y, node.p)
 	if err != nil {
 		for i := 0; i < len(x); i++ {
 			log.Print(x[i])
@@ -281,7 +281,7 @@ func (node *Node) ClientReadPhase1() {
 		log.Print(err)
 		panic("Interpolation failed")
 	}
-	node.recPoly.ResetTo(poly)
+	node.recPoly.ResetTo(polyp)
 	//*node.e1 = time.Now()
 	//*node.s2 = time.Now()
 	node.ClientSharePhase2()
@@ -467,21 +467,6 @@ func (node *Node) ClientReadPhase2() {
 	//*node.e2 = time.Now()
 	//*node.s3 = time.Now()
 	node.ClientSharePhase3()
-}
-
-//phase3
-type message struct {
-	Index int32
-	X     int32
-	Y     []byte
-}
-
-func (msg *message) getY() (Y []byte) {
-	return msg.Y
-}
-
-func (msg *message) getIndex() (Index int32) {
-	return msg.Index
 }
 
 func Demo_test() {

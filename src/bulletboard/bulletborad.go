@@ -240,12 +240,12 @@ func New(degree int, counter int, metadataPath string) (BulletinBoard, error) {
 	shaCnt := 0
 
 	reconstructionContent := make([]*pb.Cmt1Msg, counter)
-	poly, err := poly.NewRand(degree, fixedRandState, p)
+	polyp, err := poly.NewRand(degree, fixedRandState, p)
 	if err != nil {
 		log.Fatal("Error initializing random poly")
 	}
 	c := dpc.NewG1()
-	dpc.Commit(c, poly)
+	dpc.Commit(c, polyp)
 	cBytes := c.CompressedBytes()
 	for i := 0; i < counter; i++ {
 		msg := &pb.Cmt1Msg{
