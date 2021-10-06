@@ -379,7 +379,6 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 		log.Printf("%d has finish _0ShareSum", node.label)
 		*node._0ShareCount = 0
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
-
 		//get a rand poly_tmp with 0-share
 		//rand a poly_tmp polynomial
 		node.dc.Commit(node.zeroShareCmt, node._0ShareSum)
