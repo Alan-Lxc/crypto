@@ -13,6 +13,7 @@ import (
 
 func Initial(s0 string, degree int, counter int, metadataPath string) {
 	//bulletboard
+	//
 	aws := flag.Bool("aws", false, "if test on real aws")
 	flag.Parse()
 	bb, _ := bulletboard.New(degree, counter, metadataPath)
