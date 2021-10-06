@@ -5,7 +5,6 @@ import (
 	"errors"
 	//"fmt"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/commitment"
-	. "github.com/Alan-Lxc/crypto_contest/src/basic/getprime"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
@@ -112,14 +111,14 @@ func (node *Node) GetLabel() int {
 
 }
 
-func (node *Node) connect(ptrs []*Node) {
-	for i := 0; i < node.counter; i++ {
-
-		if i != node.label-1 {
-			node.Client[i] = ptrs[i]
-		}
-	}
-}
+//func (node *Node) connect(ptrs []*Node) {
+//	for i := 0; i < node.counter; i++ {
+//
+//		if i != node.label-1 {
+//			node.Client[i] = ptrs[i]
+//		}
+//	}
+//}
 
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
@@ -201,7 +200,7 @@ func (node *Node) SendMsgToNode() {
 			go func(i int, msg *pb.PointMsg) {
 				defer wg.Done()
 				ctx, cancel := context.WithCancel(context.Background())
-				_, err := node.nodeService[i].Phase1SendPointMsg(ctx, msg)
+				_, err := node.nodeService[i].Phase1ReceiveMsg(ctx, msg)
 				if err != nil {
 					panic(err)
 				}
@@ -469,29 +468,29 @@ func (node *Node) ClientReadPhase2() {
 	node.ClientSharePhase3()
 }
 
-func Demo_test() {
-	var nodes [3]Node
-	var modp *gmp.Int
-	modp = GetPrime(256)
-	for i := 0; i < 3; i++ {
-		nodes[i], _ = New(1, i+1, 3, "/home/alan/Desktop", modp)
-	}
-	for i := 0; i < 3; i++ {
-		nodes[i].connect([]*Node{&nodes[0], &nodes[1], &nodes[2]})
-	}
-	for i := 0; i < 3; i++ {
-		nodes[i].SendMsgToNode()
-	}
-
-	for i := 0; i < 3; i++ {
-		nodes[i].ClientSharePhase2()
-	}
-
-	for i := 0; i < 3; i++ {
-		nodes[i].ClientSharePhase3()
-	}
-
-}
+//func Demo_test() {
+//	var nodes [3]Node
+//	var modp *gmp.Int
+//	modp = GetPrime(256)
+//	for i := 0; i < 3; i++ {
+//		nodes[i], _ = New(1, i+1, 3, "/home/alan/Desktop", modp)
+//	}
+//	for i := 0; i < 3; i++ {
+//		nodes[i].connect([]*Node{&nodes[0], &nodes[1], &nodes[2]})
+//	}
+//	for i := 0; i < 3; i++ {
+//		nodes[i].SendMsgToNode()
+//	}
+//
+//	for i := 0; i < 3; i++ {
+//		nodes[i].ClientSharePhase2()
+//	}
+//
+//	for i := 0; i < 3; i++ {
+//		nodes[i].ClientSharePhase3()
+//	}
+//
+//}
 
 func (node *Node) NodeConnect() {
 	boradConn, err := grpc.Dial(node.ipOfBoard, grpc.WithInsecure())
