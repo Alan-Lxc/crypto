@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Alan-Lxc/crypto_contest/src/basic/commitment"
+	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
+	"github.com/golang/protobuf/proto"
 	"github.com/ncw/gmp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -64,7 +67,7 @@ func (bb *BulletinBoard) ReadPhase1(in *pb.RequestMsg, stream pb.BulletinBoardSe
 	return nil
 }
 
-func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.Cmt2Msg) (*pb.ResponseMsg, error) {
+func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.CommitMsg) (*pb.ResponseMsg, error) {
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	log.Print("[bulletinboard] is being written in phase 2")
 	index := msg.GetIndex()
@@ -91,7 +94,7 @@ func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardSe
 	return nil
 }
 
-func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.AckMsg, error) {
+func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
 	//*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	log.Print("[bulletinboard] is being written in phase 3")
 	index := msg.GetIndex()
@@ -165,7 +168,7 @@ func (bb *BulletinBoard) ClientStartPhase1() {
 			defer wg.Done()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			bb.nClient[i].StartPhase1(ctx, &pb.RequestMsg{})
+			bb.nClient[i].Phase1Getstart(ctx, &pb.RequestMsg{})
 		}(i)
 	}
 	wg.Wait()
@@ -237,7 +240,7 @@ func New(degree int, counter int, metadataPath string) (BulletinBoard, error) {
 	shaCnt := 0
 
 	reconstructionContent := make([]*pb.Cmt1Msg, counter)
-	poly, err := polyring.NewRand(degree, fixedRandState, p)
+	poly, err := poly.NewRand(degree, fixedRandState, p)
 	if err != nil {
 		log.Fatal("Error initializing random poly")
 	}
@@ -251,7 +254,7 @@ func New(degree int, counter int, metadataPath string) (BulletinBoard, error) {
 		}
 		reconstructionContent[i] = msg
 	}
-	proactivizationContent := make([]*pb.Cmt2Msg, counter)
+	proactivizationContent := make([]*pb.CommitMsg, counter)
 
 	nConn := make([]*grpc.ClientConn, counter)
 	nClient := make([]pb.NodeServiceClient, counter)

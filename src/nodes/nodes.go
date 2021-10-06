@@ -3,7 +3,7 @@ package nodes
 import (
 	"context"
 	"errors"
-	"fmt"
+	//"fmt"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/commitment"
 	. "github.com/Alan-Lxc/crypto_contest/src/basic/getprime"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
@@ -99,7 +99,8 @@ type Node struct {
 	dpc *commitment.DLPolyCommit
 
 	// Metrics
-	totMsgSize *int
+	totMsgSize   *int
+	metadataPath string
 }
 
 func (node *Node) GetLabel() int {
@@ -123,14 +124,10 @@ func (node *Node) connect(ptrs []*Node) {
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
 	log.Printf("[Node %d] Now Get start Phase1", node.label)
-	return &pb.ResponseMsg{}, nil
-}
-
-func (node *Node) Phase1SendPointMsg(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
-	log.Printf("[Node %d] Now start to send pointMsg to other point")
 	node.SendMsgToNode()
 	return &pb.ResponseMsg{}, nil
 }
+
 func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (response *pb.ResponseMsg, err error) {
 	node.GetMsgFromNode(msg)
 	return &pb.ResponseMsg{}, nil
@@ -160,17 +157,17 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error)
 	node.mutex.Unlock()
 	if flag {
 		*node.recCounter = 0
-		node.Phase1()
+		node.ClientReadPhase1()
 	}
 	return &pb.ResponseMsg{}, nil
 }
 
 //client
 func (node *Node) SendMsgToNode() {
-	if *node.iniflag {
-		node.Connect()
-		*node.iniflag = false
-	}
+	//if *node.iniflag {
+	//	node.Connect()
+	//	*node.iniflag = false
+	//}
 	p := point.Point{
 		X:       node.secretShares[node.label-1].X,
 		Y:       node.secretShares[node.label-1].Y,
@@ -183,7 +180,7 @@ func (node *Node) SendMsgToNode() {
 	node.mutex.Unlock()
 	if flag {
 		*node.recCounter = 0
-		node.Phase1()
+		node.ClientReadPhase1()
 	}
 	var wg sync.WaitGroup
 	for i := 0; i < node.counter; i++ {
@@ -242,14 +239,14 @@ func (node *Node) SendMsgToNode() {
 //}
 // Read from the bulletinboard and does the interpolation and verifiication.
 func (node *Node) ClientReadPhase1() {
-	if *node.iniflag {
-		node.Connect()
-		*node.iniflag = false
-	}
+	//if *node.iniflag {
+	//	node.Connect()
+	//	*node.iniflag = false
+	//}
 	log.Printf("[node %d] read bulletinboard in phase 1", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	stream, err := node.bClient.ReadPhase1(ctx, &pb.EmptyMsg{})
+	stream, err := node.boardService.ReadPhase1(ctx, &pb.RequestMsg{})
 	if err != nil {
 		log.Fatalf("client failed to read phase1: %v", err)
 	}
@@ -268,10 +265,10 @@ func (node *Node) ClientReadPhase1() {
 	polyCmt := node.dpc.NewG1()
 	polyCmt.Set(node.oldPolyCmt[node.label-1])
 	for i := 0; i <= node.degree; i++ {
-		point := node.recShares[i]
-		x = append(x, gmp.NewInt(int64(point.X)))
+		point := node.recPoint[i]
+		x = append(x, point.X)
 		y = append(y, point.Y)
-		if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(point.X)), point.Y, point.PolyWit) {
+		if !node.dpc.VerifyEval(polyCmt, point.X, point.Y, point.PolyWit) {
 			panic("Reconstruction Verification failed")
 		}
 	}
@@ -285,22 +282,22 @@ func (node *Node) ClientReadPhase1() {
 		panic("Interpolation failed")
 	}
 	node.recPoly.ResetTo(poly)
-	*node.e1 = time.Now()
-	*node.s2 = time.Now()
+	//*node.e1 = time.Now()
+	//*node.s2 = time.Now()
 	node.ClientSharePhase2()
 }
 
-type ZeroMsg struct {
-	Index int32
-	Share []byte
-}
-
-func (msg *ZeroMsg) GetIndex() int32 {
-	return msg.Index
-}
-func (msg *ZeroMsg) GetShare() []byte {
-	return msg.Share
-}
+//type ZeroMsg struct {
+//	Index int32
+//	Share []byte
+//}
+//
+//func (msg *ZeroMsg) GetIndex() int32 {
+//	return msg.Index
+//}
+//func (msg *ZeroMsg) GetShare() []byte {
+//	return msg.Share
+//}
 
 //phase2
 func (node *Node) ClientSharePhase2() {
@@ -394,7 +391,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 
 		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
 		if err != nil {
-			return
+			return &pb.ResponseMsg{}, nil
 		}
 		node.proPoly.ResetTo(polyTmp.Copy())
 
@@ -620,7 +617,7 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 		p:            modp,
 		randState:    randState,
 		recPoint:     recPoint,
-		recCounter:   recCounter,
+		recCounter:   &recCounter,
 		recPoly:      &poly.Poly{},
 		Client:       Client,
 		secretShares: secretShares,
@@ -720,7 +717,7 @@ func (node *Node) Phase3Readboard() {
 	log.Printf("[node %d] read bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	stream, err := node.boardService.ReadPhase3(ctx, &pb.EmptyMsg{})
+	stream, err := node.boardService.ReadPhase3(ctx, &pb.RequestMsg{})
 	if err != nil {
 		log.Fatalf("client failed to read phase3: %v", err)
 	}
