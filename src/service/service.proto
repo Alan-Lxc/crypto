@@ -3,11 +3,11 @@ option go_package = "../service";
 package service;
 
 service NodeService{
-    rpc Phase1Getstart(RequestMsg)  returns (ResponseMsg) {}
+    rpc Phase1GetStart(RequestMsg)  returns (ResponseMsg) {}
     rpc Phase1ReceiveMsg (PointMsg)    returns (ResponseMsg){}
     rpc Phase2Share(ZeroMsg)    returns(ResponseMsg){}
     rpc Phase2Verify(RequestMsg) returns(ResponseMsg){}
-    rpc Phase3Sending(PointMsg) returns(ResponseMsg){}
+    rpc Phase3SendMsg(PointMsg) returns(ResponseMsg){}
     rpc Phase3Verify(RequestMsg)returns(ResponseMsg){}
 
 }

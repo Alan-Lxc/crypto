@@ -151,7 +151,14 @@ func (bb *BulletinBoard) Serve(aws bool) {
 	pb.RegisterBulletinBoardServiceServer(s, bb)
 	reflection.Register(s)
 	log.Printf("bulletinboard serve on " + bb.bip)
-	if err := s.Serve(lis); err != nil {
+	//log.Printf("hello\n")
+	//if err := s.Serve(lis); err != nil {
+	//	log.Fatalf("bulletinboard failed to serve %v", err)
+	//}
+	//log.Printf("hello")
+	err = s.Serve(lis)
+	log.Printf("hello")
+	if err != nil {
 		log.Fatalf("bulletinboard failed to serve %v", err)
 	}
 }
@@ -168,7 +175,7 @@ func (bb *BulletinBoard) ClientStartPhase1() {
 			defer wg.Done()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			bb.nClient[i].Phase1Getstart(ctx, &pb.RequestMsg{})
+			bb.nClient[i].Phase1GetStart(ctx, &pb.RequestMsg{})
 		}(i)
 	}
 	wg.Wait()

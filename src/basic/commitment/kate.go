@@ -5,10 +5,9 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/src/basic/conv"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/ecparam"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
-	"math/big"
-
 	. "github.com/Nik-U/pbc"
 	. "github.com/ncw/gmp"
+	"math/big"
 )
 
 type DLPolyCommit struct {
@@ -46,6 +45,8 @@ func (c *DLPolyCommit) polyEvalInExponent(res *Element, poly poly.Poly) {
 			panic("can't get coeff i")
 		}
 
+		//fmt.Printf("%d\n",len(c.pk))
+		//fmt.Printf("%d\n",poly.GetDegree())
 		c.pk[i].PowBig(tmp, conv.GmpInt2BigInt(&ci))
 		res.Mul(res, tmp)
 	}

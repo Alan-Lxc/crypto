@@ -381,7 +381,7 @@ var file_service_proto_rawDesc = []byte{
 	0x07, 0x70, 0x6f, 0x6c, 0x79, 0x63, 0x6d, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07,
 	0x70, 0x6f, 0x6c, 0x79, 0x63, 0x6d, 0x74, 0x32, 0xfa, 0x02, 0x0a, 0x0b, 0x4e, 0x6f, 0x64, 0x65,
 	0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x3d, 0x0a, 0x0e, 0x50, 0x68, 0x61, 0x73, 0x65,
-	0x31, 0x47, 0x65, 0x74, 0x73, 0x74, 0x61, 0x72, 0x74, 0x12, 0x13, 0x2e, 0x73, 0x65, 0x72, 0x76,
+	0x31, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x72, 0x74, 0x12, 0x13, 0x2e, 0x73, 0x65, 0x72, 0x76,
 	0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4d, 0x73, 0x67, 0x1a, 0x14,
 	0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
 	0x65, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x12, 0x3d, 0x0a, 0x10, 0x50, 0x68, 0x61, 0x73, 0x65, 0x31,
@@ -396,7 +396,7 @@ var file_service_proto_rawDesc = []byte{
 	0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
 	0x4d, 0x73, 0x67, 0x1a, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65,
 	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x12, 0x3a, 0x0a, 0x0d, 0x50,
-	0x68, 0x61, 0x73, 0x65, 0x33, 0x53, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x12, 0x11, 0x2e, 0x73,
+	0x68, 0x61, 0x73, 0x65, 0x33, 0x53, 0x65, 0x6e, 0x64, 0x4d, 0x73, 0x67, 0x12, 0x11, 0x2e, 0x73,
 	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x4d, 0x73, 0x67, 0x1a,
 	0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
 	0x73, 0x65, 0x4d, 0x73, 0x67, 0x22, 0x00, 0x12, 0x3b, 0x0a, 0x0c, 0x50, 0x68, 0x61, 0x73, 0x65,
@@ -452,11 +452,11 @@ var file_service_proto_goTypes = []interface{}{
 	(*Cmt1Msg)(nil),     // 5: service.Cmt1Msg
 }
 var file_service_proto_depIdxs = []int32{
-	0,  // 0: service.NodeService.Phase1Getstart:input_type -> service.RequestMsg
+	0,  // 0: service.NodeService.Phase1GetStart:input_type -> service.RequestMsg
 	2,  // 1: service.NodeService.Phase1ReceiveMsg:input_type -> service.PointMsg
 	3,  // 2: service.NodeService.Phase2Share:input_type -> service.ZeroMsg
 	0,  // 3: service.NodeService.Phase2Verify:input_type -> service.RequestMsg
-	2,  // 4: service.NodeService.Phase3Sending:input_type -> service.PointMsg
+	2,  // 4: service.NodeService.Phase3SendMsg:input_type -> service.PointMsg
 	0,  // 5: service.NodeService.Phase3Verify:input_type -> service.RequestMsg
 	0,  // 6: service.BulletinBoardService.StartEpoch:input_type -> service.RequestMsg
 	0,  // 7: service.BulletinBoardService.ReadPhase1:input_type -> service.RequestMsg
@@ -464,11 +464,11 @@ var file_service_proto_depIdxs = []int32{
 	0,  // 9: service.BulletinBoardService.ReadPhase2:input_type -> service.RequestMsg
 	5,  // 10: service.BulletinBoardService.WritePhase3:input_type -> service.Cmt1Msg
 	0,  // 11: service.BulletinBoardService.ReadPhase3:input_type -> service.RequestMsg
-	1,  // 12: service.NodeService.Phase1Getstart:output_type -> service.ResponseMsg
+	1,  // 12: service.NodeService.Phase1GetStart:output_type -> service.ResponseMsg
 	1,  // 13: service.NodeService.Phase1ReceiveMsg:output_type -> service.ResponseMsg
 	1,  // 14: service.NodeService.Phase2Share:output_type -> service.ResponseMsg
 	1,  // 15: service.NodeService.Phase2Verify:output_type -> service.ResponseMsg
-	1,  // 16: service.NodeService.Phase3Sending:output_type -> service.ResponseMsg
+	1,  // 16: service.NodeService.Phase3SendMsg:output_type -> service.ResponseMsg
 	1,  // 17: service.NodeService.Phase3Verify:output_type -> service.ResponseMsg
 	1,  // 18: service.BulletinBoardService.StartEpoch:output_type -> service.ResponseMsg
 	5,  // 19: service.BulletinBoardService.ReadPhase1:output_type -> service.Cmt1Msg
@@ -594,11 +594,11 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type NodeServiceClient interface {
-	Phase1Getstart(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
+	Phase1GetStart(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
 	Phase1ReceiveMsg(ctx context.Context, in *PointMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
 	Phase2Share(ctx context.Context, in *ZeroMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
 	Phase2Verify(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
-	Phase3Sending(ctx context.Context, in *PointMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
+	Phase3SendMsg(ctx context.Context, in *PointMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
 	Phase3Verify(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
 }
 
@@ -610,9 +610,9 @@ func NewNodeServiceClient(cc grpc.ClientConnInterface) NodeServiceClient {
 	return &nodeServiceClient{cc}
 }
 
-func (c *nodeServiceClient) Phase1Getstart(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error) {
+func (c *nodeServiceClient) Phase1GetStart(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error) {
 	out := new(ResponseMsg)
-	err := c.cc.Invoke(ctx, "/service.NodeService/Phase1Getstart", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/service.NodeService/Phase1GetStart", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -646,9 +646,9 @@ func (c *nodeServiceClient) Phase2Verify(ctx context.Context, in *RequestMsg, op
 	return out, nil
 }
 
-func (c *nodeServiceClient) Phase3Sending(ctx context.Context, in *PointMsg, opts ...grpc.CallOption) (*ResponseMsg, error) {
+func (c *nodeServiceClient) Phase3SendMsg(ctx context.Context, in *PointMsg, opts ...grpc.CallOption) (*ResponseMsg, error) {
 	out := new(ResponseMsg)
-	err := c.cc.Invoke(ctx, "/service.NodeService/Phase3Sending", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/service.NodeService/Phase3SendMsg", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -666,11 +666,11 @@ func (c *nodeServiceClient) Phase3Verify(ctx context.Context, in *RequestMsg, op
 
 // NodeServiceServer is the server API for NodeService service.
 type NodeServiceServer interface {
-	Phase1Getstart(context.Context, *RequestMsg) (*ResponseMsg, error)
+	Phase1GetStart(context.Context, *RequestMsg) (*ResponseMsg, error)
 	Phase1ReceiveMsg(context.Context, *PointMsg) (*ResponseMsg, error)
 	Phase2Share(context.Context, *ZeroMsg) (*ResponseMsg, error)
 	Phase2Verify(context.Context, *RequestMsg) (*ResponseMsg, error)
-	Phase3Sending(context.Context, *PointMsg) (*ResponseMsg, error)
+	Phase3SendMsg(context.Context, *PointMsg) (*ResponseMsg, error)
 	Phase3Verify(context.Context, *RequestMsg) (*ResponseMsg, error)
 }
 
@@ -678,8 +678,8 @@ type NodeServiceServer interface {
 type UnimplementedNodeServiceServer struct {
 }
 
-func (*UnimplementedNodeServiceServer) Phase1Getstart(context.Context, *RequestMsg) (*ResponseMsg, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Phase1Getstart not implemented")
+func (*UnimplementedNodeServiceServer) Phase1GetStart(context.Context, *RequestMsg) (*ResponseMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Phase1GetStart not implemented")
 }
 func (*UnimplementedNodeServiceServer) Phase1ReceiveMsg(context.Context, *PointMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase1ReceiveMsg not implemented")
@@ -690,8 +690,8 @@ func (*UnimplementedNodeServiceServer) Phase2Share(context.Context, *ZeroMsg) (*
 func (*UnimplementedNodeServiceServer) Phase2Verify(context.Context, *RequestMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase2Verify not implemented")
 }
-func (*UnimplementedNodeServiceServer) Phase3Sending(context.Context, *PointMsg) (*ResponseMsg, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Phase3Sending not implemented")
+func (*UnimplementedNodeServiceServer) Phase3SendMsg(context.Context, *PointMsg) (*ResponseMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Phase3SendMsg not implemented")
 }
 func (*UnimplementedNodeServiceServer) Phase3Verify(context.Context, *RequestMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase3Verify not implemented")
@@ -701,20 +701,20 @@ func RegisterNodeServiceServer(s *grpc.Server, srv NodeServiceServer) {
 	s.RegisterService(&_NodeService_serviceDesc, srv)
 }
 
-func _NodeService_Phase1Getstart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _NodeService_Phase1GetStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServiceServer).Phase1Getstart(ctx, in)
+		return srv.(NodeServiceServer).Phase1GetStart(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/service.NodeService/Phase1Getstart",
+		FullMethod: "/service.NodeService/Phase1GetStart",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).Phase1Getstart(ctx, req.(*RequestMsg))
+		return srv.(NodeServiceServer).Phase1GetStart(ctx, req.(*RequestMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -773,20 +773,20 @@ func _NodeService_Phase2Verify_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NodeService_Phase3Sending_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _NodeService_Phase3SendMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PointMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServiceServer).Phase3Sending(ctx, in)
+		return srv.(NodeServiceServer).Phase3SendMsg(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/service.NodeService/Phase3Sending",
+		FullMethod: "/service.NodeService/Phase3SendMsg",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).Phase3Sending(ctx, req.(*PointMsg))
+		return srv.(NodeServiceServer).Phase3SendMsg(ctx, req.(*PointMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -814,8 +814,8 @@ var _NodeService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*NodeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Phase1Getstart",
-			Handler:    _NodeService_Phase1Getstart_Handler,
+			MethodName: "Phase1GetStart",
+			Handler:    _NodeService_Phase1GetStart_Handler,
 		},
 		{
 			MethodName: "Phase1ReceiveMsg",
@@ -830,8 +830,8 @@ var _NodeService_serviceDesc = grpc.ServiceDesc{
 			Handler:    _NodeService_Phase2Verify_Handler,
 		},
 		{
-			MethodName: "Phase3Sending",
-			Handler:    _NodeService_Phase3Sending_Handler,
+			MethodName: "Phase3SendMsg",
+			Handler:    _NodeService_Phase3SendMsg_Handler,
 		},
 		{
 			MethodName: "Phase3Verify",

@@ -3,6 +3,9 @@ package nodes
 import (
 	"context"
 	"errors"
+	"io/ioutil"
+	"strings"
+
 	//"fmt"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/commitment"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
@@ -100,6 +103,14 @@ type Node struct {
 	// Metrics
 	totMsgSize   *int
 	metadataPath string
+}
+
+func (node *Node) Phase1Getstart(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
+	panic("implement me")
+}
+
+func (node *Node) Phase3Sending(ctx context.Context, msg *pb.PointMsg) (*pb.ResponseMsg, error) {
+	panic("implement me")
 }
 
 func (node *Node) GetLabel() int {
@@ -524,13 +535,39 @@ func (node *Node) Service() {
 	}
 	log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
 }
-
-func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error) {
+func (node *Node) Serve(aws bool) {
+	port := node.ipAddress[node.label-1]
+	if aws {
+		port = "0.0.0.0:12001"
+	}
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatalf("node failed to listen %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterNodeServiceServer(s, node)
+	reflection.Register(s)
+	log.Printf("node %d serve on %s", node.label, port)
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("node failed to serve %v", err)
+	}
+}
+func ReadIpList(metadataPath string) []string {
+	ipData, err := ioutil.ReadFile(metadataPath + "/ip_list")
+	if err != nil {
+		log.Fatalf("node failed to read iplist %v\n", err)
+	}
+	return strings.Split(string(ipData), "\n")
+}
+func New(degree, label, counter int, logPath string) (Node, error) {
 	if label < 0 {
 		return Node{}, errors.New("Label must be a non-negative number!")
 	}
 	file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
 	defer file.Close()
+	ipRaw := ReadIpList(logPath)[0 : counter+1]
+	bip := ipRaw[0]
+	ipList := ipRaw[1 : counter+1]
 	if counter < 0 {
 		return Node{}, errors.New("Counter must be a non-negative number!")
 	}
@@ -539,9 +576,13 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 	//Maybe We can generate a big prime?
 	//p.SetString(rand.)
 	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-
+	modp := gmp.NewInt(0)
+	modp.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 	fixedRandState := rand.New(rand.NewSource(int64(3)))
-
+	dc := commitment.DLCommit{}
+	dc.SetupFix()
+	dpc := commitment.DLPolyCommit{}
+	dpc.SetupFix(counter)
 	secretShares := make([]*point.Point, counter)
 	tmpPoly, err := poly.NewRand(degree, fixedRandState, modp)
 	for i := 0; i < counter; i++ {
@@ -550,9 +591,9 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 		}
 		x := int32(label)
 		y := gmp.NewInt(0)
-		//w := dpc.NewG1()
+		w := dpc.NewG1()
 		tmpPoly.EvalMod(gmp.NewInt(int64(x)), modp, y)
-		//dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
+		dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
 
 		secretShares[i] = point.NewPoint(gmp.NewInt(int64(x)), y)
 	}
@@ -594,6 +635,8 @@ func New(degree, label, counter int, logPath string, modp *gmp.Int) (Node, error
 	Client := make([]*Node, 3)
 	shareCnt := 0
 	return Node{
+		ipAddress:    ipList,
+		ipOfBoard:    bip,
 		label:        label,
 		counter:      counter,
 		degree:       degree,

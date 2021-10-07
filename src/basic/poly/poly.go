@@ -26,7 +26,8 @@ func NewPoly(degree int) (Poly, error) {
 }
 func (poly Poly) GetDegree() int {
 	deg := len(poly.coeff) - 1
-	//Check the high end whether is 0,if so we should --
+
+	// note: i == 0 is not tested, because even the constant term is zero, we consider it's degree 0
 	for i := deg; i > 0; i-- {
 		if poly.coeff[i].CmpInt32(0) == 0 {
 			deg--
@@ -34,6 +35,7 @@ func (poly Poly) GetDegree() int {
 			break
 		}
 	}
+
 	return deg
 }
 
