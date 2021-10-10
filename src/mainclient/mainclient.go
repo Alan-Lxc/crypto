@@ -39,7 +39,7 @@ func GeneratePoly(s0 string, degree int, counter int, metadataPath string) {
 	for i := 0; i < counter; i++ {
 		x := int32(i)
 		y := gmp.NewInt(0)
-		poly.EvalMod(gmp.NewInt(int64(x)), p, y)
+		polyy.EvalMod(gmp.NewInt(int64(x)), p, y)
 
 		polytmp, _ := poly.NewRand(degree, fixedRandState, p)
 		polytmp.SetCoeffWithGmp(0, y)
