@@ -252,7 +252,7 @@ func ReadIpList(metadataPath string) []string {
 }
 
 // New returns a network node structure
-func New(degree int, counter int, metadataPath string, PPoly []poly.Poly) (BulletinBoard, error) {
+func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (BulletinBoard, error) {
 	f, _ := os.Create(metadataPath + "/log0")
 	defer f.Close()
 	if counter < 0 {
@@ -277,10 +277,10 @@ func New(degree int, counter int, metadataPath string, PPoly []poly.Poly) (Bulle
 	if err != nil {
 		log.Fatal("Error initializing random poly")
 	}
-	c := dpc.NewG1()
-	dpc.Commit(c, polyp)
-	cBytes := c.CompressedBytes()
 	for i := 0; i < counter; i++ {
+		c := dpc.NewG1()
+		dpc.Commit(c, Polyyy[i])
+		cBytes := c.CompressedBytes()
 		msg := &pb.Cmt1Msg{
 			Index:   int32(i + 1),
 			Polycmt: cBytes,
