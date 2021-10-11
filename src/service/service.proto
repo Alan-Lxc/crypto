@@ -12,6 +12,8 @@ service NodeService{
 
 }
 service BulletinBoardService {
+//    rpc GetCoeffofNodeSecretShares1(RequestForCoeffMsg) returns(stream CoeffMsg){}
+    rpc GetCoeffofNodeSecretShares2(RequestMsg)returns ( CoeffMsg){}
     // Start a epoch
     rpc StartEpoch(RequestMsg) returns (ResponseMsg) {}
     // BulletinBoard RPC for recontruction phase
@@ -48,4 +50,11 @@ message CommitMsg{
 message Cmt1Msg {
     int32 index = 1;
     bytes polycmt = 2;
+}
+message RequestForCoeffMsg{
+    int32 label =1;
+}
+message CoeffMsg{
+//    int32 label = 1;
+    repeated bytes coeff = 2;
 }

@@ -559,7 +559,7 @@ func ReadIpList(metadataPath string) []string {
 	}
 	return strings.Split(string(ipData), "\n")
 }
-func New(degree, label, counter int, logPath string) (Node, error) {
+func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, error) {
 	if label < 0 {
 		return Node{}, errors.New("Label must be a non-negative number!")
 	}
@@ -584,7 +584,9 @@ func New(degree, label, counter int, logPath string) (Node, error) {
 	dpc := commitment.DLPolyCommit{}
 	dpc.SetupFix(counter)
 	secretShares := make([]*point.Point, counter)
-	tmpPoly, err := poly.NewRand(degree, fixedRandState, modp)
+	//tmpPoly, err := poly.NewRand(degree, fixedRandState, modp)
+	tmpPoly, err := poly.NewPoly(degree)
+	tmpPoly.SetbyCoeff(coeff)
 	for i := 0; i < counter; i++ {
 		if err != nil {
 			panic("Error initializing random tmpPoly")

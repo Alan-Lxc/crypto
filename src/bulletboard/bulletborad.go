@@ -48,6 +48,22 @@ type BulletinBoard struct {
 
 	// Metrics
 	totMsgSize *int
+	//poly
+	randPoly *poly.Poly
+}
+
+func (bb *BulletinBoard) GetCoeffofNodeSecretShares2(ctx context.Context, msg *pb.RequestMsg) (*pb.CoeffMsg, error) {
+
+	degree := bb.randPoly.GetDegree()
+	coeff := make([][]byte, degree)
+	for i := 0; i <= degree; i++ {
+		tmp, err := bb.randPoly.GetCoeff(i)
+		if err != nil {
+			panic("error")
+		}
+		coeff[i] = tmp.Bytes()
+	}
+	return &pb.CoeffMsg{Coeff: coeff}, nil
 }
 
 func (bb *BulletinBoard) StartEpoch(ctx context.Context, in *pb.RequestMsg) (*pb.ResponseMsg, error) {
@@ -195,7 +211,17 @@ func (bb *BulletinBoard) ClientStartVerifPhase2() {
 	}
 	wg.Wait()
 }
-
+func GetCoeffFromMsg(msg *pb.CoeffMsg) []*gmp.Int {
+	tmp := msg.GetCoeff()
+	l := len(tmp)
+	res := make([]*gmp.Int, l)
+	for i := 0; i < l; i++ {
+		n := gmp.NewInt(0)
+		n.SetBytes(tmp[i])
+		res[i] = n
+	}
+	return res
+}
 func (bb *BulletinBoard) ClientStartVerifPhase3() {
 	var wg sync.WaitGroup
 	for i := 0; i < bb.counter; i++ {

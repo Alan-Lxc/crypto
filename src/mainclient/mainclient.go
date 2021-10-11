@@ -1,10 +1,10 @@
 package mainclient
 
 import (
-	"../bulletboard"
-	"../clock"
 	"flag"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
+	"github.com/Alan-Lxc/crypto_contest/src/bulletboard"
+	"github.com/Alan-Lxc/crypto_contest/src/control"
 	"github.com/Alan-Lxc/crypto_contest/src/nodes"
 	"github.com/ncw/gmp"
 	"math/rand"
@@ -43,8 +43,8 @@ func GeneratePoly(s0 string, degree int, counter int, metadataPath string) {
 
 		polytmp, _ := poly.NewRand(degree, fixedRandState, p)
 		polytmp.SetCoeffWithGmp(0, y)
-
-		n, _ := nodes.New(degree, i, counter, metadataPath, p)
+		coeff := polytmp.GetAllCoeff()
+		n, _ := nodes.New(degree, i, counter, metadataPath, p, coeff)
 		n.Service()
 	}
 

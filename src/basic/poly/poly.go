@@ -8,9 +8,9 @@ import (
 )
 
 // Poly  p(x) = a0 + a1*x^1 + a2*x^2 + ... + an*x^n
-//each polynomial is saved as p(x) = coeff[0] + coeff[1] *x^1+...+coeff[n]*x^n
+//each polynomial is saved as p(x) = Coeffs[0] + Coeffs[1] *x^1+...+Coeffs[n]*x^n
 type Poly struct {
-	coeff []*gmp.Int
+	Coeffs []*gmp.Int
 }
 
 func NewPoly(degree int) (Poly, error) {
@@ -24,12 +24,21 @@ func NewPoly(degree int) (Poly, error) {
 	}
 	return Poly{coeff}, nil
 }
+func (poly Poly) SetbyCoeff(coeff []*gmp.Int) {
+	degree := poly.GetDegree()
+	if degree > len(coeff) {
+		degree = len(coeff)
+	}
+	for i := 0; i <= degree; i++ {
+		poly.SetCoeffWithGmp(i, coeff[i])
+	}
+}
 func (poly Poly) GetDegree() int {
-	deg := len(poly.coeff) - 1
+	deg := len(poly.Coeffs) - 1
 
 	// note: i == 0 is not tested, because even the constant term is zero, we consider it's degree 0
 	for i := deg; i > 0; i-- {
-		if poly.coeff[i].CmpInt32(0) == 0 {
+		if poly.Coeffs[i].CmpInt32(0) == 0 {
 			deg--
 		} else {
 			break
@@ -39,16 +48,16 @@ func (poly Poly) GetDegree() int {
 	return deg
 }
 
-// GetCoefficient returns coeff[i]
+// GetCoefficient returns Coeffs[i]
 func (poly Poly) GetCoeff(i int) (gmp.Int, error) {
-	if i < 0 || i >= len(poly.coeff) {
+	if i < 0 || i >= len(poly.Coeffs) {
 		return *gmp.NewInt(0), errors.New("out of boundary")
 	}
 
-	return *poly.coeff[i], nil
+	return *poly.Coeffs[i], nil
 }
 func (poly Poly) GetCoeffConstant() *gmp.Int {
-	return poly.coeff[0]
+	return poly.Coeffs[0]
 }
 
 // GetAllCoeffcients returns a copy of
@@ -57,37 +66,37 @@ func (poly Poly) GetAllCoeffs() (all []*gmp.Int) {
 
 	for i := range all {
 		all[i] = gmp.NewInt(0)
-		all[i] = poly.coeff[i]
+		all[i] = poly.Coeffs[i]
 	}
 
 	return all
 }
 func (poly Poly) GetPtrtoCoeff(i int) (*gmp.Int, error) {
-	return poly.coeff[i], nil
+	return poly.Coeffs[i], nil
 }
 
 func (poly Poly) GetPtrtoConstant() *gmp.Int {
-	return poly.coeff[0]
+	return poly.Coeffs[0]
 }
 func (poly *Poly) SetCoeffWithInt(i int, ci int64) error {
-	if i < 0 || i > len(poly.coeff)-1 {
+	if i < 0 || i > len(poly.Coeffs)-1 {
 		return errors.New("the parameter is out of range")
 	}
-	poly.coeff[i].SetInt64(ci)
+	poly.Coeffs[i].SetInt64(ci)
 	return nil
 }
 func (poly *Poly) SetCoeffWithGmp(i int, ci *gmp.Int) error {
-	if i < 0 || i > len(poly.coeff)-1 {
+	if i < 0 || i > len(poly.Coeffs)-1 {
 		return errors.New("the parameter is out of range")
 	}
-	poly.coeff[i].Set(ci)
+	poly.Coeffs[i].Set(ci)
 	return nil
 }
 
-//Reset the poly with coeff all equals 0
+//Reset the poly with Coeffs all equals 0
 func (poly *Poly) Reset() {
-	for i := 0; i < len(poly.coeff); i++ {
-		poly.coeff[i].SetInt64(0)
+	for i := 0; i < len(poly.Coeffs); i++ {
+		poly.Coeffs[i].SetInt64(0)
 	}
 }
 
@@ -97,7 +106,7 @@ func NewConstant(c int64) Poly {
 	if err != nil {
 		panic(err.Error())
 	}
-	poly.coeff[0] = gmp.NewInt(c)
+	poly.Coeffs[0] = gmp.NewInt(c)
 	return poly
 }
 
@@ -112,15 +121,15 @@ func NewRand(degree int, rand *rand.Rand, n *gmp.Int) (Poly, error) {
 	return poly, nil
 }
 func (poly Poly) Rand(rand *rand.Rand, mod *gmp.Int) {
-	for i := range poly.coeff {
-		poly.coeff[i].Rand(rand, mod)
+	for i := range poly.Coeffs {
+		poly.Coeffs[i].Rand(rand, mod)
 	}
 
-	highest := len(poly.coeff) - 1
+	highest := len(poly.Coeffs) - 1
 
 	for {
-		if 0 == poly.coeff[highest].CmpInt32(0) {
-			poly.coeff[highest].Rand(rand, mod)
+		if 0 == poly.Coeffs[highest].CmpInt32(0) {
+			poly.Coeffs[highest].Rand(rand, mod)
 		} else {
 			break
 		}
@@ -131,15 +140,15 @@ func (poly *Poly) ResetDegree(degree int) error {
 		return errors.New("the parameter is out of range")
 	}
 	//want degree less than already,need to shrink the degree
-	if degree+1 <= len(poly.coeff) {
-		poly.coeff = poly.coeff[:degree+1]
+	if degree+1 <= len(poly.Coeffs) {
+		poly.Coeffs = poly.Coeffs[:degree+1]
 	} else {
 		//or we need to grow the size
-		extra := make([]*gmp.Int, degree+1-len(poly.coeff))
+		extra := make([]*gmp.Int, degree+1-len(poly.Coeffs))
 		for i := 0; i < len(extra); i++ {
 			extra[i] = gmp.NewInt(0)
 		}
-		poly.coeff = append(poly.coeff, extra...)
+		poly.Coeffs = append(poly.Coeffs, extra...)
 
 	}
 	poly.Reset()
@@ -151,7 +160,7 @@ func (poly *Poly) ResetTo(other Poly) {
 		panic(err.Error())
 	}
 	for i := 0; i < other.GetDegree()+1; i++ {
-		poly.coeff[i].Set(other.coeff[i])
+		poly.Coeffs[i].Set(other.Coeffs[i])
 	}
 }
 
@@ -159,12 +168,12 @@ func (poly *Poly) Add(poly1 Poly, poly2 Poly) {
 	if poly1.GetDegree() > poly2.GetDegree() {
 		poly.ResetTo(poly1)
 		for i := 0; i < poly2.GetDegree(); i++ {
-			poly.coeff[i].Add(poly1.coeff[i], poly2.coeff[i])
+			poly.Coeffs[i].Add(poly1.Coeffs[i], poly2.Coeffs[i])
 		}
 	} else {
 		poly.ResetTo(poly2)
 		for i := 0; i < poly1.GetDegree(); i++ {
-			poly.coeff[i].Add(poly1.coeff[i], poly2.coeff[i])
+			poly.Coeffs[i].Add(poly1.Coeffs[i], poly2.Coeffs[i])
 		}
 
 	} //let the poly as long as the longest (highest end =longest)
@@ -174,12 +183,12 @@ func (poly *Poly) Sub(poly1 Poly, poly2 Poly) {
 	if poly1.GetDegree() > poly2.GetDegree() {
 		poly.ResetTo(poly1)
 		for i := 0; i < poly2.GetDegree(); i++ {
-			poly.coeff[i].Sub(poly1.coeff[i], poly2.coeff[i])
+			poly.Coeffs[i].Sub(poly1.Coeffs[i], poly2.Coeffs[i])
 		}
 	} else {
 		poly.ResetTo(poly2)
 		for i := 0; i < poly1.GetDegree(); i++ {
-			poly.coeff[i].Sub(poly1.coeff[i], poly2.coeff[i])
+			poly.Coeffs[i].Sub(poly1.Coeffs[i], poly2.Coeffs[i])
 		}
 
 	} //let the poly as long as the longest (highest end =longest)
@@ -195,10 +204,10 @@ func (poly *Poly) Multiply(poly1 Poly, poly2 Poly) error {
 	}
 	for i := 0; i <= deg1; i++ {
 		for j := 0; j <= deg2; j++ {
-			poly.coeff[i+j].AddMul(poly1.coeff[i], poly2.coeff[j])
+			poly.Coeffs[i+j].AddMul(poly1.Coeffs[i], poly2.Coeffs[j])
 		}
 	}
-	poly.coeff = poly.coeff[:poly.GetDegree()+1]
+	poly.Coeffs = poly.Coeffs[:poly.GetDegree()+1]
 	return err
 }
 
@@ -208,8 +217,8 @@ func (poly Poly) DeepCopy() Poly {
 		panic("deepcopy failed: " + err.Error())
 	}
 
-	for i := 0; i < len(dst.coeff); i++ {
-		dst.coeff[i].Set(poly.coeff[i])
+	for i := 0; i < len(dst.Coeffs); i++ {
+		dst.Coeffs[i].Set(poly.Coeffs[i])
 	}
 
 	return dst
@@ -225,24 +234,24 @@ func (poly *Poly) MulSelf(op Poly) error {
 //AddMul  return to self + k * poly2
 func (poly *Poly) AddMul(poly2 Poly, k *gmp.Int) {
 	for i := 0; i <= poly2.GetDegree(); i++ {
-		poly.coeff[i].AddMul(poly2.coeff[i], k)
+		poly.Coeffs[i].AddMul(poly2.Coeffs[i], k)
 	}
 }
 
 func (poly *Poly) Mod(p *gmp.Int) {
-	for i := 0; i < len(poly.coeff); i++ {
-		poly.coeff[i].Mod(poly.coeff[i], p)
+	for i := 0; i < len(poly.Coeffs); i++ {
+		poly.Coeffs[i].Mod(poly.Coeffs[i], p)
 	}
 }
 
 //求解多项式的值
 // EvalMod returns poly(x) using Horner's rule. If p != nil, returns poly(x) mod p
 func (poly Poly) EvalMod(x *gmp.Int, p *gmp.Int, result *gmp.Int) {
-	result.Set(poly.coeff[poly.GetDegree()])
+	result.Set(poly.Coeffs[poly.GetDegree()])
 
 	for i := poly.GetDegree(); i >= 1; i-- {
 		result.Mul(result, x)
-		result.Add(result, poly.coeff[i-1])
+		result.Add(result, poly.Coeffs[i-1])
 	}
 
 	if p != nil {
@@ -264,7 +273,7 @@ func (poly *Poly) Divide(op1 Poly, op2 Poly) error {
 		return errors.New("op2 must be of format x-a")
 	}
 
-	if len(poly.coeff) < degree1-1 {
+	if len(poly.Coeffs) < degree1-1 {
 		return errors.New("receiver too small")
 	}
 
@@ -276,26 +285,26 @@ func (poly *Poly) Divide(op1 Poly, op2 Poly) error {
 	}
 
 	for i := 0; i <= degree1; i++ {
-		numerator.coeff[i].Set(op1.coeff[i])
+		numerator.Coeffs[i].Set(op1.Coeffs[i])
 	}
 
 	for i := degree1; i > 0; i-- {
-		poly.coeff[i-1].Div(numerator.coeff[i], op2.coeff[degree2])
+		poly.Coeffs[i-1].Div(numerator.Coeffs[i], op2.Coeffs[degree2])
 		for j := degree2; j >= 0; j-- {
-			tmp.Mul(poly.coeff[i-1], op2.coeff[j])
-			numerator.coeff[i+j-degree2].Sub(numerator.coeff[i+j-degree2], tmp)
+			tmp.Mul(poly.Coeffs[i-1], op2.Coeffs[j])
+			numerator.Coeffs[i+j-degree2].Sub(numerator.Coeffs[i+j-degree2], tmp)
 		}
 	}
 
-	poly.coeff = poly.coeff[:poly.GetDegree()+1]
+	poly.Coeffs = poly.Coeffs[:poly.GetDegree()+1]
 	return nil
 }
 
 func (poly Poly) Copy() Poly {
 	tmp, _ := NewPoly(poly.GetDegree())
 
-	for i := 0; i < len(tmp.coeff); i++ {
-		tmp.coeff[i].Set(poly.coeff[i])
+	for i := 0; i < len(tmp.Coeffs); i++ {
+		tmp.Coeffs[i].Set(poly.Coeffs[i])
 	}
 
 	return tmp
@@ -304,7 +313,7 @@ func (poly Poly) GetAllCoeff() []*gmp.Int {
 	res := make([]*gmp.Int, poly.GetDegree()+1)
 	for i := range res {
 		res[i] = gmp.NewInt(0)
-		res[i] = poly.coeff[i]
+		res[i] = poly.Coeffs[i]
 	}
 	return res
 }
@@ -319,8 +328,8 @@ func FromVec(coeff ...int64) Poly {
 		panic(err.Error())
 	}
 
-	for i := range poly.coeff {
-		poly.coeff[i].SetInt64(coeff[i])
+	for i := range poly.Coeffs {
+		poly.Coeffs[i].SetInt64(coeff[i])
 	}
 
 	return poly
@@ -334,7 +343,7 @@ func (poly Poly) IsSame(op Poly) bool {
 	}
 
 	for i := 0; i <= op.GetDegree(); i++ {
-		if op.coeff[i].Cmp(poly.coeff[i]) != 0 {
+		if op.Coeffs[i].Cmp(poly.Coeffs[i]) != 0 {
 			return false
 		}
 	}
