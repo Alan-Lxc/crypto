@@ -34,7 +34,7 @@ func GeneratePoly(s0 string, degree int, counter int, metadataPath string) {
 	polyy, _ := poly.NewRand(degree, fixedRandState, p)
 	polyy.SetCoeffWithGmp(0, tmp)
 
-	//nn := make([]nodes.Node, counter)
+	nn := make([]nodes.Node, counter)
 	//????
 	for i := 0; i < counter; i++ {
 		x := int32(i)
@@ -44,8 +44,8 @@ func GeneratePoly(s0 string, degree int, counter int, metadataPath string) {
 		polytmp, _ := poly.NewRand(degree, fixedRandState, p)
 		polytmp.SetCoeffWithGmp(0, y)
 		coeff := polytmp.GetAllCoeff()
-		n, _ := nodes.New(degree, i, counter, metadataPath, p, coeff)
-		n.Service()
+		nn[i], _ = nodes.New(degree, i, counter, metadataPath, coeff)
+		nn[i].Service()
 	}
 
 }

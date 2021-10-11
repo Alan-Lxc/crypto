@@ -252,7 +252,7 @@ func ReadIpList(metadataPath string) []string {
 }
 
 // New returns a network node structure
-func New(degree int, counter int, metadataPath string) (BulletinBoard, error) {
+func New(degree int, counter int, metadataPath string, PPoly []poly.Poly) (BulletinBoard, error) {
 	f, _ := os.Create(metadataPath + "/log0")
 	defer f.Close()
 	if counter < 0 {
