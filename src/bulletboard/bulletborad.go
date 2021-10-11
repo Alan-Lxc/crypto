@@ -259,7 +259,7 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 		return BulletinBoard{}, errors.New(fmt.Sprintf("counter must be non-negative, got %d", counter))
 	}
 
-	fixedRandState := rand.New(rand.NewSource(int64(3)))
+	//fixedRandState := rand.New(rand.NewSource(int64(3)))
 	p := gmp.NewInt(0)
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 	dpc := commitment.DLPolyCommit{}
@@ -273,10 +273,10 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 	shaCnt := 0
 
 	reconstructionContent := make([]*pb.Cmt1Msg, counter)
-	polyp, err := poly.NewRand(degree, fixedRandState, p)
-	if err != nil {
-		log.Fatal("Error initializing random poly")
-	}
+	//polyp, err := poly.NewRand(degree, fixedRandState, p)
+	//if err != nil {
+	//	log.Fatal("Error initializing random poly")
+	//}
 	for i := 0; i < counter; i++ {
 		c := dpc.NewG1()
 		dpc.Commit(c, Polyyy[i])

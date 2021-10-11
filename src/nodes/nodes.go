@@ -541,6 +541,7 @@ func (node *Node) Service() {
 	if err != nil {
 		log.Fatalf("[Node %d] fail to provide service", node.label)
 	}
+
 	log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
 }
 func (node *Node) Serve(aws bool) {
