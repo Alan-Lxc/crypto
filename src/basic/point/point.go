@@ -11,11 +11,11 @@ type Point struct {
 	PolyWit *pbc.Element
 }
 
-func NewPoint(x *gmp.Int, y *gmp.Int) *Point {
+func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *Point {
 	return &Point{
-		X: x,
-		Y: y,
-		//PolyWit: w,
+		X:       x,
+		Y:       y,
+		PolyWit: w,
 	}
 }
 

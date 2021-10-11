@@ -80,7 +80,7 @@ type Node struct {
 	//board IP address
 	ipOfBoard string
 	//clientconn
-	clinetConn []*grpc.ClientConn
+	clientConn []*grpc.ClientConn
 	//nodeService
 	nodeService []pb.NodeServiceClient
 	//boardconn
@@ -103,6 +103,14 @@ type Node struct {
 	// Metrics
 	totMsgSize   *int
 	metadataPath string
+	// Initialize Flag
+	iniflag *bool
+	s1      time.Time
+	e1      time.Time
+	s2      time.Time
+	e2      time.Time
+	s3      time.Time
+	e3      time.Time
 }
 
 func (node *Node) Phase1Getstart(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
@@ -163,7 +171,7 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error)
 	node.recPoint[*node.recCounter] = &p
 	//fmt.Println(p)
 	*node.recCounter += 1
-	flag := *node.recCounter == node.counter
+	flag := (*node.recCounter == node.counter)
 	node.mutex.Unlock()
 	if flag {
 		*node.recCounter = 0
@@ -174,10 +182,10 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error)
 
 //client
 func (node *Node) SendMsgToNode() {
-	//if *node.iniflag {
-	//	node.Connect()
-	//	*node.iniflag = false
-	//}
+	if *node.iniflag {
+		node.NodeConnect()
+		*node.iniflag = false
+	}
 	p := point.Point{
 		X:       node.secretShares[node.label-1].X,
 		Y:       node.secretShares[node.label-1].Y,
@@ -249,10 +257,10 @@ func (node *Node) SendMsgToNode() {
 //}
 // Read from the bulletinboard and does the interpolation and verifiication.
 func (node *Node) ClientReadPhase1() {
-	//if *node.iniflag {
-	//	node.Connect()
-	//	*node.iniflag = false
-	//}
+	if *node.iniflag {
+		node.NodeConnect()
+		*node.iniflag = false
+	}
 	log.Printf("[node %d] read bulletinboard in phase 1", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -362,7 +370,7 @@ func (node *Node) ClientSharePhase2() {
 				defer wg.Done()
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
-				_, err := node.Client[i].Phase2Share(ctx, msg)
+				_, err := node.nodeService[i].Phase2Share(ctx, msg)
 				if err != nil {
 					return
 				}
@@ -515,7 +523,7 @@ func (node *Node) NodeConnect() {
 			if err != nil {
 				log.Fatalf("[Node %d] Fail to connect to other node:%v", node.label, err)
 			}
-			node.clinetConn[i] = clientconn
+			node.clientConn[i] = clientconn
 			node.nodeService[i] = pb.NewNodeServiceClient(clientconn)
 		}
 	}
@@ -572,35 +580,14 @@ func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, er
 		return Node{}, errors.New("Counter must be a non-negative number!")
 	}
 	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
-	//p := gmp.NewInt(0)
-	//Maybe We can generate a big prime?
-	//p.SetString(rand.)
-	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-	modp := gmp.NewInt(0)
-	modp.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-	fixedRandState := rand.New(rand.NewSource(int64(3)))
+	//fixedRandState := rand.New(rand.NewSource(int64(3)))
 	dc := commitment.DLCommit{}
 	dc.SetupFix()
 	dpc := commitment.DLPolyCommit{}
 	dpc.SetupFix(counter)
-	secretShares := make([]*point.Point, counter)
-	//tmpPoly, err := poly.NewRand(degree, fixedRandState, modp)
-	tmpPoly, err := poly.NewPoly(degree)
-	tmpPoly.SetbyCoeff(coeff)
-	for i := 0; i < counter; i++ {
-		if err != nil {
-			panic("Error initializing random tmpPoly")
-		}
-		x := int32(label)
-		y := gmp.NewInt(0)
-		w := dpc.NewG1()
-		tmpPoly.EvalMod(gmp.NewInt(int64(x)), modp, y)
-		dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
 
-		secretShares[i] = point.NewPoint(gmp.NewInt(int64(x)), y)
-	}
-
-	proPoly, _ := poly.NewPoly(degree)
+	p := gmp.NewInt(0)
+	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 	lambda := make([]*gmp.Int, counter)
 	// Calculate Lagrange Interpolation
 	denominator := poly.NewConstant(1)
@@ -616,13 +603,13 @@ func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, er
 		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
 
 		deno.Divide(denominator, tmp)
-		deno.EvalMod(gmp.NewInt(0), modp, lambda[i])
+		deno.EvalMod(gmp.NewInt(0), p, lambda[i])
 		inter := gmp.NewInt(0)
-		deno.EvalMod(gmp.NewInt(int64(i+1)), modp, inter)
+		deno.EvalMod(gmp.NewInt(int64(i+1)), p, inter)
 		interInv := gmp.NewInt(0)
-		interInv.ModInverse(inter, modp)
+		interInv.ModInverse(inter, p)
 		lambda[i].Mul(lambda[i], interInv)
-		lambda[i].Mod(lambda[i], modp)
+		lambda[i].Mod(lambda[i], p)
 	}
 
 	_0Shares := make([]*gmp.Int, counter)
@@ -634,27 +621,105 @@ func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, er
 
 	recPoint := make([]*point.Point, counter)
 	recCounter := 0
-	Client := make([]*Node, 3)
+
+	secretShares := make([]*point.Point, counter)
+	//tmpPoly, err := poly.NewRand(degree, fixedRandState, p)
+	tmpPoly, err := poly.NewPoly(degree)
+	tmpPoly.SetbyCoeff(coeff)
+	for i := 0; i < counter; i++ {
+		if err != nil {
+			panic("Error initializing random tmpPoly")
+		}
+		x := int32(label)
+		y := gmp.NewInt(0)
+		w := dpc.NewG1()
+		tmpPoly.EvalMod(gmp.NewInt(int64(x)), p, y)
+		dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
+
+		secretShares[i] = point.NewPoint(gmp.NewInt(int64(x)), y, w)
+	}
+
+	proPoly, _ := poly.NewPoly(degree)
+	recPoly, _ := poly.NewPoly(degree)
+	newPoly, _ := poly.NewPoly(degree)
 	shareCnt := 0
+
+	oldPolyCmt := make([]*pbc.Element, counter)
+	midPolyCmt := make([]*pbc.Element, counter)
+	newPolyCmt := make([]*pbc.Element, counter)
+	for i := 0; i < counter; i++ {
+		oldPolyCmt[i] = dpc.NewG1()
+		midPolyCmt[i] = dpc.NewG1()
+		newPolyCmt[i] = dpc.NewG1()
+	}
+
+	zeroShareCmt := dc.NewG1()
+	zeroPolyCmt := dpc.NewG1()
+	zeroPolyWit := dpc.NewG1()
+
+	zerosumShareCmt := make([]*pbc.Element, counter)
+	zerosumPolyCmt := make([]*pbc.Element, counter)
+	zerosumPolyWit := make([]*pbc.Element, counter)
+
+	for i := 0; i < counter; i++ {
+		zerosumShareCmt[i] = dc.NewG1()
+		zerosumPolyCmt[i] = dpc.NewG1()
+		zerosumPolyWit[i] = dpc.NewG1()
+	}
+
+	totMsgSize := 0
+	s1 := time.Now()
+	e1 := time.Now()
+	s2 := time.Now()
+	e2 := time.Now()
+	s3 := time.Now()
+	e3 := time.Now()
+
+	clientConn := make([]*grpc.ClientConn, counter)
+	nodeService := make([]pb.NodeServiceClient, counter)
+
+	iniflag := true
 	return Node{
-		ipAddress:    ipList,
-		ipOfBoard:    bip,
-		label:        label,
-		counter:      counter,
-		degree:       degree,
-		p:            modp,
-		randState:    randState,
-		recPoint:     recPoint,
-		recCounter:   &recCounter,
-		recPoly:      &poly.Poly{},
-		Client:       Client,
-		secretShares: secretShares,
-		proPoly:      &proPoly,
-		_0Shares:     _0Shares,
-		_0ShareCount: &_0ShareCount,
-		_0ShareSum:   _0ShareSum,
-		lambda:       lambda,
-		shareCnt:     &shareCnt,
+		metadataPath:    logPath,
+		ipAddress:       ipList,
+		ipOfBoard:       bip,
+		degree:          degree,
+		label:           label,
+		counter:         counter,
+		randState:       randState,
+		dc:              &dc,
+		dpc:             &dpc,
+		p:               p,
+		lambda:          lambda,
+		_0Shares:        _0Shares,
+		_0ShareCount:    &_0ShareCount,
+		_0ShareSum:      _0ShareSum,
+		secretShares:    secretShares,
+		recPoint:        recPoint,
+		recCounter:      &recCounter,
+		recPoly:         &recPoly,
+		proPoly:         &proPoly,
+		newPoly:         &newPoly,
+		shareCnt:        &shareCnt,
+		oldPolyCmt:      oldPolyCmt,
+		midPolyCmt:      midPolyCmt,
+		newPolyCmt:      newPolyCmt,
+		zeroShareCmt:    zeroShareCmt,
+		zeroPolyCmt:     zeroPolyCmt,
+		zeroPolyWit:     zeroPolyWit,
+		zerosumPolyCmt:  zerosumShareCmt,
+		zerosumPolyWit:  zerosumPolyWit,
+		zerosumShareCmt: zerosumShareCmt,
+		totMsgSize:      &totMsgSize,
+		s1:              s1,
+		e1:              e1,
+		s2:              s2,
+		e2:              e2,
+		s3:              s3,
+		e3:              e3,
+		clientConn:      clientConn,
+		nodeService:     nodeService,
+		iniflag:         &iniflag,
 	}, nil
 
 }
