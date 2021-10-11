@@ -535,7 +535,7 @@ func (node *Node) Service() {
 		log.Fatalf("[Node %d] fail to listen:%v", node.label, err)
 	}
 	server := grpc.NewServer()
-	//pb.re	(s,node)
+	pb.RegisterNodeServiceServer(server, node)
 	reflection.Register(server)
 	err = server.Serve(listener)
 	if err != nil {
