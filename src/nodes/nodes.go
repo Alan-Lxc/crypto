@@ -468,7 +468,7 @@ func (node *Node) ClientReadPhase2() {
 		// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
 		exponentSum.Mul(exponentSum, tmp)
 	}
-	// log.Printf("%d exponentSum: %s", node.label, exponentSum.String())
+	log.Printf("%d exponentSum: %s", node.label, exponentSum.String())
 	if !exponentSum.Is1() {
 		panic("Proactivization Verification 1 failed")
 	}
@@ -765,9 +765,10 @@ func (node *Node) ClientSharePhase3() {
 		if i != node.label-1 {
 			log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
 			msg := &pb.PointMsg{
-				Index: int32(node.label),
-				X:     gmp.NewInt(int64(i + 1)).Bytes(),
-				Y:     value.Bytes(),
+				Index:   int32(node.label),
+				X:       gmp.NewInt(int64(i + 1)).Bytes(),
+				Y:       value.Bytes(),
+				Witness: witness.CompressedBytes(),
 			}
 			//把消息发送给不同的节点
 			wg.Add(1)
@@ -775,7 +776,7 @@ func (node *Node) ClientSharePhase3() {
 				defer wg.Done()
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
-				node.Client[i].Phase3SendMsg(ctx, msg)
+				node.nodeService[i].Phase3SendMsg(ctx, msg)
 			}(i, msg)
 		} else {
 			node.secretShares[i].Y.Set(value)
