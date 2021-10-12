@@ -14,7 +14,7 @@ type Control struct {
 	boardIp      string
 
 	boardConn    *grpc.ClientConn
-	boardService pb.BulletinBoardServiceClient
+	BoardService pb.BulletinBoardServiceClient
 }
 
 func (c *Control) Connect() {
@@ -23,7 +23,7 @@ func (c *Control) Connect() {
 		log.Fatalf("Fail to connect borad:%v", err)
 	}
 	c.boardConn = boarConn
-	c.boardService = pb.NewBulletinBoardServiceClient(c.boardConn)
+	c.BoardService = pb.NewBulletinBoardServiceClient(c.boardConn)
 }
 func (c *Control) Disconnect() {
 	log.Println("Disconnect the board")
@@ -33,8 +33,7 @@ func (c *Control) StartHandoff() {
 	log.Printf("Start to Handoff")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	tmp := pb.RequestMsg{}
-	_, err := c.boardService.StartEpoch(ctx, &tmp)
+	_, err := c.BoardService.StartEpoch(ctx, &pb.RequestMsg{})
 	if err != nil {
 		log.Fatalf("Start Handoff Fail:%v", err)
 	}

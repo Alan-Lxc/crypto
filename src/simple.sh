@@ -15,14 +15,14 @@ if [ -d "ip_list" ]; then
 fi
 for i in `seq 0 $COUNTER`
 do
-  port=$(($i+1234))
+  port=$(($i+10000))
   echo 127.0.0.1:$port >> ip_list
 done
 cd ..
 
 # start a thread representing bulletinboard
 go run ../client/client.go -d $DEGREE -c $COUNTER -path $IP_PATH &
-
+#go run ./test/bulletinboard.go -l $i -c $COUNTER -d $DEGREE -path $IP_PATH &
 
 ## start threads representing nodes
 #for i in `seq 1 $COUNTER`;
@@ -31,10 +31,10 @@ go run ../client/client.go -d $DEGREE -c $COUNTER -path $IP_PATH &
 #done
 #
 ## wait some time for all the nodes to finish initializing
-#sleep 6
-#
-## send the clock message to bulletinboard to start an epoch
-#go run ./test/clock.go -path $IP_PATH
+sleep 6
+
+# send the clock message to bulletinboard to start an epoch
+go run ./test/clock.go -path $IP_PATH
 
 # wait some time for the protocol to finish running
 # LASTPORT=$(($COUNTER + 11000))

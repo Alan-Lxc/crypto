@@ -173,7 +173,7 @@ func (bb *BulletinBoard) Serve(aws bool) {
 	//}
 	//log.Printf("hello")
 	err = s.Serve(lis)
-	log.Printf("hello")
+	log.Printf("[bulletboard]hello")
 	if err != nil {
 		log.Fatalf("bulletinboard failed to serve %v", err)
 	}

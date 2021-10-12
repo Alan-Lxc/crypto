@@ -544,6 +544,7 @@ func (node *Node) Service() {
 
 	log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
 }
+
 func (node *Node) Serve(aws bool) {
 	port := node.ipAddress[node.label-1]
 	if aws {
@@ -680,6 +681,7 @@ func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, er
 	nodeService := make([]pb.NodeServiceClient, counter)
 
 	iniflag := true
+	log.Printf("Node %d new done", label)
 	return Node{
 		metadataPath:    logPath,
 		ipAddress:       ipList,

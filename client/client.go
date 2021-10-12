@@ -95,8 +95,7 @@ func (c *client) InitandConnect(s0 string) {
 	}
 	//nn := make([]nodes.Node, counter)
 	//board	Init
-	bb, _ := bulletboard.New(c.degree, c.counter, c.metadataPath, polyyy)
-	go bb.Serve(false)
+	go newBoard(c.degree, c.counter, c.metadataPath, polyyy)
 	time.Sleep(6)
 	bconn, err := grpc.Dial(c.ipBorad, grpc.WithInsecure())
 	if err != nil {
@@ -130,9 +129,13 @@ func (c *client) InitandConnect(s0 string) {
 	}
 	log.Printf("Has connected to controller")
 	c.control = controll
-	controll.Connect()
+	c.control.Connect()
 	//time.Sleep(6)
-	go c.control.StartHandoff()
+	c.control.StartHandoff()
+}
+func newBoard(degree, ccounter int, metadataPath string, polyyy []poly.Poly) {
+	bb, _ := bulletboard.New(degree, ccounter, metadataPath, polyyy)
+	bb.Serve(false)
 }
 func main() {
 	//cnt := flag.Int("c", 2, "Enter number of nodes")
@@ -147,4 +150,5 @@ func main() {
 	}
 	client1.InitandConnect("1234567899876543210")
 	//log.Printf("Done")
+	//client1.control.StartHandoff()
 }
