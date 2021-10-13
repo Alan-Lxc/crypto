@@ -105,12 +105,12 @@ type Node struct {
 	metadataPath string
 	// Initialize Flag
 	iniflag *bool
-	s1      time.Time
-	e1      time.Time
-	s2      time.Time
-	e2      time.Time
-	s3      time.Time
-	e3      time.Time
+	s1      *time.Time
+	e1      *time.Time
+	s2      *time.Time
+	e2      *time.Time
+	s3      *time.Time
+	e3      *time.Time
 }
 
 func (node *Node) Phase1Getstart(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
@@ -142,6 +142,7 @@ func (node *Node) GetLabel() int {
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
 	log.Printf("[Node %d] Now Get start Phase1", node.label)
+	*node.s1 = time.Now()
 	node.SendMsgToNode()
 	return &pb.ResponseMsg{}, nil
 }
@@ -300,8 +301,8 @@ func (node *Node) ClientReadPhase1() {
 		panic("Interpolation failed")
 	}
 	node.recPoly.ResetTo(polyp)
-	//*node.e1 = time.Now()
-	//*node.s2 = time.Now()
+	*node.e1 = time.Now()
+	*node.s2 = time.Now()
 	node.ClientSharePhase2()
 }
 
@@ -481,8 +482,8 @@ func (node *Node) ClientReadPhase2() {
 	if !flag {
 		panic("Proactivization Verification 2 failed")
 	}
-	//*node.e2 = time.Now()
-	//*node.s3 = time.Now()
+	*node.e2 = time.Now()
+	*node.s3 = time.Now()
 	node.ClientSharePhase3()
 }
 
@@ -714,12 +715,12 @@ func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, er
 		zerosumPolyWit:  zerosumPolyWit,
 		zerosumShareCmt: zerosumShareCmt,
 		totMsgSize:      &totMsgSize,
-		s1:              s1,
-		e1:              e1,
-		s2:              s2,
-		e2:              e2,
-		s3:              s3,
-		e3:              e3,
+		s1:              &s1,
+		e1:              &e1,
+		s2:              &s2,
+		e2:              &e2,
+		s3:              &s3,
+		e3:              &e3,
 		clientConn:      clientConn,
 		nodeService:     nodeService,
 		iniflag:         &iniflag,
@@ -838,7 +839,7 @@ func (node *Node) Phase3Readboard() {
 		}
 
 	}
-	//*node.e3 = time.Now()
+	*node.e3 = time.Now()
 	f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer f.Close()
 	//fmt.Fprintf(f, "totMsgSize,%d\n", *node.totMsgSize)
