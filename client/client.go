@@ -88,7 +88,9 @@ func (c *client) InitandConnect(s0 string) {
 	polyy.SetCoeffWithGmp(0, tmp)
 	polyyy := make([]poly.Poly, counter)
 	for i := 0; i < counter; i++ {
+		x := int32(i + 1)
 		y := gmp.NewInt(0)
+		polyy.EvalMod(gmp.NewInt(int64(x)), p, y)
 
 		polyyy[i], _ = poly.NewRand(degree, fixedRandState, p)
 		polyyy[i].SetCoeffWithGmp(0, y)
@@ -106,9 +108,9 @@ func (c *client) InitandConnect(s0 string) {
 	//node
 	//nn := make([]nodes.Node, counter)
 	for i := 0; i < counter; i++ {
-		x := int32(i + 1)
-		y := gmp.NewInt(0)
-		polyy.EvalMod(gmp.NewInt(int64(x)), p, y)
+		//x := int32(i + 1)
+		//y := gmp.NewInt(0)
+		//polyy.EvalMod(gmp.NewInt(int64(x)), p, y)
 		coeff := polyyy[i].GetAllCoeff()
 		node, _ := nodes.New(degree, i+1, counter, c.metadataPath, coeff)
 		go node.Service()
