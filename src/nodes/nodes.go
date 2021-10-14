@@ -291,6 +291,7 @@ func (node *Node) ClientReadPhase1() {
 		if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(node.label)), p.Y, p.PolyWit) {
 			fmt.Println(node.label, p.X, polyCmt, p.Y, p.PolyWit)
 			panic("Reconstruction Verification failed")
+			//
 		} else {
 			fmt.Println(node.label, p.X, "okk")
 		}
