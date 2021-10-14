@@ -162,34 +162,63 @@ func (poly *Poly) ResetTo(other Poly) {
 }
 
 func (poly *Poly) Add(poly1 Poly, poly2 Poly) {
-	if poly1.GetDegree() > poly2.GetDegree() {
+	deg1 := poly1.GetDegree()
+	deg2 := poly2.GetDegree()
+
+	if deg1 > deg2 {
 		poly.ResetTo(poly1)
-		for i := 0; i < poly2.GetDegree(); i++ {
-			poly.Coeffs[i].Add(poly1.Coeffs[i], poly2.Coeffs[i])
-		}
 	} else {
 		poly.ResetTo(poly2)
-		for i := 0; i < poly1.GetDegree(); i++ {
-			poly.Coeffs[i].Add(poly1.Coeffs[i], poly2.Coeffs[i])
-		}
+	}
 
-	} //let the poly as long as the longest (highest end =longest)
+	for i := 0; i < min(deg1, deg2)+1; i++ {
+		poly.Coeffs[i].Add(poly1.Coeffs[i], poly2.Coeffs[i])
+	}
+
+	poly.Coeffs = poly.Coeffs[:poly.GetDegree()+1]
+
+	//let the poly as long as the longest (highest end =longest)
 	//and then add poly1 + poly2
 }
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	} else {
+		return b
+	}
+}
+
 func (poly *Poly) Sub(poly1 Poly, poly2 Poly) {
-	if poly1.GetDegree() > poly2.GetDegree() {
+	// make sure poly is as long as the longest of op1 and op2
+	deg1 := poly1.GetDegree()
+	deg2 := poly2.GetDegree()
+
+	if deg1 > deg2 {
 		poly.ResetTo(poly1)
-		for i := 0; i < poly2.GetDegree(); i++ {
-			poly.Coeffs[i].Sub(poly1.Coeffs[i], poly2.Coeffs[i])
-		}
 	} else {
 		poly.ResetTo(poly2)
-		for i := 0; i < poly1.GetDegree(); i++ {
-			poly.Coeffs[i].Sub(poly1.Coeffs[i], poly2.Coeffs[i])
-		}
+	}
 
-	} //let the poly as long as the longest (highest end =longest)
-	//and then add poly1 - poly2
+	for i := 0; i < min(deg1, deg2)+1; i++ {
+		poly.Coeffs[i].Sub(poly1.Coeffs[i], poly2.Coeffs[i])
+	}
+
+	poly.Coeffs = poly.Coeffs[:poly.GetDegree()+1]
+
+	//if poly1.GetDegree() > poly2.GetDegree() {
+	//	poly.ResetTo(poly1)
+	//	for i := 0; i < poly2.GetDegree(); i++ {
+	//		poly.Coeffs[i].Sub(poly1.Coeffs[i], poly2.Coeffs[i])
+	//	}
+	//} else {
+	//	poly.ResetTo(poly2)
+	//	for i := 0; i < poly1.GetDegree(); i++ {
+	//		poly.Coeffs[i].Sub(poly1.Coeffs[i], poly2.Coeffs[i])
+	//	}
+	//
+	//} //let the poly as long as the longest (highest end =longest)
+	////and then add poly1 - poly2
 
 }
 func (poly *Poly) Multiply(poly1 Poly, poly2 Poly) error {

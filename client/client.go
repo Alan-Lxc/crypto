@@ -150,7 +150,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Can't create a new client:%v", err)
 	}
-	client1.InitandConnect("1234567899876543210")
+	client1.InitandConnect("0")
 	//log.Printf("Done")
 	//client1.control.StartHandoff()
 }
