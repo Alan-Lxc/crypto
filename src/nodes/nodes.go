@@ -3,6 +3,7 @@ package nodes
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"strings"
 
@@ -288,8 +289,12 @@ func (node *Node) ClientReadPhase1() {
 		y = append(y, p.Y)
 		polyCmt.Set(node.oldPolyCmt[(p.X).Int32()-1])
 		if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(node.label)), p.Y, p.PolyWit) {
+			fmt.Println(node.label, p.X, polyCmt, p.Y, p.PolyWit)
 			panic("Reconstruction Verification failed")
+		} else {
+			fmt.Println(node.label, p.X, "okk")
 		}
+
 	}
 	polyp, err := interpolation.LagrangeInterpolate(node.degree, x, y, node.p)
 	if err != nil {
@@ -570,163 +575,6 @@ func ReadIpList(metadataPath string) []string {
 	}
 	return strings.Split(string(ipData), "\n")
 }
-func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, error) {
-	if label < 0 {
-		return Node{}, errors.New("Label must be a non-negative number!")
-	}
-	file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
-	defer file.Close()
-	ipRaw := ReadIpList(logPath)[0 : counter+1]
-	bip := ipRaw[0]
-	ipList := ipRaw[1 : counter+1]
-	if counter < 0 {
-		return Node{}, errors.New("Counter must be a non-negative number!")
-	}
-	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
-	//fixedRandState := rand.New(rand.NewSource(int64(3)))
-	dc := commitment.DLCommit{}
-	dc.SetupFix()
-	dpc := commitment.DLPolyCommit{}
-	dpc.SetupFix(counter)
-
-	p := gmp.NewInt(0)
-	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-	lambda := make([]*gmp.Int, counter)
-	// Calculate Lagrange Interpolation
-	denominator := poly.NewConstant(1)
-	tmp, _ := poly.NewPoly(1)
-	tmp.SetCoeffWithInt(1, 1)
-	for i := 0; i < counter; i++ {
-		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
-		denominator.MulSelf(tmp)
-	}
-	for i := 0; i < counter; i++ {
-		lambda[i] = gmp.NewInt(0)
-		deno, _ := poly.NewPoly(0)
-		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
-
-		deno.Divide(denominator, tmp)
-		deno.EvalMod(gmp.NewInt(0), p, lambda[i])
-		inter := gmp.NewInt(0)
-		deno.EvalMod(gmp.NewInt(int64(i+1)), p, inter)
-		interInv := gmp.NewInt(0)
-		interInv.ModInverse(inter, p)
-		lambda[i].Mul(lambda[i], interInv)
-		lambda[i].Mod(lambda[i], p)
-	}
-
-	_0Shares := make([]*gmp.Int, counter)
-	for i := 0; i < counter; i++ {
-		_0Shares[i] = gmp.NewInt(0)
-	}
-	_0ShareCount := 0
-	_0ShareSum := gmp.NewInt(0)
-
-	recPoint := make([]*point.Point, counter)
-	recCounter := 0
-
-	secretShares := make([]*point.Point, counter)
-	//tmpPoly, err := poly.NewRand(degree, fixedRandState, p)
-	tmpPoly, err := poly.NewPoly(degree)
-	tmpPoly.SetbyCoeff(coeff)
-	for i := 0; i < counter; i++ {
-		if err != nil {
-			panic("Error initializing random tmpPoly")
-		}
-		x := int32(i + 1)
-		y := gmp.NewInt(0)
-		w := dpc.NewG1()
-		tmpPoly.EvalMod(gmp.NewInt(int64(x)), p, y)
-		dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
-
-		secretShares[i] = point.NewPoint(gmp.NewInt(int64(label)), y, w)
-	}
-
-	proPoly, _ := poly.NewPoly(degree)
-	recPoly, _ := poly.NewPoly(degree)
-	newPoly, _ := poly.NewPoly(degree)
-	shareCnt := 0
-
-	oldPolyCmt := make([]*pbc.Element, counter)
-	midPolyCmt := make([]*pbc.Element, counter)
-	newPolyCmt := make([]*pbc.Element, counter)
-	for i := 0; i < counter; i++ {
-		oldPolyCmt[i] = dpc.NewG1()
-		midPolyCmt[i] = dpc.NewG1()
-		newPolyCmt[i] = dpc.NewG1()
-	}
-
-	zeroShareCmt := dc.NewG1()
-	zeroPolyCmt := dpc.NewG1()
-	zeroPolyWit := dpc.NewG1()
-
-	zerosumShareCmt := make([]*pbc.Element, counter)
-	zerosumPolyCmt := make([]*pbc.Element, counter)
-	zerosumPolyWit := make([]*pbc.Element, counter)
-
-	for i := 0; i < counter; i++ {
-		zerosumShareCmt[i] = dc.NewG1()
-		zerosumPolyCmt[i] = dpc.NewG1()
-		zerosumPolyWit[i] = dpc.NewG1()
-	}
-
-	totMsgSize := 0
-	s1 := time.Now()
-	e1 := time.Now()
-	s2 := time.Now()
-	e2 := time.Now()
-	s3 := time.Now()
-	e3 := time.Now()
-
-	clientConn := make([]*grpc.ClientConn, counter)
-	nodeService := make([]pb.NodeServiceClient, counter)
-
-	iniflag := true
-	log.Printf("Node %d new done", label)
-	return Node{
-		metadataPath:    logPath,
-		ipAddress:       ipList,
-		ipOfBoard:       bip,
-		degree:          degree,
-		label:           label,
-		counter:         counter,
-		randState:       randState,
-		dc:              &dc,
-		dpc:             &dpc,
-		p:               p,
-		lambda:          lambda,
-		_0Shares:        _0Shares,
-		_0ShareCount:    &_0ShareCount,
-		_0ShareSum:      _0ShareSum,
-		secretShares:    secretShares,
-		recPoint:        recPoint,
-		recCounter:      &recCounter,
-		recPoly:         &recPoly,
-		proPoly:         &proPoly,
-		newPoly:         &newPoly,
-		shareCnt:        &shareCnt,
-		oldPolyCmt:      oldPolyCmt,
-		midPolyCmt:      midPolyCmt,
-		newPolyCmt:      newPolyCmt,
-		zeroShareCmt:    zeroShareCmt,
-		zeroPolyCmt:     zeroPolyCmt,
-		zeroPolyWit:     zeroPolyWit,
-		zerosumPolyCmt:  zerosumShareCmt,
-		zerosumPolyWit:  zerosumPolyWit,
-		zerosumShareCmt: zerosumShareCmt,
-		totMsgSize:      &totMsgSize,
-		s1:              &s1,
-		e1:              &e1,
-		s2:              &s2,
-		e2:              &e2,
-		s3:              &s3,
-		e3:              &e3,
-		clientConn:      clientConn,
-		nodeService:     nodeService,
-		iniflag:         &iniflag,
-	}, nil
-
-}
 
 //第三部分的分享， 是全份额重建
 //通过新的多项式B（x，i），对包括自己的每一个node发送B（i，i）
@@ -852,4 +700,165 @@ func (node *Node) Phase3Readboard() {
 		node._0Shares[i].SetInt64(0)
 	}
 	node._0ShareSum.SetInt64(0)
+}
+
+func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, error) {
+	if label < 0 {
+		return Node{}, errors.New("Label must be a non-negative number!")
+	}
+	file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
+	defer file.Close()
+	ipRaw := ReadIpList(logPath)[0 : counter+1]
+	bip := ipRaw[0]
+	ipList := ipRaw[1 : counter+1]
+	if counter < 0 {
+		return Node{}, errors.New("Counter must be a non-negative number!")
+	}
+	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
+	//fixedRandState := rand.New(rand.NewSource(int64(3)))
+	dc := commitment.DLCommit{}
+	dc.SetupFix()
+	dpc := commitment.DLPolyCommit{}
+	dpc.SetupFix(counter)
+
+	p := gmp.NewInt(0)
+	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
+	lambda := make([]*gmp.Int, counter)
+	// Calculate Lagrange Interpolation
+	denominator := poly.NewConstant(1)
+	tmp, _ := poly.NewPoly(1)
+	tmp.SetCoeffWithInt(1, 1)
+	for i := 0; i < counter; i++ {
+		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
+		denominator.MulSelf(tmp)
+	}
+	for i := 0; i < counter; i++ {
+		lambda[i] = gmp.NewInt(0)
+		deno, _ := poly.NewPoly(0)
+		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
+
+		deno.Divide(denominator, tmp)
+		deno.EvalMod(gmp.NewInt(0), p, lambda[i])
+		inter := gmp.NewInt(0)
+		deno.EvalMod(gmp.NewInt(int64(i+1)), p, inter)
+		interInv := gmp.NewInt(0)
+		interInv.ModInverse(inter, p)
+		lambda[i].Mul(lambda[i], interInv)
+		lambda[i].Mod(lambda[i], p)
+	}
+
+	_0Shares := make([]*gmp.Int, counter)
+	for i := 0; i < counter; i++ {
+		_0Shares[i] = gmp.NewInt(0)
+	}
+	_0ShareCount := 0
+	_0ShareSum := gmp.NewInt(0)
+
+	recPoint := make([]*point.Point, counter)
+	recCounter := 0
+
+	secretShares := make([]*point.Point, counter)
+	//tmpPoly, err := poly.NewRand(degree, fixedRandState, p)
+	tmpPoly, err := poly.NewPoly(len(coeff) - 1)
+	tmpPoly.SetbyCoeff(coeff)
+	//fmt.Println(tmpPoly,coeff)
+
+	for i := 0; i < counter; i++ {
+		if err != nil {
+			panic("Error initializing random tmpPoly")
+		}
+		x := int32(i + 1)
+		y := gmp.NewInt(0)
+		w := dpc.NewG1()
+		tmpPoly.EvalMod(gmp.NewInt(int64(x)), p, y)
+		dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
+
+		//fmt.Println(tmpPoly,x,"witness is ",w)
+		secretShares[i] = point.NewPoint(gmp.NewInt(int64(label)), y, w)
+	}
+
+	proPoly, _ := poly.NewPoly(degree)
+	recPoly, _ := poly.NewPoly(degree)
+	newPoly, _ := poly.NewPoly(degree)
+	shareCnt := 0
+
+	oldPolyCmt := make([]*pbc.Element, counter)
+	midPolyCmt := make([]*pbc.Element, counter)
+	newPolyCmt := make([]*pbc.Element, counter)
+	for i := 0; i < counter; i++ {
+		oldPolyCmt[i] = dpc.NewG1()
+		midPolyCmt[i] = dpc.NewG1()
+		newPolyCmt[i] = dpc.NewG1()
+	}
+
+	zeroShareCmt := dc.NewG1()
+	zeroPolyCmt := dpc.NewG1()
+	zeroPolyWit := dpc.NewG1()
+
+	zerosumShareCmt := make([]*pbc.Element, counter)
+	zerosumPolyCmt := make([]*pbc.Element, counter)
+	zerosumPolyWit := make([]*pbc.Element, counter)
+
+	for i := 0; i < counter; i++ {
+		zerosumShareCmt[i] = dc.NewG1()
+		zerosumPolyCmt[i] = dpc.NewG1()
+		zerosumPolyWit[i] = dpc.NewG1()
+	}
+
+	totMsgSize := 0
+	s1 := time.Now()
+	e1 := time.Now()
+	s2 := time.Now()
+	e2 := time.Now()
+	s3 := time.Now()
+	e3 := time.Now()
+
+	clientConn := make([]*grpc.ClientConn, counter)
+	nodeService := make([]pb.NodeServiceClient, counter)
+
+	iniflag := true
+	log.Printf("Node %d new done", label)
+	return Node{
+		metadataPath:    logPath,
+		ipAddress:       ipList,
+		ipOfBoard:       bip,
+		degree:          degree,
+		label:           label,
+		counter:         counter,
+		randState:       randState,
+		dc:              &dc,
+		dpc:             &dpc,
+		p:               p,
+		lambda:          lambda,
+		_0Shares:        _0Shares,
+		_0ShareCount:    &_0ShareCount,
+		_0ShareSum:      _0ShareSum,
+		secretShares:    secretShares,
+		recPoint:        recPoint,
+		recCounter:      &recCounter,
+		recPoly:         &recPoly,
+		proPoly:         &proPoly,
+		newPoly:         &newPoly,
+		shareCnt:        &shareCnt,
+		oldPolyCmt:      oldPolyCmt,
+		midPolyCmt:      midPolyCmt,
+		newPolyCmt:      newPolyCmt,
+		zeroShareCmt:    zeroShareCmt,
+		zeroPolyCmt:     zeroPolyCmt,
+		zeroPolyWit:     zeroPolyWit,
+		zerosumPolyCmt:  zerosumShareCmt,
+		zerosumPolyWit:  zerosumPolyWit,
+		zerosumShareCmt: zerosumShareCmt,
+		totMsgSize:      &totMsgSize,
+		s1:              &s1,
+		e1:              &e1,
+		s2:              &s2,
+		e2:              &e2,
+		s3:              &s3,
+		e3:              &e3,
+		clientConn:      clientConn,
+		nodeService:     nodeService,
+		iniflag:         &iniflag,
+	}, nil
+
 }

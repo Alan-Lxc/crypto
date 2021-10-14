@@ -25,10 +25,7 @@ func NewPoly(degree int) (Poly, error) {
 	return Poly{coeff}, nil
 }
 func (poly Poly) SetbyCoeff(coeff []*gmp.Int) {
-	degree := poly.GetDegree()
-	if degree > len(coeff) {
-		degree = len(coeff)
-	}
+	degree := len(coeff) - 1
 	for i := 0; i <= degree; i++ {
 		poly.SetCoeffWithGmp(i, coeff[i])
 	}

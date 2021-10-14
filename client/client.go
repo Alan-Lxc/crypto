@@ -135,7 +135,7 @@ func (c *client) InitandConnect(s0 string) {
 	//time.Sleep(6)
 	c.control.StartHandoff()
 }
-func newBoard(degree, ccounter int, metadataPath string, polyyy []poly.Poly) {
+func newBoard(degree int, ccounter int, metadataPath string, polyyy []poly.Poly) {
 	bb, _ := bulletboard.New(degree, ccounter, metadataPath, polyyy)
 	bb.Serve(false)
 }
@@ -146,7 +146,7 @@ func main() {
 	//s0 := flag.String("secret","1234567899876543210","Enter the secret")
 	////aws := flag.Bool("aws", false, "if test on real aws")
 	//flag.Parse()
-	client1, err := newClient(2, 5, "/home/kzl/Desktop/test/crypto_contest/src/metadata", "192.168.0.1")
+	client1, err := newClient(2, 5, "/home/gary/GolandProjects/crypto_contest/src/metadata", "192.168.0.1")
 	if err != nil {
 		log.Fatalf("Can't create a new client:%v", err)
 	}
