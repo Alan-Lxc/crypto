@@ -282,12 +282,12 @@ func (node *Node) ClientReadPhase1() {
 	x := make([]*gmp.Int, 0)
 	y := make([]*gmp.Int, 0)
 	polyCmt := node.dpc.NewG1()
-	polyCmt.Set(node.oldPolyCmt[node.label-1])
 	for i := 0; i <= node.degree; i++ {
 		p := node.recPoint[i]
 		x = append(x, p.X)
 		y = append(y, p.Y)
-		if !node.dpc.VerifyEval(polyCmt, p.X, p.Y, p.PolyWit) {
+		polyCmt.Set(node.oldPolyCmt[(p.X).Int32()-1])
+		if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(node.label)), p.Y, p.PolyWit) {
 			panic("Reconstruction Verification failed")
 		}
 	}
@@ -633,13 +633,13 @@ func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, er
 		if err != nil {
 			panic("Error initializing random tmpPoly")
 		}
-		x := int32(label)
+		x := int32(i + 1)
 		y := gmp.NewInt(0)
 		w := dpc.NewG1()
 		tmpPoly.EvalMod(gmp.NewInt(int64(x)), p, y)
 		dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
 
-		secretShares[i] = point.NewPoint(gmp.NewInt(int64(x)), y, w)
+		secretShares[i] = point.NewPoint(gmp.NewInt(int64(label)), y, w)
 	}
 
 	proPoly, _ := poly.NewPoly(degree)
@@ -767,7 +767,7 @@ func (node *Node) ClientSharePhase3() {
 			log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
 			msg := &pb.PointMsg{
 				Index:   int32(node.label),
-				X:       gmp.NewInt(int64(i + 1)).Bytes(),
+				X:       gmp.NewInt(int64(node.label)).Bytes(),
 				Y:       value.Bytes(),
 				Witness: witness.CompressedBytes(),
 			}
