@@ -103,7 +103,7 @@ type Node struct {
 
 	// Metrics
 	totMsgSize   *int
-	metadataPath string
+	metadataPath string "github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	// Initialize Flag
 	iniflag *bool
 	s1      *time.Time
@@ -135,7 +135,7 @@ func (node *Node) GetLabel() int {
 //	for i := 0; i < node.counter; i++ {
 //
 //		if i != node.label-1 {
-//			node.Client[i] = ptrs[i]
+//			node.Client[i] ="github.com/Alan-Lxc/crypto_contest/src/basic/poly" ptrs[i]
 //		}
 //	}
 //}
@@ -168,6 +168,7 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error)
 		Y:       y,
 		PolyWit: witness,
 	}
+	fmt.Println(p.X, node.label, p.Y, p.PolyWit)
 	//Receive the point and store
 	node.mutex.Lock()
 	node.recPoint[*node.recCounter] = &p
@@ -214,9 +215,10 @@ func (node *Node) SendMsgToNode() {
 				Index:   int32(node.label),
 				X:       node.secretShares[i].X.Bytes(),
 				Y:       node.secretShares[i].Y.Bytes(),
-				Witness: node.secretShares[i].PolyWit.Bytes(),
+				Witness: node.secretShares[i].PolyWit.CompressedBytes(),
 				//Witness: nil,
 			}
+			fmt.Println(node.secretShares[i].X, i+1, node.secretShares[i].Y, node.secretShares[i].PolyWit)
 			wg.Add(1)
 			go func(i int, msg *pb.PointMsg) {
 				defer wg.Done()
@@ -287,7 +289,7 @@ func (node *Node) ClientReadPhase1() {
 		p := node.recPoint[i]
 		x = append(x, p.X)
 		y = append(y, p.Y)
-		polyCmt.Set(node.oldPolyCmt[(p.X).Int32()-1])
+		polyCmt.Set(node.oldPolyCmt[p.X.Int32()-1])
 		if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(node.label)), p.Y, p.PolyWit) {
 			fmt.Println(node.label, p.X, "FAIL", polyCmt, p.Y, p.PolyWit)
 			panic("Reconstruction Verification failed")
@@ -703,7 +705,7 @@ func (node *Node) Phase3Readboard() {
 	node._0ShareSum.SetInt64(0)
 }
 
-func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, error) {
+func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (Node, error) {
 	if label < 0 {
 		return Node{}, errors.New("Label must be a non-negative number!")
 	}
@@ -776,6 +778,7 @@ func New(degree, label, counter int, logPath string, coeff []*gmp.Int) (Node, er
 
 		//fmt.Println(tmpPoly,x,"witness is ",w)
 		secretShares[i] = point.NewPoint(gmp.NewInt(int64(label)), y, w)
+		//fmt.Println(i+1,label,y,w)
 	}
 
 	proPoly, _ := poly.NewPoly(degree)

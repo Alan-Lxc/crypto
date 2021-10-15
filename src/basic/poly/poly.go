@@ -199,8 +199,8 @@ func (poly *Poly) Sub(poly1 Poly, poly2 Poly) {
 	} else {
 		poly.ResetTo(poly2)
 	}
-
-	for i := 0; i < min(deg1, deg2)+1; i++ {
+	//fmt.Println("deg-1")
+	for i := 0; i < min(deg1, deg2); i++ {
 		poly.Coeffs[i].Sub(poly1.Coeffs[i], poly2.Coeffs[i])
 	}
 
@@ -321,7 +321,9 @@ func (poly *Poly) Divide(op1 Poly, op2 Poly) error {
 			numerator.Coeffs[i+j-degree2].Sub(numerator.Coeffs[i+j-degree2], tmp)
 		}
 	}
-
+	p := gmp.NewInt(0)
+	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
+	fmt.Println("coeffs0 is ", gmp.NewInt(0).Mod(numerator.Coeffs[0], p))
 	poly.Coeffs = poly.Coeffs[:poly.GetDegree()+1]
 	return nil
 }
