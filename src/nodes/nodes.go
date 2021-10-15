@@ -354,10 +354,10 @@ func (node *Node) ClientSharePhase2() {
 		node.dc.Commit(node.zeroShareCmt, node._0ShareSum)
 		polyTmp, _ := poly.NewRand(node.degree, node.randState, node.p)
 		polyTmp.SetCoeffWithInt(0, 0)
-		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
 		node.dpc.Commit(node.zeroPolyCmt, polyTmp)
 		node.dpc.CreateWitness(node.zeroPolyWit, polyTmp, gmp.NewInt(0))
 
+		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
 		if err != nil {
 			return
 		}
@@ -412,10 +412,10 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 		node.dc.Commit(node.zeroShareCmt, node._0ShareSum)
 		polyTmp, _ := poly.NewRand(node.degree, node.randState, node.p)
 		polyTmp.SetCoeffWithInt(0, 0)
-		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
 		node.dpc.Commit(node.zeroPolyCmt, polyTmp)
 		node.dpc.CreateWitness(node.zeroPolyWit, polyTmp, gmp.NewInt(0))
 
+		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
 		if err != nil {
 			return &pb.ResponseMsg{}, nil
 		}
