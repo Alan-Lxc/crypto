@@ -483,7 +483,7 @@ func (node *Node) ClientReadPhase2() {
 	}
 	flag := true
 	for i := 0; i < node.counter; i++ {
-		if !node.dpc.VerifyEval(node.zerosumPolyCmt[i], gmp.NewInt(0), node._0ShareSum, node.zerosumPolyWit[i]) {
+		if !node.dpc.VerifyEval(node.zerosumPolyCmt[i], gmp.NewInt(0), gmp.NewInt(0), node.zerosumPolyWit[i]) {
 			flag = false
 		}
 	}
