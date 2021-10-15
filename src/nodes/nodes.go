@@ -344,23 +344,25 @@ func (node *Node) ClientSharePhase2() {
 	node._0Shares[node.counter-1].Mul(node._0Shares[node.counter-1], inter)
 	node._0Shares[node.counter-1].Mod(node._0Shares[node.counter-1], node.p)
 	//
-	//exponentSum := node.dc.NewG1()
-	//exponentSum.Set1()
-	////fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
-	//for i := 0; i < node.counter; i++ {
-	//	lambda := big.NewInt(0)
-	//	lambda.SetString(node.lambda[i].String(), 10)
-	//	//lambda.SetString(node.lambda[node.counter-1].String(), 10)
-	//	tmp := node.dc.NewG1()
-	//	node.dc.Commit(node.zeroShareCmt, node._0Shares[i])
-	//	tmp.PowBig(node.zeroShareCmt, lambda)
-	//	// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
-	//	exponentSum.Mul(exponentSum, tmp)
-	//}
-	//fmt.Println(exponentSum)
-	//if !exponentSum.Is1() {
-	//	panic("Proactivization Verification 1 failed")
-	//}
+	exponentSum := node.dc.NewG1()
+	exponentSum.Set1()
+	Y := make([]*gmp.Int, node.counter)
+	Y[0] = gmp.NewInt(int64(21))
+	Y[1] = gmp.NewInt(int64(22))
+	Y[2] = gmp.NewInt(int64(20))
+	Y[3] = gmp.NewInt(int64(20))
+	Y[4] = gmp.NewInt(int64(15))
+	//fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
+	for i := 0; i < node.counter; i++ {
+		lambda := big.NewInt(0)
+		lambda.SetString(node.lambda[i].String(), 10)
+		//lambda.SetString(node.lambda[node.counter-1].String(), 10)
+		tmp := node.dc.NewG1()
+		node.dc.Commit(node.zeroShareCmt, Y[i])
+		tmp.PowBig(node.zeroShareCmt, lambda)
+		// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
+		exponentSum.Mul(exponentSum, tmp)
+	}
 	//X:=make([]*gmp.Int,node.counter)
 	//for i := 0; i < node.counter; i++ {
 	//	X[i]=gmp.NewInt(int64(i+1))
@@ -391,7 +393,7 @@ func (node *Node) ClientSharePhase2() {
 		*node._0ShareCount = 0
 		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
-		fmt.Println(node.label,"sum is  ",node._0ShareSum)
+		fmt.Println(node.label, "sum is  ", node._0ShareSum)
 
 		//get a rand poly_tmp with 0-share
 		//rand a poly_tmp polynomial
@@ -454,7 +456,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 		*node._0ShareCount = 0
 		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
-		fmt.Println(node.label,"sum is  ",node._0ShareSum)
+		fmt.Println(node.label, "sum is  ", node._0ShareSum)
 
 		//get a rand poly_tmp with 0-share
 		//rand a poly_tmp polynomial
@@ -474,25 +476,25 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 func (node *Node) Phase2Write() {
 	log.Printf("[node %d] write bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Commitment and Witness from BulletinBoard
-	msg := &pb.CommitMsg{	//
-	//exponentSum := node.dc.NewG1()
-	//exponentSum.Set1()
-	////fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
-	//for i := 0; i < node.counter; i++ {
-	//	lambda := big.NewInt(0)
-	//	lambda.SetString(node.lambda[i].String(), 10)
-	//	//lambda.SetString(node.lambda[node.counter-1].String(), 10)
-	//	tmp := node.dc.NewG1()
-	//	node.dc.Commit(node.zeroShareCmt, node._0Shares[i])
-	//	tmp.PowBig(node.zeroShareCmt, lambda)
-	//	// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
-	//	exponentSum.Mul(exponentSum, tmp)
-	//}
-	//fmt.Println(exponentSum)
-	//if !exponentSum.Is1() {
-	//	panic("Proactivization Verification 1 failed")
-	//}
+	defer cancel()        // Commitment and Witness from BulletinBoard
+	msg := &pb.CommitMsg{ //
+		//exponentSum := node.dc.NewG1()
+		//exponentSum.Set1()
+		////fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
+		//for i := 0; i < node.counter; i++ {
+		//	lambda := big.NewInt(0)
+		//	lambda.SetString(node.lambda[i].String(), 10)
+		//	//lambda.SetString(node.lambda[node.counter-1].String(), 10)
+		//	tmp := node.dc.NewG1()
+		//	node.dc.Commit(node.zeroShareCmt, node._0Shares[i])
+		//	tmp.PowBig(node.zeroShareCmt, lambda)
+		//	// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
+		//	exponentSum.Mul(exponentSum, tmp)
+		//}
+		//fmt.Println(exponentSum)
+		//if !exponentSum.Is1() {
+		//	panic("Proactivization Verification 1 failed")
+		//}
 		Index:       int32(node.label),
 		ShareCommit: node.zeroShareCmt.CompressedBytes(),
 		PolyCommit:  node.zeroPolyCmt.CompressedBytes(),
@@ -502,12 +504,12 @@ func (node *Node) Phase2Write() {
 	node.boardService.WritePhase2(ctx, msg)
 }
 func (node *Node) Phase2Verify(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
-	log.Printf("[Node %d] start verification in phase 2",node.label)
+	log.Printf("[Node %d] start verification in phase 2", node.label)
 	node.ClientReadPhase2()
 	return &pb.ResponseMsg{}, nil
-}//if !exponentSum.Is1() {
-	//	panic("Proactivization Verification 1 failed")
-	//}
+} //if !exponentSum.Is1() {
+//	panic("Proactivization Verification 1 failed")
+//}
 func (node *Node) ClientReadPhase2() {
 	log.Printf("[node %d] read bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -732,23 +734,7 @@ func (node *Node) Phase3Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.Res
 	node.Phase3Readboard()
 	return &pb.ResponseMsg{}, nil
 }
-	exponentSum := node.dc.NewG1()
-	exponentSum.Set1()
-	//fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
-	for i := 0; i < node.counter; i++ {
-		lambda := big.NewInt(0)
-		lambda.SetString(node.lambda[i].String(), 10)
-		//lambda.SetString(node.lambda[node.counter-1].String(), 10)
-		tmp := node.dc.NewG1()
-		node.dc.Commit(node.zeroShareCmt, node._0Shares[i])
-		tmp.PowBig(node.zeroShareCmt, lambda)
-		// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
-		exponentSum.Mul(exponentSum, tmp)
-	}
-	fmt.Println(exponentSum)
-	if !exponentSum.Is1() {
-		panic("Proactivization Verification 1 failed")
-	}
+
 func (node *Node) Phase3Readboard() {
 	log.Printf("[node %d] read bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
