@@ -111,7 +111,7 @@ func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardSe
 }
 
 func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
-	//*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
+	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	log.Print("[bulletinboard] is being written in phase 3")
 	index := msg.GetIndex()
 	bb.reconstructionContent[index-1] = msg

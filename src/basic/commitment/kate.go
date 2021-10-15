@@ -121,7 +121,7 @@ func (c *DLPolyCommit) CreateWitness(res *Element, polynomial poly.Poly, x0 *Int
 
 	// poly_t = polynomial(x)-polynomial(x0)
 	poly_t.GetPtrtoConstant().Sub(poly_t.GetPtrtoConstant(), tmp)
-	fmt.Println("did sub")
+	//fmt.Println("did sub")
 	// quot == poly_t / (x - x0)
 	quot := poly.NewEmpty()
 
@@ -143,15 +143,15 @@ func (c *DLPolyCommit) CreateWitness(res *Element, polynomial poly.Poly, x0 *Int
 // VerifyEval checks the correctness of w, returns true/false
 func (c *DLPolyCommit) VerifyEval(C *Element, x *Int, polyX *Int, w *Element) bool {
 	//test
-	d1 := c.pairing.NewGT()
-	d2 := c.pairing.NewGT()
-	d1.Pair(c.pk[0].Source(), c.pk[0].Source())
-	d2.Pair(c.pk[0].Source(), c.pk[0].Source())
-	dd := big.NewInt(0)
-	dd.SetString(c.p.String(), 10)
-	d1.PowBig(d1, dd)
-	d2.PowBig(d2, big.NewInt(0).Mul(dd, dd))
-	fmt.Println("?????????????????", d1.Equals(d2))
+	//d1 := c.pairing.NewGT()
+	//d2 := c.pairing.NewGT()
+	//d1.Pair(c.pk[0].Source(), c.pk[0].Source())
+	//d2.Pair(c.pk[0].Source(), c.pk[0].Source())
+	//dd := big.NewInt(0)
+	//dd.SetString(c.p.String(), 10)
+	//d1.PowBig(d1, dd)
+	//d2.PowBig(d2, big.NewInt(0).Mul(dd, dd))
+	//fmt.Println("?????????????????", d1.Equals(d2))
 
 	e1 := c.pairing.NewGT()
 	e2 := c.pairing.NewGT()

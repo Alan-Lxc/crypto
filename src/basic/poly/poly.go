@@ -323,7 +323,7 @@ func (poly *Poly) Divide(op1 Poly, op2 Poly) error {
 	}
 	p := gmp.NewInt(0)
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-	fmt.Println("coeffs0 is ", gmp.NewInt(0).Mod(numerator.Coeffs[0], p))
+	//fmt.Println("coeffs0 is ", gmp.NewInt(0).Mod(numerator.Coeffs[0], p))
 	poly.Coeffs = poly.Coeffs[:poly.GetDegree()+1]
 	return nil
 }

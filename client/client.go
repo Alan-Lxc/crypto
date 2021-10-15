@@ -84,7 +84,7 @@ func (c *client) InitandConnect(s0 string) {
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 	tmp := gmp.NewInt(0)
 	tmp.SetString(s0, 10)
-	polyy, _ := poly.NewRand(counter-1, fixedRandState, p)
+	polyy, _ := poly.NewRand(degree, fixedRandState, p)
 	polyy.SetCoeffWithGmp(0, tmp)
 	polyyy := make([]poly.Poly, counter)
 	for i := 0; i < counter; i++ {
@@ -92,7 +92,7 @@ func (c *client) InitandConnect(s0 string) {
 		y := gmp.NewInt(0)
 		polyy.EvalMod(gmp.NewInt(int64(x)), p, y)
 
-		polyyy[i], _ = poly.NewRand(degree, fixedRandState, p)
+		polyyy[i], _ = poly.NewRand(counter-1, fixedRandState, p)
 		polyyy[i].SetCoeffWithGmp(0, y)
 	}
 	//nn := make([]nodes.Node, counter)

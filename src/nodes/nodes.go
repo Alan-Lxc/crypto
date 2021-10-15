@@ -168,7 +168,7 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error)
 		Y:       y,
 		PolyWit: witness,
 	}
-	fmt.Println(p.X, node.label, p.Y, p.PolyWit)
+	//fmt.Println(p.X, node.label, p.Y, p.PolyWit)
 	//Receive the point and store
 	node.mutex.Lock()
 	node.recPoint[*node.recCounter] = &p
@@ -218,7 +218,7 @@ func (node *Node) SendMsgToNode() {
 				Witness: node.secretShares[i].PolyWit.CompressedBytes(),
 				//Witness: nil,
 			}
-			fmt.Println(node.secretShares[i].X, i+1, node.secretShares[i].Y, node.secretShares[i].PolyWit)
+			//fmt.Println(node.secretShares[i].X, i+1, node.secretShares[i].Y, node.secretShares[i].PolyWit)
 			wg.Add(1)
 			go func(i int, msg *pb.PointMsg) {
 				defer wg.Done()
@@ -291,11 +291,9 @@ func (node *Node) ClientReadPhase1() {
 		y = append(y, p.Y)
 		polyCmt.Set(node.oldPolyCmt[p.X.Int32()-1])
 		if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(node.label)), p.Y, p.PolyWit) {
-			fmt.Println(node.label, p.X, "FAIL", polyCmt, p.Y, p.PolyWit)
+			//fmt.Println(node.label, p.X, "FAIL", polyCmt, p.Y, p.PolyWit)
 			panic("Reconstruction Verification failed")
 			//
-		} else {
-			fmt.Println(node.label, p.X, "okk")
 		}
 
 	}
@@ -329,29 +327,76 @@ func (node *Node) ClientReadPhase1() {
 //phase2
 func (node *Node) ClientSharePhase2() {
 	// Generate Random Numbers
+	//fmt.Println("initial 0 is ",node._0Shares[node.counter-1])
+	//for i := 0; i < node.counter; i++ {
+	//	fmt.Println("lambda ",i+1 ,node.lambda[i])
+	//}
 	for i := 0; i < node.counter-1; i++ {
 		node._0Shares[i].Rand(node.randState, gmp.NewInt(10))
-		node._0Shares[node.counter-1].Sub(node._0Shares[node.counter-1], gmp.NewInt(0).Mul(node._0Shares[i], node.lambda[i]))
+		inter := gmp.NewInt(0)
+		inter.Mul(node._0Shares[i], node.lambda[i])
+		node._0Shares[node.counter-1].Sub(node._0Shares[node.counter-1], inter)
 	}
 	//0-share means the S
 	node._0Shares[node.counter-1].Mod(node._0Shares[node.counter-1], node.p)
-	node._0Shares[node.counter-1].Mul(node._0Shares[node.counter-1], gmp.NewInt(0).ModInverse(node.lambda[node.counter-1], node.p))
+	inter := gmp.NewInt(0)
+	inter.ModInverse(node.lambda[node.counter-1], node.p)
+	node._0Shares[node.counter-1].Mul(node._0Shares[node.counter-1], inter)
 	node._0Shares[node.counter-1].Mod(node._0Shares[node.counter-1], node.p)
+	//
+	//exponentSum := node.dc.NewG1()
+	//exponentSum.Set1()
+	////fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
+	//for i := 0; i < node.counter; i++ {
+	//	lambda := big.NewInt(0)
+	//	lambda.SetString(node.lambda[i].String(), 10)
+	//	//lambda.SetString(node.lambda[node.counter-1].String(), 10)
+	//	tmp := node.dc.NewG1()
+	//	node.dc.Commit(node.zeroShareCmt, node._0Shares[i])
+	//	tmp.PowBig(node.zeroShareCmt, lambda)
+	//	// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
+	//	exponentSum.Mul(exponentSum, tmp)
+	//}
+	//fmt.Println(exponentSum)
+	//if !exponentSum.Is1() {
+	//	panic("Proactivization Verification 1 failed")
+	//}
+	//X:=make([]*gmp.Int,node.counter)
+	//for i := 0; i < node.counter; i++ {
+	//	X[i]=gmp.NewInt(int64(i+1))
+	//}
+	//Y:=make([]*gmp.Int,node.counter)
+	//Y[0]=gmp.NewInt(int64(21))
+	//Y[1]=gmp.NewInt(int64(22))
+	//Y[2]=gmp.NewInt(int64(20))
+	//Y[3]=gmp.NewInt(int64(20))
+	//Y[4]=gmp.NewInt(int64(15))
+	//tttmp ,_ :=interpolation.LagrangeInterpolate(node.counter-1,X,Y,node.p)
+	//
+	//fmt.Println("0 is ",tttmp.GetCoeffConstant())
+	//for i := 0; i < node.counter; i++ {
+	//	tmpppp :=gmp.NewInt(int64(0))
+	//	tttmp.EvalMod(gmp.NewInt(int64(i+1)),node.p,tmpppp)
+	//	fmt.Println(node.label,tmpppp.Mod(tmpppp.Sub(tmpppp,Y[i]),node.p))
+	//}
 	//to get sum for \sum_counter
 	node.mutex.Lock()
 	node._0ShareSum.Add(node._0ShareSum, node._0Shares[node.label-1])
 	*node._0ShareCount = *node._0ShareCount + 1
-	_0shareSumFinish := *node._0ShareCount == node.counter
+	_0shareSumFinish := (*node._0ShareCount == node.counter)
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
 		log.Printf("%d has finish _0ShareSum", node.label)
 		*node._0ShareCount = 0
+		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
+		fmt.Println(node.label,"sum is  ",node._0ShareSum)
 
 		//get a rand poly_tmp with 0-share
 		//rand a poly_tmp polynomial
 		node.dc.Commit(node.zeroShareCmt, node._0ShareSum)
+		//fmt.Println(node.dc.Verify(node.zeroShareCmt, node._0ShareSum))
 		polyTmp, _ := poly.NewRand(node.degree, node.randState, node.p)
 		polyTmp.SetCoeffWithInt(0, 0)
 		node.dpc.Commit(node.zeroPolyCmt, polyTmp)
@@ -361,7 +406,7 @@ func (node *Node) ClientSharePhase2() {
 		if err != nil {
 			return
 		}
-		node.proPoly.ResetTo(polyTmp.Copy())
+		node.proPoly.ResetTo(polyTmp.DeepCopy())
 
 		node.Phase2Write()
 	}
@@ -374,6 +419,7 @@ func (node *Node) ClientSharePhase2() {
 				Index: int32(node.label),
 				Share: node._0Shares[i].Bytes(),
 			}
+			//fmt.Println(node.label,i+1,node._0Shares[i],"send")
 			wg.Add(1)
 			go func(i int, msg *pb.ZeroMsg) {
 				defer wg.Done()
@@ -388,7 +434,6 @@ func (node *Node) ClientSharePhase2() {
 	}
 	wg.Wait()
 }
-
 func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.ResponseMsg, error) {
 	*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 	index := msg.GetIndex()
@@ -396,17 +441,21 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 	inter := gmp.NewInt(0)
 	inter.SetBytes(msg.GetShare())
 
+	//fmt.Println(index,node.label,inter,"recive")
 	//to get sum for \sum_counter
 	node.mutex.Lock()
 	node._0ShareSum.Add(node._0ShareSum, inter)
 	*node._0ShareCount = *node._0ShareCount + 1
-	_0shareSumFinish := *node._0ShareCount == node.counter
+	_0shareSumFinish := (*node._0ShareCount == node.counter)
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
 		log.Printf("%d has finish _0ShareSum", node.label)
 		*node._0ShareCount = 0
+		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
+		fmt.Println(node.label,"sum is  ",node._0ShareSum)
+
 		//get a rand poly_tmp with 0-share
 		//rand a poly_tmp polynomial
 		node.dc.Commit(node.zeroShareCmt, node._0ShareSum)
@@ -415,33 +464,50 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 		node.dpc.Commit(node.zeroPolyCmt, polyTmp)
 		node.dpc.CreateWitness(node.zeroPolyWit, polyTmp, gmp.NewInt(0))
 
-		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
-		if err != nil {
-			return &pb.ResponseMsg{}, nil
-		}
-		node.proPoly.ResetTo(polyTmp.Copy())
+		polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
+		node.proPoly.ResetTo(polyTmp.DeepCopy())
 
 		node.Phase2Write()
 	}
 	return &pb.ResponseMsg{}, nil
 }
 func (node *Node) Phase2Write() {
-	//log.printf("
+	log.Printf("[node %d] write bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Commitment and Witness from BulletinBoard
-	msg := &pb.CommitMsg{
+	msg := &pb.CommitMsg{	//
+	//exponentSum := node.dc.NewG1()
+	//exponentSum.Set1()
+	////fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
+	//for i := 0; i < node.counter; i++ {
+	//	lambda := big.NewInt(0)
+	//	lambda.SetString(node.lambda[i].String(), 10)
+	//	//lambda.SetString(node.lambda[node.counter-1].String(), 10)
+	//	tmp := node.dc.NewG1()
+	//	node.dc.Commit(node.zeroShareCmt, node._0Shares[i])
+	//	tmp.PowBig(node.zeroShareCmt, lambda)
+	//	// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
+	//	exponentSum.Mul(exponentSum, tmp)
+	//}
+	//fmt.Println(exponentSum)
+	//if !exponentSum.Is1() {
+	//	panic("Proactivization Verification 1 failed")
+	//}
 		Index:       int32(node.label),
 		ShareCommit: node.zeroShareCmt.CompressedBytes(),
 		PolyCommit:  node.zeroPolyCmt.CompressedBytes(),
 		ZeroWitness: node.zeroPolyWit.CompressedBytes(),
 	}
+	//fmt.Println("t1 ",int32(node.label),node.zeroShareCmt,node.zeroPolyCmt,node.zeroPolyWit)
 	node.boardService.WritePhase2(ctx, msg)
 }
 func (node *Node) Phase2Verify(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
-	log.Printf("[Node %d] start verification in phase 2")
+	log.Printf("[Node %d] start verification in phase 2",node.label)
 	node.ClientReadPhase2()
 	return &pb.ResponseMsg{}, nil
-}
+}//if !exponentSum.Is1() {
+	//	panic("Proactivization Verification 1 failed")
+	//}
 func (node *Node) ClientReadPhase2() {
 	log.Printf("[node %d] read bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -460,6 +526,7 @@ func (node *Node) ClientReadPhase2() {
 		sharecmt := msg.GetShareCommit()
 		polycmt := msg.GetPolyCommit()
 		zerowitness := msg.GetZeroWitness()
+		//fmt.Println("t2 ",index,node.dpc.NewG1().SetCompressedBytes(sharecmt),node.dpc.NewG1().SetCompressedBytes(polycmt),node.dpc.NewG1().SetCompressedBytes(zerowitness),node.label)
 		node.zerosumShareCmt[index-1].SetCompressedBytes(sharecmt)
 		inter := node.dpc.NewG1()
 		inter.SetString(node.zerosumShareCmt[index-1].String(), 10)
@@ -469,18 +536,20 @@ func (node *Node) ClientReadPhase2() {
 	}
 	exponentSum := node.dc.NewG1()
 	exponentSum.Set1()
+	//fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
 	for i := 0; i < node.counter; i++ {
 		lambda := big.NewInt(0)
 		lambda.SetString(node.lambda[i].String(), 10)
+		//lambda.SetString(node.lambda[node.counter-1].String(), 10)
 		tmp := node.dc.NewG1()
 		tmp.PowBig(node.zerosumShareCmt[i], lambda)
 		// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
 		exponentSum.Mul(exponentSum, tmp)
 	}
 	log.Printf("%d exponentSum: %s", node.label, exponentSum.String())
-	if !exponentSum.Is1() {
-		panic("Proactivization Verification 1 failed")
-	}
+	//if !exponentSum.Is1() {
+	//	panic("Proactivization Verification 1 failed")
+	//}
 	flag := true
 	for i := 0; i < node.counter; i++ {
 		if !node.dpc.VerifyEval(node.zerosumPolyCmt[i], gmp.NewInt(0), gmp.NewInt(0), node.zerosumPolyWit[i]) {
@@ -597,7 +666,7 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 	flag := *node.shareCnt == node.counter
 	node.mutex.Unlock()
 	if flag {
-		log.Printf("%d has finish sharePhase3", node.label)
+		log.Printf("[node %d] has finish sharePhase3", node.label)
 		*node.shareCnt = 0
 		node.Phase3WriteOnBorad()
 	}
@@ -654,14 +723,32 @@ func (node *Node) Phase3WriteOnBorad() {
 		Index:   int32(node.label),
 		Polycmt: C.CompressedBytes(),
 	}
+	//fmt.Println(node.label,C)
 	node.boardService.WritePhase3(ctx, msg)
+	//log.Printf("finish~~")
 }
 func (node *Node) Phase3Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
 	log.Printf("[node %d] start verification in phase 3", node.label)
 	node.Phase3Readboard()
 	return &pb.ResponseMsg{}, nil
 }
-
+	exponentSum := node.dc.NewG1()
+	exponentSum.Set1()
+	//fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
+	for i := 0; i < node.counter; i++ {
+		lambda := big.NewInt(0)
+		lambda.SetString(node.lambda[i].String(), 10)
+		//lambda.SetString(node.lambda[node.counter-1].String(), 10)
+		tmp := node.dc.NewG1()
+		node.dc.Commit(node.zeroShareCmt, node._0Shares[i])
+		tmp.PowBig(node.zeroShareCmt, lambda)
+		// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
+		exponentSum.Mul(exponentSum, tmp)
+	}
+	fmt.Println(exponentSum)
+	if !exponentSum.Is1() {
+		panic("Proactivization Verification 1 failed")
+	}
 func (node *Node) Phase3Readboard() {
 	log.Printf("[node %d] read bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -680,6 +767,7 @@ func (node *Node) Phase3Readboard() {
 		polycmt := msg.GetPolycmt()
 		node.newPolyCmt[index-1].SetCompressedBytes(polycmt)
 	}
+	//fmt.Println("hhhh")
 	for i := 0; i < node.counter; i++ {
 		tmp := node.dpc.NewG1()
 		if !node.newPolyCmt[i].Equals(tmp.Mul(node.oldPolyCmt[i], node.midPolyCmt[i])) {
