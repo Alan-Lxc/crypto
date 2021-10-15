@@ -412,10 +412,10 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 		node.dc.Commit(node.zeroShareCmt, node._0ShareSum)
 		polyTmp, _ := poly.NewRand(node.degree, node.randState, node.p)
 		polyTmp.SetCoeffWithInt(0, 0)
+		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
 		node.dpc.Commit(node.zeroPolyCmt, polyTmp)
 		node.dpc.CreateWitness(node.zeroPolyWit, polyTmp, gmp.NewInt(0))
 
-		err := polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
 		if err != nil {
 			return &pb.ResponseMsg{}, nil
 		}
@@ -483,7 +483,7 @@ func (node *Node) ClientReadPhase2() {
 	}
 	flag := true
 	for i := 0; i < node.counter; i++ {
-		if !node.dpc.VerifyEval(node.zerosumPolyCmt[i], gmp.NewInt(0), gmp.NewInt(0), node.zerosumPolyWit[i]) {
+		if !node.dpc.VerifyEval(node.zerosumPolyCmt[i], gmp.NewInt(0), node._0ShareSum, node.zerosumPolyWit[i]) {
 			flag = false
 		}
 	}
