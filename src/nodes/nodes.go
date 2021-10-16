@@ -310,6 +310,50 @@ func (node *Node) ClientReadPhase1() {
 	node.recPoly.ResetTo(polyp)
 	*node.e1 = time.Now()
 	*node.s2 = time.Now()
+	node.Phase1WriteOnBorad()
+}
+
+func (node *Node) Phase1WriteOnBorad() {
+	log.Printf("[node %d] write bulletinboard in phase 3", node.label)
+	fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	C := node.dpc.NewG1()
+	node.dpc.Commit(C, *node.recPoly)
+	//fmt.Println(node.label,C)
+	//fmt.Println(node.label,"22")
+	msg := &pb.Cmt1Msg{
+		Index:   int32(node.label),
+		Polycmt: C.CompressedBytes(),
+	}
+	node.boardService.WritePhase1(ctx, msg)
+	//fmt.Println(node.label,C)
+	//log.Printf("finish~~")
+}
+func (node *Node) Phase1Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
+	log.Printf("[node %d] start verification in phase 3", node.label)
+	node.Phase1Readboard()
+	return &pb.ResponseMsg{}, nil
+}
+
+func (node *Node) Phase1Readboard() {
+	log.Printf("[node %d] read bulletinboard in phase 3", node.label)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stream, err := node.boardService.ReadPhase1(ctx, &pb.RequestMsg{})
+	if err != nil {
+		log.Fatalf("client failed to read phase3: %v", err)
+	}
+	for i := 0; i < node.counter; i++ {
+		msg, err := stream.Recv()
+		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
+		if err != nil {
+			log.Fatalf("client failed to receive in read phase1: %v", err)
+		}
+		index := msg.GetIndex()
+		polycmt := msg.GetPolycmt()
+		node.oldPolyCmt[index-1].SetCompressedBytes(polycmt)
+	}
 	node.ClientSharePhase2()
 }
 
@@ -515,17 +559,17 @@ func (node *Node) ClientReadPhase2() {
 		sharecmt := msg.GetShareCommit()
 		polycmt := msg.GetPolyCommit()
 		zerowitness := msg.GetZeroWitness()
-		fmt.Println("t2 ", index, node.dpc.NewG1().SetCompressedBytes(sharecmt), node.dpc.NewG1().SetCompressedBytes(polycmt), node.dpc.NewG1().SetCompressedBytes(zerowitness), node.label)
+
+		//fmt.Println("t2 ", index, node.dpc.NewG1().SetCompressedBytes(sharecmt), node.dpc.NewG1().SetCompressedBytes(polycmt), node.dpc.NewG1().SetCompressedBytes(zerowitness), node.label)
 		node.zerosumShareCmt[index-1].SetCompressedBytes(sharecmt)
-		fmt.Println("t2 ", node.zerosumShareCmt[index-1], node.label)
-		fmt.Println("hhhhhhhhhhhhhhhhh ", node.zerosumShareCmt[0], node.label)
 		inter := node.dpc.NewG1()
 		inter.SetString(node.zerosumShareCmt[index-1].String(), 10)
+
 		node.zerosumPolyCmt[index-1].SetCompressedBytes(polycmt)
 		node.midPolyCmt[index-1].Mul(inter, node.zerosumPolyCmt[index-1])
 		node.zerosumPolyWit[index-1].SetCompressedBytes(zerowitness)
+
 	}
-	fmt.Println("hhhhhhhhhhhhhhhhh ", node.zerosumShareCmt[0], node.label)
 	exponentSum := node.dc.NewG1()
 	exponentSum.Set1()
 	//fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
@@ -537,12 +581,12 @@ func (node *Node) ClientReadPhase2() {
 		tmp.PowBig(node.zerosumShareCmt[i], lambda)
 		// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
 		exponentSum.Mul(exponentSum, tmp)
-		fmt.Println(i+1, " 's cmt is", node.zerosumShareCmt[i], "Hey!!! exponentsun be ", exponentSum)
+		//fmt.Println(i+1, " 's cmt is", node.zerosumShareCmt[i], "Hey!!! exponentsun be ", exponentSum)
 	}
 	log.Printf("%d exponentSum: %s", node.label, exponentSum.String())
-	//if !exponentSum.Is1() {
-	//	panic("Proactivization Verification 1 failed")
-	//}
+	if !exponentSum.Is1() {
+		panic("Proactivization Verification 1 failed")
+	}
 	flag := true
 	for i := 0; i < node.counter; i++ {
 		if !node.dpc.VerifyEval(node.zerosumPolyCmt[i], gmp.NewInt(0), gmp.NewInt(0), node.zerosumPolyWit[i]) {
@@ -667,7 +711,19 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 }
 func (node *Node) ClientSharePhase3() {
 	node.newPoly.Add(*node.recPoly, *node.proPoly)
-	//fmt.Println(*node.recPoly)
+	C := node.dpc.NewG1()
+	node.dpc.Commit(C, *node.newPoly)
+	//old1 := node.dpc.NewG1()
+	//old2 := node.dpc.NewG1()
+	//old3 := node.dpc.NewG1()
+	//node.dpc.Commit(old1, *node.recPoly)
+	//node.dpc.Commit(old2, *node.proPoly)
+	//node.dpc.Commit(old3, *node.newPoly)
+
+	//tmp := node.dpc.NewG1()
+	//fmt.Println(node.label,"verify 1 ",old1.Equals(node.oldPolyCmt[node.label-1]))
+	//fmt.Println(node.label,"verify 2 ",old3.Equals(tmp.Mul(old1,old2)))
+	//fmt.Println(node.label," poly is ",*node.recPoly)
 	var wg sync.WaitGroup
 	for i := 0; i < node.counter; i++ {
 		value := gmp.NewInt(0)
@@ -687,9 +743,9 @@ func (node *Node) ClientSharePhase3() {
 			//把消息发送给不同的节点
 			wg.Add(1)
 			go func(i int, msg *pb.PointMsg) {
-				defer wg.Done()
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
+				defer wg.Done()
 				node.nodeService[i].Phase3SendMsg(ctx, msg)
 			}(i, msg)
 		} else {
@@ -708,16 +764,19 @@ func (node *Node) ClientSharePhase3() {
 }
 func (node *Node) Phase3WriteOnBorad() {
 	log.Printf("[node %d] write bulletinboard in phase 3", node.label)
+	fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	C := node.dpc.NewG1()
 	node.dpc.Commit(C, *node.newPoly)
+	//fmt.Println(node.label,C)
+	//fmt.Println(node.label,"22")
 	msg := &pb.Cmt1Msg{
 		Index:   int32(node.label),
 		Polycmt: C.CompressedBytes(),
 	}
-	//fmt.Println(node.label,C)
 	node.boardService.WritePhase3(ctx, msg)
+	//fmt.Println(node.label,C)
 	//log.Printf("finish~~")
 }
 func (node *Node) Phase3Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
@@ -745,6 +804,9 @@ func (node *Node) Phase3Readboard() {
 		node.newPolyCmt[index-1].SetCompressedBytes(polycmt)
 	}
 	//fmt.Println("hhhh")
+	tmpX := make([]*gmp.Int, node.counter)
+	tmpY := make([]*gmp.Int, node.counter)
+
 	for i := 0; i < node.counter; i++ {
 		tmp := node.dpc.NewG1()
 		if !node.newPolyCmt[i].Equals(tmp.Mul(node.oldPolyCmt[i], node.midPolyCmt[i])) {
@@ -753,8 +815,50 @@ func (node *Node) Phase3Readboard() {
 		if !node.dpc.VerifyEval(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit) {
 			panic("Share Distribution Verification 2 failed")
 		}
-
+		tmpX[i] = node.secretShares[i].X
+		tmpY[i] = node.secretShares[i].Y
 	}
+
+	polyp, err := interpolation.LagrangeInterpolate(node.degree, tmpX, tmpY, node.p)
+	if err != nil {
+		for i := 0; i < len(tmpX); i++ {
+			log.Print(tmpX[i])
+			log.Print(tmpY[i])
+		}
+		log.Print(err)
+		panic("Interpolation failed")
+	}
+	node.recPoly.ResetTo(polyp)
+	node.Phase3WriteOnBorad2()
+
+}
+func (node *Node) Phase3WriteOnBorad2() {
+	log.Printf("[node %d] write bulletinboard in phase 3", node.label)
+	fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	C := node.dpc.NewG1()
+	node.dpc.Commit(C, *node.recPoly)
+	//fmt.Println(node.label,C)
+	//fmt.Println(node.label,"22")
+	msg := &pb.Cmt1Msg{
+		Index:   int32(node.label),
+		Polycmt: C.CompressedBytes(),
+	}
+	node.boardService.WritePhase32(ctx, msg)
+	for i := 0; i < node.counter; i++ {
+		x := int32(i + 1)
+		y := gmp.NewInt(0)
+		w := node.dpc.NewG1()
+
+		tmpPoly, _ := poly.NewPoly(node.counter - 1)
+		tmpPoly.EvalMod(gmp.NewInt(int64(x)), node.p, y)
+		node.dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
+		node.secretShares[i] = point.NewPoint(gmp.NewInt(int64(node.label)), y, w)
+		//fmt.Println(i+1,label,y,w)
+	}
+	//fmt.Println(node.label,C)
+	//log.Printf("finish~~")
 	*node.e3 = time.Now()
 	f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer f.Close()
@@ -831,10 +935,10 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	tmpPoly.SetbyCoeff(coeff)
 	//fmt.Println(tmpPoly,coeff)
 
+	if err != nil {
+		panic("Error initializing random tmpPoly")
+	}
 	for i := 0; i < counter; i++ {
-		if err != nil {
-			panic("Error initializing random tmpPoly")
-		}
 		x := int32(i + 1)
 		y := gmp.NewInt(0)
 		w := dpc.NewG1()
@@ -915,7 +1019,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 		zeroShareCmt:    zeroShareCmt,
 		zeroPolyCmt:     zeroPolyCmt,
 		zeroPolyWit:     zeroPolyWit,
-		zerosumPolyCmt:  zerosumShareCmt,
+		zerosumPolyCmt:  zerosumPolyCmt,
 		zerosumPolyWit:  zerosumPolyWit,
 		zerosumShareCmt: zerosumShareCmt,
 		totMsgSize:      &totMsgSize,

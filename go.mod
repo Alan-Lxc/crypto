@@ -4,11 +4,11 @@ go 1.17
 
 require (
 	github.com/Nik-U/pbc v0.0.0-20181205041846-3e516ca0c5d6
-	github.com/golang/protobuf v1.4.3
+	github.com/golang/protobuf v1.5.2
 	github.com/ncw/gmp v1.0.4
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/grpc v1.41.0
-	google.golang.org/protobuf v1.25.0
+	google.golang.org/protobuf v1.27.1
 )
 
 require (

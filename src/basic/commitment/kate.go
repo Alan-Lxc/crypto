@@ -38,6 +38,7 @@ func (c *DLPolyCommit) polyEvalInExponent(res *Element, poly poly.Poly) {
 	// res = 1
 	res.Set1()
 	tmp := c.pairing.NewG1()
+	//fmt.Println(poly.GetDegree())
 	for i := 0; i <= poly.GetDegree(); i++ {
 		// tmp = g^{a^i} ^ ci
 		ci, err := poly.GetCoeff(i)
@@ -47,7 +48,10 @@ func (c *DLPolyCommit) polyEvalInExponent(res *Element, poly poly.Poly) {
 
 		//fmt.Printf("%d\n",len(c.pk))
 		//fmt.Printf("%d\n",poly.GetDegree())
+		//fmt.Println(i,"gottt",conv.GmpInt2BigInt(&ci))
+		//c.pk[i].PowBig(tmp, conv.GmpInt2BigInt(&ci))
 		c.pk[i].PowBig(tmp, conv.GmpInt2BigInt(&ci))
+		//fmt.Println(i,"gottt",conv.GmpInt2BigInt(&ci))
 		res.Mul(res, tmp)
 	}
 }
