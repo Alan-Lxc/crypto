@@ -38,19 +38,29 @@ func (c *DLPolyCommit) polyEvalInExponent(res *Element, poly poly.Poly) {
 	// res = 1
 	res.Set1()
 	tmp := c.pairing.NewG1()
-	//fmt.Println(poly.GetDegree())
+	//fmt.Println(poly)
 	for i := 0; i <= poly.GetDegree(); i++ {
+		//fmt.Println(i  ,111)
 		// tmp = g^{a^i} ^ ci
 		ci, err := poly.GetCoeff(i)
 		if err != nil {
 			panic("can't get coeff i")
 		}
 
+		//fmt.Println(i  ,222)
 		//fmt.Printf("%d\n",len(c.pk))
 		//fmt.Printf("%d\n",poly.GetDegree())
 		//fmt.Println(i,"gottt",conv.GmpInt2BigInt(&ci))
 		//c.pk[i].PowBig(tmp, conv.GmpInt2BigInt(&ci))
+		//b := new(big.Int)
+		//b.SetBytes((&ci).Bytes())
+		//fmt.Println(i  ,333)
+		//b = big.NewInt(32)
+		//tmp.PowBig(c.pk[i],b)
+		//fmt.Println((c.pk[i]).Source(),b,c.pk[i].PowBig(tmp, b))
+		//c.pk[i].PowBig(tmp, b)
 		c.pk[i].PowBig(tmp, conv.GmpInt2BigInt(&ci))
+		//fmt.Println(i  ,444)
 		//fmt.Println(i,"gottt",conv.GmpInt2BigInt(&ci))
 		res.Mul(res, tmp)
 	}
@@ -81,7 +91,7 @@ func (c *DLPolyCommit) SetupFix(degree int) {
 
 	// secret key
 	sk := new(big.Int)
-	sk.SetString("2", 10)
+	sk.SetString("1", 10)
 
 	tmp := new(big.Int)
 	for i := 0; i <= degree; i++ {

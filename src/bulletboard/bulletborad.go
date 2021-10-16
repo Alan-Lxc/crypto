@@ -161,7 +161,7 @@ func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.
 }
 
 func (bb *BulletinBoard) WritePhase32(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
-	fmt.Println("written index is xxxx")
+	//fmt.Println("written index is xxxx")
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	log.Print("[bulletinboard] is being written in phase 3 2")
 	index := msg.GetIndex()
@@ -329,6 +329,7 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 	for i := 0; i < counter; i++ {
 		c := dpc.NewG1()
 		dpc.Commit(c, Polyyy[i])
+		//fmt.Println(Polyyy[i].GetDegree())
 		cBytes := c.CompressedBytes()
 		msg := &pb.Cmt1Msg{
 			Index:   int32(i + 1),

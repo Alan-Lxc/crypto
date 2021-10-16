@@ -172,7 +172,7 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error)
 	//fmt.Println(p.X, node.label, p.Y, p.PolyWit)
 	//Receive the point and store
 	node.mutex.Lock()
-	node.recPoint[*node.recCounter] = &p
+	node.recPoint[p.X.Int32()-1] = &p
 	//fmt.Println(p)
 	*node.recCounter += 1
 	flag := (*node.recCounter == node.counter)
@@ -196,7 +196,9 @@ func (node *Node) SendMsgToNode() {
 		PolyWit: node.secretShares[node.label-1].PolyWit,
 	}
 	node.mutex.Lock()
-	node.recPoint[*node.recCounter] = &p
+	//fmt.Println()
+	node.recPoint[p.X.Int32()-1] = &p
+	//node.recPoint[*node.recCounter] = &p
 	*node.recCounter += 1
 	flag := *node.recCounter == node.counter
 	node.mutex.Unlock()
@@ -272,15 +274,8 @@ func (node *Node) ClientReadPhase1() {
 		}
 
 	}
-	polyp, err := interpolation.LagrangeInterpolate(node.degree, x, y, node.p)
-	if err != nil {
-		for i := 0; i < len(x); i++ {
-			node.log.Print(x[i])
-			node.log.Print(y[i])
-		}
-		node.log.Print(err)
-		panic("Interpolation failed")
-	}
+	polyp, _ := interpolation.LagrangeInterpolate(node.degree, x, y, node.p)
+
 	node.recPoly.ResetTo(polyp)
 	*node.e1 = time.Now()
 	*node.s2 = time.Now()
@@ -289,7 +284,7 @@ func (node *Node) ClientReadPhase1() {
 
 func (node *Node) Phase1WriteOnBorad() {
 	log.Printf("[node %d] write bulletinboard in phase 3", node.label)
-	fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
+	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	C := node.dpc.NewG1()
@@ -306,6 +301,30 @@ func (node *Node) Phase1WriteOnBorad() {
 }
 func (node *Node) Phase1Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
 	log.Printf("[node %d] start verification in phase 3", node.label)
+	//x := make([]*gmp.Int, 0)
+	//y := make([]*gmp.Int, 0)
+	//x=append(x, gmp.NewInt(1),gmp.NewInt(2),gmp.NewInt(3))
+	//t1 := gmp.NewInt(0)
+	//t1.SetString("7343003390229545479771395739651417438480557364638257548670918175510748426479",10)
+	////t1.Add(t1,gmp.NewInt(17))
+	//t2 := gmp.NewInt(0)
+	//t2.SetString("14686006780459090959542791479302834876961114729276515097340601783121620309748",10)
+	////t2.Add(t2,gmp.NewInt(18))
+	//t3 := gmp.NewInt(0)
+	//t3.SetString("22029010170688636439314187218954252315441672093914772646010285390732492193017",10)
+	//t4 := gmp.NewInt(0)
+	//t4.SetString("3",10)
+	////t3.Add(t3,t4)
+	//
+	//p := gmp.NewInt(0)
+	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
+	//y=append(y,t1,t2,t3)
+	//
+	//ans := gmp.NewInt(0)
+	//ans.Mul(ans,node.p)
+	//polyy,_:=interpolation.LagrangeInterpolate(2,x,y,node.p)
+	//polyy.EvalMod(gmp.NewInt(0),p,ans)
+	//fmt.Println("ans is ",ans)
 	node.Phase1Readboard()
 	return &pb.ResponseMsg{}, nil
 }
@@ -386,19 +405,20 @@ func (node *Node) ClientSharePhase2() {
 	//	fmt.Println("exponentsun be ",exponentSum)
 	//}
 	//fmt.Println("should be 0 but be",exponentSum)
-	//X:=make([]*gmp.Int,node.counter)
-	//for i := 0; i < node.counter; i++ {
-	//	X[i]=gmp.NewInt(int64(i+1))
-	//}
-	//Y:=make([]*gmp.Int,node.counter)
+	X := make([]*gmp.Int, node.counter)
+	Y := make([]*gmp.Int, node.counter)
+	for i := 0; i < node.counter; i++ {
+		X[i] = gmp.NewInt(int64(i + 1))
+		Y[i] = node._0Shares[i]
+	}
 	//Y[0]=gmp.NewInt(int64(21))
 	//Y[1]=gmp.NewInt(int64(22))
 	//Y[2]=gmp.NewInt(int64(20))
 	//Y[3]=gmp.NewInt(int64(20))
 	//Y[4]=gmp.NewInt(int64(15))
-	//tttmp ,_ :=interpolation.LagrangeInterpolate(node.counter-1,X,Y,node.p)
-	//
-	//fmt.Println("0 is ",tttmp.GetCoeffConstant())
+	tttmp, _ := interpolation.LagrangeInterpolate(node.counter-1, X, Y, node.p)
+
+	fmt.Println(node.counter-1, "0 is ", tttmp.GetCoeffConstant())
 	//for i := 0; i < node.counter; i++ {
 	//	tmpppp :=gmp.NewInt(int64(0))
 	//	tttmp.EvalMod(gmp.NewInt(int64(i+1)),node.p,tmpppp)
@@ -479,7 +499,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 		*node._0ShareCount = 0
 		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
-		//fmt.Println(node.label, "sum is  ", node._0ShareSum)
+		fmt.Println(node.label, "sum is  ", node._0ShareSum)
 
 		//get a rand poly_tmp with 0-share
 		//rand a poly_tmp polynomial
@@ -644,7 +664,7 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 	*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 	index := msg.GetIndex()
 	Y := msg.GetY()
-	log.Printf("[node %d] receive point message from [node %d] in phase3", node.label, index)
+	node.log.Printf("[node %d] receive point message from [node %d] in phase3", node.label, index)
 	witness := msg.GetWitness()
 	node.secretShares[index-1].Y.SetBytes(Y)
 	node.secretShares[index-1].PolyWit.SetCompressedBytes(witness)
@@ -653,7 +673,7 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 	flag := *node.shareCnt == node.counter
 	node.mutex.Unlock()
 	if flag {
-		log.Printf("[node %d] has finish sharePhase3", node.label)
+		node.log.Printf("[node %d] has finish sharePhase3", node.label)
 		*node.shareCnt = 0
 		node.Phase3WriteOnBorad()
 	}
@@ -661,6 +681,7 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 }
 func (node *Node) ClientSharePhase3() {
 	node.newPoly.Add(*node.recPoly, *node.proPoly)
+
 	C := node.dpc.NewG1()
 	node.dpc.Commit(C, *node.newPoly)
 	//old1 := node.dpc.NewG1()
@@ -683,7 +704,7 @@ func (node *Node) ClientSharePhase3() {
 		node.dpc.CreateWitness(witness, *node.newPoly, gmp.NewInt(int64(i+1)))
 
 		if i != node.label-1 {
-			log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
+			node.log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
 			msg := &pb.PointMsg{
 				Index:   int32(node.label),
 				X:       gmp.NewInt(int64(node.label)).Bytes(),
@@ -713,12 +734,13 @@ func (node *Node) ClientSharePhase3() {
 	}
 }
 func (node *Node) Phase3WriteOnBorad() {
-	log.Printf("[node %d] write bulletinboard in phase 3", node.label)
-	fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
+	node.log.Printf("[node %d] write bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	C := node.dpc.NewG1()
+	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 	node.dpc.Commit(C, *node.newPoly)
+	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 	//fmt.Println(node.label,C)
 	//fmt.Println(node.label,"22")
 	msg := &pb.Cmt1Msg{
@@ -730,24 +752,24 @@ func (node *Node) Phase3WriteOnBorad() {
 	//log.Printf("finish~~")
 }
 func (node *Node) Phase3Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
-	log.Printf("[node %d] start verification in phase 3", node.label)
+	node.log.Printf("[node %d] start verification in phase 3", node.label)
 	node.Phase3Readboard()
 	return &pb.ResponseMsg{}, nil
 }
 
 func (node *Node) Phase3Readboard() {
-	log.Printf("[node %d] read bulletinboard in phase 3", node.label)
+	node.log.Printf("[node %d] read bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream, err := node.boardService.ReadPhase3(ctx, &pb.RequestMsg{})
 	if err != nil {
-		log.Fatalf("client failed to read phase3: %v", err)
+		node.log.Fatalf("client failed to read phase3: %v", err)
 	}
 	for i := 0; i < node.counter; i++ {
 		msg, err := stream.Recv()
 		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 		if err != nil {
-			log.Fatalf("client failed to receive in read phase1: %v", err)
+			node.log.Fatalf("client failed to receive in read phase1: %v", err)
 		}
 		index := msg.GetIndex()
 		polycmt := msg.GetPolycmt()
@@ -765,26 +787,23 @@ func (node *Node) Phase3Readboard() {
 		if !node.dpc.VerifyEval(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit) {
 			panic("Share Distribution Verification 2 failed")
 		}
-		tmpX[i] = node.secretShares[i].X
+
+		tmpX[i] = gmp.NewInt(int64(i + 1))
 		tmpY[i] = node.secretShares[i].Y
 	}
 
-	polyp, err := interpolation.LagrangeInterpolate(node.degree, tmpX, tmpY, node.p)
-	if err != nil {
-		for i := 0; i < len(tmpX); i++ {
-			log.Print(tmpX[i])
-			log.Print(tmpY[i])
-		}
-		log.Print(err)
-		panic("Interpolation failed")
-	}
+	polyp, _ := interpolation.LagrangeInterpolate(node.degree*2, tmpX, tmpY, node.p)
+	//fmt.Println(tmpX,tmpY,node.degree,polyp)
 	node.recPoly.ResetTo(polyp)
+	//y := gmp.NewInt(0)
+	//node.recPoly.EvalMod(gmp.NewInt(int64(0)), node.p, y)
+	//fmt.Println(node.label,y)
 	node.Phase3WriteOnBorad2()
 
 }
 func (node *Node) Phase3WriteOnBorad2() {
-	log.Printf("[node %d] write bulletinboard in phase 3", node.label)
-	fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
+	node.log.Printf("[node %d] write bulletinboard in phase 3 2", node.label)
+	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	C := node.dpc.NewG1()
@@ -795,19 +814,19 @@ func (node *Node) Phase3WriteOnBorad2() {
 		Index:   int32(node.label),
 		Polycmt: C.CompressedBytes(),
 	}
+	tmpPoly, _ := poly.NewPoly(node.degree * 2)
+	tmpPoly.ResetTo(*node.recPoly)
 	node.boardService.WritePhase32(ctx, msg)
 	for i := 0; i < node.counter; i++ {
 		x := int32(i + 1)
 		y := gmp.NewInt(0)
 		w := node.dpc.NewG1()
 
-		tmpPoly, _ := poly.NewPoly(node.counter - 1)
 		tmpPoly.EvalMod(gmp.NewInt(int64(x)), node.p, y)
 		node.dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
 		node.secretShares[i] = point.NewPoint(gmp.NewInt(int64(node.label)), y, w)
 		//fmt.Println(i+1,label,y,w)
 	}
-	//fmt.Println(node.label,C)
 	//log.Printf("finish~~")
 	*node.e3 = time.Now()
 	f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -883,8 +902,8 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	//tmpPoly, err := poly.NewRand(degree, fixedRandState, p)
 	tmpPoly, err := poly.NewPoly(len(coeff) - 1)
 	tmpPoly.SetbyCoeff(coeff)
-	//fmt.Println(tmpPoly,coeff)
-
+	//fmt.Println(tmpPoly.GetDegree())
+	//fmt.Println(tmpPoly)
 	if err != nil {
 		panic("Error initializing random tmpPoly")
 	}
