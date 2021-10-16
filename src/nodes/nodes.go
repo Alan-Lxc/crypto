@@ -95,8 +95,7 @@ type Node struct {
 	zerosumPolyCmt  []*pbc.Element
 	zerosumPolyWit  []*pbc.Element
 	midPolyCmt      []*pbc.Element
-
-	newPolyCmt []*pbc.Element
+	newPolyCmt      []*pbc.Element
 
 	// [+] Commitment
 	dc  *commitment.DLCommit
@@ -113,6 +112,7 @@ type Node struct {
 	e2      *time.Time
 	s3      *time.Time
 	e3      *time.Time
+	log     *log.Logger
 }
 
 func (node *Node) Phase1Getstart(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
@@ -143,7 +143,7 @@ func (node *Node) GetLabel() int {
 
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
-	log.Printf("[Node %d] Now Get start Phase1", node.label)
+	node.log.Printf("[Node %d] Now Get start Phase1", node.label)
 	*node.s1 = time.Now()
 	node.SendMsgToNode()
 	return &pb.ResponseMsg{}, nil
@@ -157,7 +157,7 @@ func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (respo
 func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error) {
 	*node.totMsgSize = *node.totMsgSize + proto.Size(pointmsg)
 	index := pointmsg.GetIndex()
-	log.Printf("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
+	node.log.Printf("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
 	x := gmp.NewInt(0)
 	x.SetBytes(pointmsg.GetX())
 	y := gmp.NewInt(0)
@@ -207,7 +207,7 @@ func (node *Node) SendMsgToNode() {
 	var wg sync.WaitGroup
 	for i := 0; i < node.counter; i++ {
 		if i != node.label-1 {
-			log.Printf("[Node %d] send point message to [Node %d]", node.label, i+1)
+			node.log.Printf("[Node %d] send point message to [Node %d]", node.label, i+1)
 			//msg := point.Pointmsg{}
 			//msg.SetIndex(node.label)
 			//msg.SetPoint(node.secretShares[i])
@@ -235,49 +235,23 @@ func (node *Node) SendMsgToNode() {
 	wg.Wait()
 }
 
-//func (node *Node) Phase1() {
-//	log.Printf("[Node %d] now start phase1", node.label)
-//	x_point := make([]*gmp.Int, node.degree+1)
-//	y_point := make([]*gmp.Int, node.degree+1)
-//	for i := 0; i <= node.degree; i++ {
-//		p := node.recPoint[i]
-//		//x_point = append(x_point, gmp.NewInt(int64(point.X)))
-//		x_point[i] = p.X
-//		polyTmp.
-//			y_point[i] = p.Y
-//		//y_point = append(y_point, point.Y)
-//	}
-//	p, err := interpolation.LagrangeInterpolate(node.degree, x_point, y_point, node.p)
-//	if err != nil {
-//		for i := 0; i <= node.degree; i++ {
-//			log.Print(x_point[i])
-//			log.Print(y_point[i])
-//		}
-//		log.Print(err)
-//		panic("Interpolation failed")
-//	}
-//	node.recPoly = &p
-//	fmt.Printf("Interpolation finished\n")
-//	//node.Phase2()
-//}
-// Read from the bulletinboard and does the interpolation and verifiication.
 func (node *Node) ClientReadPhase1() {
 	if *node.iniflag {
 		node.NodeConnect()
 		*node.iniflag = false
 	}
-	log.Printf("[node %d] read bulletinboard in phase 1", node.label)
+	node.log.Printf("[Node %d] read bulletinboard in phase 1", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream, err := node.boardService.ReadPhase1(ctx, &pb.RequestMsg{})
 	if err != nil {
-		log.Fatalf("client failed to read phase1: %v", err)
+		node.log.Fatalf("client failed to read phase1: %v", err)
 	}
 	for i := 0; i < node.counter; i++ {
 		msg, err := stream.Recv()
 		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 		if err != nil {
-			log.Fatalf("client failed to receive in read phase1: %v", err)
+			node.log.Fatalf("client failed to receive in read phase1: %v", err)
 		}
 		index := msg.GetIndex()
 		polycmt := msg.GetPolycmt()
@@ -301,10 +275,10 @@ func (node *Node) ClientReadPhase1() {
 	polyp, err := interpolation.LagrangeInterpolate(node.degree, x, y, node.p)
 	if err != nil {
 		for i := 0; i < len(x); i++ {
-			log.Print(x[i])
-			log.Print(y[i])
+			node.log.Print(x[i])
+			node.log.Print(y[i])
 		}
-		log.Print(err)
+		node.log.Print(err)
 		panic("Interpolation failed")
 	}
 	node.recPoly.ResetTo(polyp)
@@ -394,7 +368,7 @@ func (node *Node) ClientSharePhase2() {
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
-		log.Printf("%d has finish _0ShareSum", node.label)
+		node.log.Printf("[Node %d] has finish _0ShareSum", node.label)
 		*node._0ShareCount = 0
 		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
@@ -421,7 +395,7 @@ func (node *Node) ClientSharePhase2() {
 	var wg sync.WaitGroup
 	for i := 0; i < node.counter; i++ {
 		if i != node.label-1 {
-			log.Printf("[node %d] send message to [node %d] in phase 2", node.label, i+1)
+			node.log.Printf("[Node %d] send message to [Node %d] in phase 2", node.label, i+1)
 			msg := &pb.ZeroMsg{
 				Index: int32(node.label),
 				Share: node._0Shares[i].Bytes(),
@@ -444,7 +418,7 @@ func (node *Node) ClientSharePhase2() {
 func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.ResponseMsg, error) {
 	*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 	index := msg.GetIndex()
-	log.Printf("[node %d] receive zero message from [node %d] in phase 2", node.label, index)
+	node.log.Printf("[Node %d] receive zero message from [Node %d] in phase 2", node.label, index)
 	inter := gmp.NewInt(0)
 	inter.SetBytes(msg.GetShare())
 
@@ -457,7 +431,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
-		log.Printf("%d has finish _0ShareSum", node.label)
+		node.log.Printf("%d has finish _0ShareSum", node.label)
 		*node._0ShareCount = 0
 		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
@@ -480,7 +454,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 	return &pb.ResponseMsg{}, nil
 }
 func (node *Node) Phase2Write() {
-	log.Printf("[node %d] write bulletinboard in phase 2", node.label)
+	node.log.Printf("[node %d] write bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Commitment and Witness from BulletinBoard
 	msg := &pb.CommitMsg{
@@ -493,23 +467,23 @@ func (node *Node) Phase2Write() {
 	node.boardService.WritePhase2(ctx, msg)
 }
 func (node *Node) Phase2Verify(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
-	log.Printf("[Node %d] start verification in phase 2", node.label)
+	node.log.Printf("[Node %d] start verification in phase 2")
 	node.ClientReadPhase2()
 	return &pb.ResponseMsg{}, nil
 }
 func (node *Node) ClientReadPhase2() {
-	log.Printf("[node %d] read bulletinboard in phase 2", node.label)
+	node.log.Printf("[Node %d] read bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream, err := node.boardService.ReadPhase2(ctx, &pb.RequestMsg{})
 	if err != nil {
-		log.Fatalf("client failed to read phase2: %v", err)
+		node.log.Fatalf("client failed to read phase2: %v", err)
 	}
 	for i := 0; i < node.counter; i++ {
 		msg, err := stream.Recv()
 		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 		if err != nil {
-			log.Fatalf("client failed to receive in read phase1: %v", err)
+			node.log.Fatalf("client failed to receive in read phase1: %v", err)
 		}
 		index := msg.GetIndex()
 		sharecmt := msg.GetShareCommit()
@@ -535,7 +509,7 @@ func (node *Node) ClientReadPhase2() {
 		//lambda.SetString(node.lambda[node.counter-1].String(), 10)
 		tmp := node.dc.NewG1()
 		tmp.PowBig(node.zerosumShareCmt[i], lambda)
-		// log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
+		// node.log.Printf("label: %d #share %d\nlambda %s\nzeroshareCmt %s\ntmp %s", node.label, i+1, lambda.String(), node.zerosumShareCmt[i].String(), tmp.String())
 		exponentSum.Mul(exponentSum, tmp)
 		fmt.Println(i+1, " 's cmt is", node.zerosumShareCmt[i], "Hey!!! exponentsun be ", exponentSum)
 	}
@@ -557,34 +531,10 @@ func (node *Node) ClientReadPhase2() {
 	node.ClientSharePhase3()
 }
 
-//func Demo_test() {
-//	var nodes [3]Node
-//	var modp *gmp.Int
-//	modp = GetPrime(256)
-//	for i := 0; i < 3; i++ {
-//		nodes[i], _ = New(1, i+1, 3, "/home/alan/Desktop", modp)
-//	}
-//	for i := 0; i < 3; i++ {
-//		nodes[i].connect([]*Node{&nodes[0], &nodes[1], &nodes[2]})
-//	}
-//	for i := 0; i < 3; i++ {
-//		nodes[i].SendMsgToNode()
-//	}
-//
-//	for i := 0; i < 3; i++ {
-//		nodes[i].ClientSharePhase2()
-//	}
-//
-//	for i := 0; i < 3; i++ {
-//		nodes[i].ClientSharePhase3()
-//	}
-//
-//}
-
 func (node *Node) NodeConnect() {
 	boradConn, err := grpc.Dial(node.ipOfBoard, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("Fail to connect board:%v", err)
+		node.log.Fatalf("Fail to connect board:%v", err)
 	}
 	node.boardConn = boradConn
 	node.boardService = pb.NewBulletinBoardServiceClient(boradConn)
@@ -592,7 +542,7 @@ func (node *Node) NodeConnect() {
 		if i != node.label-1 {
 			clientconn, err := grpc.Dial(node.ipAddress[i], grpc.WithInsecure())
 			if err != nil {
-				log.Fatalf("[Node %d] Fail to connect to other node:%v", node.label, err)
+				node.log.Fatalf("[Node %d] Fail to connect to other node:%v", node.label, err)
 			}
 			node.clientConn[i] = clientconn
 			node.nodeService[i] = pb.NewNodeServiceClient(clientconn)
@@ -603,17 +553,17 @@ func (node *Node) Service() {
 	port := node.ipAddress[node.label-1]
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatalf("[Node %d] fail to listen:%v", node.label, err)
+		node.log.Fatalf("[Node %d] fail to listen:%v", node.label, err)
 	}
 	server := grpc.NewServer()
 	pb.RegisterNodeServiceServer(server, node)
 	reflection.Register(server)
 	err = server.Serve(listener)
 	if err != nil {
-		log.Fatalf("[Node %d] fail to provide service", node.label)
+		node.log.Fatalf("[Node %d] fail to provide service", node.label)
 	}
 
-	log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
+	node.log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
 }
 
 func (node *Node) Serve(aws bool) {
@@ -623,14 +573,14 @@ func (node *Node) Serve(aws bool) {
 	}
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatalf("node failed to listen %v", err)
+		node.log.Fatalf("node failed to listen %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterNodeServiceServer(s, node)
 	reflection.Register(s)
-	log.Printf("node %d serve on %s", node.label, port)
+	node.log.Printf("node %d serve on %s", node.label, port)
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("node failed to serve %v", err)
+		node.log.Fatalf("node failed to serve %v", err)
 	}
 }
 func ReadIpList(metadataPath string) []string {
@@ -886,7 +836,15 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	nodeService := make([]pb.NodeServiceClient, counter)
 
 	iniflag := true
-	log.Printf("Node %d new done", label)
+
+	fileName := "./src/metadata/logOfNode" + strconv.Itoa(label) + ".log"
+	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		tmplogger, err = os.Create(fileName)
+	}
+	os.Truncate(fileName, 0)
+	log := log.New(tmplogger, "", log.LstdFlags)
+	log.Printf("Node %d new done,ip = %s", label, ipList[label-1])
 	return Node{
 		metadataPath:    logPath,
 		ipAddress:       ipList,
@@ -928,6 +886,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 		clientConn:      clientConn,
 		nodeService:     nodeService,
 		iniflag:         &iniflag,
+		log:             log,
 	}, nil
 
 }

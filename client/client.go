@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 )
@@ -76,6 +77,12 @@ func newClient(degree, counter int, metadataPath string, ip string) (client, err
 }
 
 func (c *client) InitandConnect(s0 string) {
+	file, err := os.OpenFile("./src/metadata/test.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log := log.New(file, "", log.LstdFlags)
+	defer file.Close()
 	log.Printf("Start to connecttion")
 	degree := c.degree
 	counter := c.counter
@@ -140,18 +147,25 @@ func newBoard(degree int, ccounter int, metadataPath string, polyyy []poly.Poly)
 	bb.Serve(false)
 }
 func main() {
+	file, err := os.OpenFile("./src/metadata/test.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log := log.New(file, "", log.LstdFlags|log.Llongfile)
+
 	//cnt := flag.Int("c", 2, "Enter number of nodes")
 	//degree := flag.Int("d", 1, "Enter the polynomial degree")
 	//metadataPath := flag.String("path", "/mpss/metadata", "Enter the metadata path")
 	//s0 := flag.String("secret","1234567899876543210","Enter the secret")
 	////aws := flag.Bool("aws", false, "if test on real aws")
 	//flag.Parse()
-
-	client1, err := newClient(2, 5, "/home/gary/GolandProjects/crypto_contest/src/metadata", "192.168.0.1")
+	client1, err := newClient(2, 5, "/home/kzl/Desktop/test/crypto_contest/src/metadata", "192.168.0.1")
 	if err != nil {
 		log.Fatalf("Can't create a new client:%v", err)
 	}
-	client1.InitandConnect("0")
+	defer file.Close()
+	client1.InitandConnect("1234567899876543210")
+	//client1.InitandConnect("0")
 	//log.Printf("Done")
 	//client1.control.StartHandoff()
 }
