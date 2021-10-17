@@ -83,6 +83,39 @@ func (bb *BulletinBoard) ReadPhase1(in *pb.RequestMsg, stream pb.BulletinBoardSe
 	return nil
 }
 
+func (bb *BulletinBoard) WritePhase1(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
+	//fmt.Println("written index is xxxx")
+	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
+	log.Print("[bulletinboard] is being written in phase 3")
+	index := msg.GetIndex()
+	bb.reconstructionContent[index-1] = msg
+	bb.mutex.Lock()
+	*bb.shaCnt = *bb.shaCnt + 1
+	flag := (*bb.shaCnt == bb.counter)
+	bb.mutex.Unlock()
+	if flag {
+		*bb.shaCnt = 0
+		bb.ClientStartVerifPhase1()
+	}
+	return &pb.ResponseMsg{}, nil
+}
+
+func (bb *BulletinBoard) ClientStartVerifPhase1() {
+	var wg sync.WaitGroup
+	for i := 0; i < bb.counter; i++ {
+		log.Print("[bulletinboard] start verification in phase 3")
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			bb.nClient[i].Phase1Verify(ctx, &pb.RequestMsg{})
+		}(i)
+	}
+	wg.Wait()
+	*bb.totMsgSize = 0
+}
+
 func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.CommitMsg) (*pb.ResponseMsg, error) {
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	log.Print("[bulletinboard] is being written in phase 2")
@@ -111,6 +144,7 @@ func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardSe
 }
 
 func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
+	fmt.Println("written index is xxxx")
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	log.Print("[bulletinboard] is being written in phase 3")
 	index := msg.GetIndex()
@@ -126,6 +160,21 @@ func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.
 	return &pb.ResponseMsg{}, nil
 }
 
+func (bb *BulletinBoard) WritePhase32(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
+	//fmt.Println("written index is xxxx")
+	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
+	log.Print("[bulletinboard] is being written in phase 3 2")
+	index := msg.GetIndex()
+	bb.reconstructionContent[index-1] = msg
+	bb.mutex.Lock()
+	*bb.shaCnt = *bb.shaCnt + 1
+	flag := (*bb.shaCnt == bb.counter)
+	bb.mutex.Unlock()
+	if flag {
+		*bb.shaCnt = 0
+	}
+	return &pb.ResponseMsg{}, nil
+}
 func (bb *BulletinBoard) ReadPhase3(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase3Server) error {
 	log.Print("[bulletinboard] is being read in phase 3")
 	for i := 0; i < bb.counter; i++ {
@@ -280,6 +329,7 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 	for i := 0; i < counter; i++ {
 		c := dpc.NewG1()
 		dpc.Commit(c, Polyyy[i])
+		//fmt.Println(Polyyy[i].GetDegree())
 		cBytes := c.CompressedBytes()
 		msg := &pb.Cmt1Msg{
 			Index:   int32(i + 1),

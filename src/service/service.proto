@@ -3,27 +3,30 @@ option go_package = "../service";
 package service;
 
 service NodeService{
-    rpc Phase1GetStart(RequestMsg)  returns (ResponseMsg) {}
-    rpc Phase1ReceiveMsg (PointMsg)    returns (ResponseMsg){}
-    rpc Phase2Share(ZeroMsg)    returns(ResponseMsg){}
-    rpc Phase2Verify(RequestMsg) returns(ResponseMsg){}
-    rpc Phase3SendMsg(PointMsg) returns(ResponseMsg){}
-    rpc Phase3Verify(RequestMsg)returns(ResponseMsg){}
+    rpc Phase1GetStart(RequestMsg)  returns (ResponseMsg) {};
+    rpc Phase1ReceiveMsg (PointMsg)    returns (ResponseMsg){};
+    rpc Phase1Verify(RequestMsg)returns(ResponseMsg){};
+    rpc Phase2Share(ZeroMsg)    returns(ResponseMsg){};
+    rpc Phase2Verify(RequestMsg) returns(ResponseMsg){};
+    rpc Phase3SendMsg(PointMsg) returns(ResponseMsg){};
+    rpc Phase3Verify(RequestMsg)returns(ResponseMsg){};
 
 }
 service BulletinBoardService {
 //    rpc GetCoeffofNodeSecretShares1(RequestForCoeffMsg) returns(stream CoeffMsg){}
-    rpc GetCoeffofNodeSecretShares2(RequestMsg)returns ( CoeffMsg){}
+    rpc GetCoeffofNodeSecretShares2(RequestMsg)returns ( CoeffMsg){};
     // Start a epoch
-    rpc StartEpoch(RequestMsg) returns (ResponseMsg) {}
+    rpc StartEpoch(RequestMsg) returns (ResponseMsg) {};
     // BulletinBoard RPC for recontruction phase
-    rpc ReadPhase1(RequestMsg) returns (stream Cmt1Msg) {}
+    rpc ReadPhase1(RequestMsg) returns (stream Cmt1Msg) {};
+    rpc WritePhase1(Cmt1Msg) returns (ResponseMsg) {};
     // BulletinBoard RPC for proactivization phase
-    rpc WritePhase2(CommitMsg) returns (ResponseMsg) {}
-    rpc ReadPhase2(RequestMsg) returns (stream CommitMsg) {}
+    rpc WritePhase2(CommitMsg) returns (ResponseMsg) {};
+    rpc ReadPhase2(RequestMsg) returns (stream CommitMsg) {};
     // BulletinBoard RPC for share distribution phase
-    rpc WritePhase3(Cmt1Msg) returns (ResponseMsg) {}
-    rpc ReadPhase3(RequestMsg) returns (stream Cmt1Msg) {}
+    rpc WritePhase3(Cmt1Msg) returns (ResponseMsg) {};
+    rpc WritePhase32(Cmt1Msg) returns (ResponseMsg) {};
+    rpc ReadPhase3(RequestMsg) returns (stream Cmt1Msg) {};
 }
 
 message RequestMsg{}

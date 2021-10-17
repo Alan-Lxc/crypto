@@ -99,7 +99,7 @@ func (c *client) InitandConnect(s0 string) {
 		y := gmp.NewInt(0)
 		polyy.EvalMod(gmp.NewInt(int64(x)), p, y)
 
-		polyyy[i], _ = poly.NewRand(counter-1, fixedRandState, p)
+		polyyy[i], _ = poly.NewRand(degree*2, fixedRandState, p)
 		polyyy[i].SetCoeffWithGmp(0, y)
 	}
 	//nn := make([]nodes.Node, counter)
@@ -159,13 +159,18 @@ func main() {
 	//s0 := flag.String("secret","1234567899876543210","Enter the secret")
 	////aws := flag.Bool("aws", false, "if test on real aws")
 	//flag.Parse()
-	client1, err := newClient(2, 5, "/home/kzl/Desktop/test/crypto_contest/src/metadata", "192.168.0.1")
+	client1, err := newClient(2, 5, "/home/alan/Desktop/crypto_contest/src/metadata", "192.168.0.1")
 	if err != nil {
 		log.Fatalf("Can't create a new client:%v", err)
 	}
 	defer file.Close()
 	client1.InitandConnect("1234567899876543210")
-	//client1.InitandConnect("0")
-	//log.Printf("Done")
-	//client1.control.StartHandoff()
+	var flag int
+	_, err1 := fmt.Scanf("%d", &flag)
+	if err1 != nil {
+		fmt.Println("err:", err1)
+	}
+	if flag == 1 {
+		client1.control.StartHandoff()
+	}
 }
