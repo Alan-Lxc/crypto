@@ -163,7 +163,7 @@ func main() {
 	//flag.Parse()
 	var degree int
 	var counter int
-	fmt.Println("please input degree and counter")
+	fmt.Println("please input degree and counter:")
 	fmt.Scanf("%d%d", &degree, &counter)
 	client1, err := newClient(degree, counter, "./src/metadata", "192.168.0.1")
 	if err != nil {
