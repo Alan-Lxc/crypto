@@ -115,6 +115,10 @@ type Node struct {
 	s3      *time.Time
 	e3      *time.Time
 	log     *log.Logger
+	tott    int64
+	t1      int64
+	t2      int64
+	t3      int64
 }
 
 func (node *Node) Phase1Getstart(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
@@ -760,7 +764,26 @@ func (node *Node) Phase3Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.Res
 	node.Phase3Readboard()
 	return &pb.ResponseMsg{}, nil
 }
-
+func (node *Node) Gettot() int {
+	return *node.totMsgSize
+}
+func (node *Node) Gettime() []int64 {
+	tt := make([]int64, 4)
+	tt[0] = node.e3.Sub(*node.s1).Nanoseconds()
+	tt[1] = node.e1.Sub(*node.s1).Nanoseconds()
+	tt[2] = node.e2.Sub(*node.s2).Nanoseconds()
+	tt[3] = node.e3.Sub(*node.s3).Nanoseconds()
+	return tt
+}
+func (node *Node) Sendtestmsg(ctx context.Context, msg *pb.RequestMsg) (*pb.TestMsg, error) {
+	return &pb.TestMsg{
+		Totmsgsize: int32(*node.totMsgSize),
+		Totaltime:  node.tott,
+		Phase1Time: node.t1,
+		Phase2Time: node.t2,
+		Phase3Time: node.t3,
+	}, nil
+}
 func (node *Node) Phase3Readboard() {
 	node.log.Printf("[node %d] read bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -809,13 +832,13 @@ func (node *Node) Phase3Readboard() {
 		*node.e3 = time.Now()
 		//f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		//defer f.Close()
-		fmt.Printf("totMsgSize,%d\n", *node.totMsgSize)
-		fmt.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
-		fmt.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
-		fmt.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
-		fmt.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
-		fmt.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
-		*node.totMsgSize = 0
+		node.log.Printf("totMsgSize,%d\n", *node.totMsgSize)
+		node.log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
+		node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
+		node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
+		node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+		node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
+		//*node.totMsgSize = 0
 	}
 
 }
@@ -868,8 +891,12 @@ func (node *Node) Phase3WriteOnBorad2() {
 	node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
 	node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
 	node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+	node.tott = (node.e3.Sub(*node.s1).Nanoseconds())
+	node.t1 = (node.e1.Sub(*node.s1).Nanoseconds())
+	node.t2 = (node.e2.Sub(*node.s2).Nanoseconds())
+	node.t3 = (node.e3.Sub(*node.s3).Nanoseconds())
 	node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
-	*node.totMsgSize = 0
+	//*node.totMsgSize = 0
 	for i := 0; i < node.degree*2+1; i++ {
 		node._0Shares[i].SetInt64(0)
 	}

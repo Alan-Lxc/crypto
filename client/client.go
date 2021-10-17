@@ -43,6 +43,7 @@ type client struct {
 	control control.Control
 	//logger file pointer
 	log *log.Logger
+	nn  []*nodes.Node
 }
 
 func ReadIpList(metadataPath string) []string {
@@ -119,13 +120,14 @@ func (c *client) InitandConnect(s0 string) {
 	c.boardConn = bconn
 	c.boardService = pb.NewBulletinBoardServiceClient(bconn)
 	//node
-	//nn := make([]nodes.Node, counter)
+	nn := make([]*nodes.Node, counter)
 	for i := 0; i < counter; i++ {
 		//x := int32(i + 1)
 		//y := gmp.NewInt(0)
 		//polyy.EvalMod(gmp.NewInt(int64(x)), p, y)
 		coeff := polyyy[i].GetAllCoeff()
 		node, _ := nodes.New(degree, i+1, counter, c.metadataPath, coeff)
+		nn[i] = &node
 		go node.Service()
 		time.Sleep(1)
 		nConn, err := grpc.Dial(c.ipList[i], grpc.WithInsecure())
@@ -135,6 +137,7 @@ func (c *client) InitandConnect(s0 string) {
 		c.nodeConn[i] = nConn
 		c.nodeService[i] = pb.NewNodeServiceClient(nConn)
 	}
+	c.nn = nn
 	//fmt.Println(counter)
 	time.Sleep(6)
 	c.log.Printf("client has connected to committee and board")
@@ -164,6 +167,8 @@ func main() {
 	var degree int
 	var counter int
 	fmt.Println("please input degree and counter:")
+	var flag int
+
 	fmt.Scanf("%d%d", &degree, &counter)
 	client1, err := newClient(degree, counter, "./src/metadata", "192.168.0.1")
 	if err != nil {
@@ -171,8 +176,47 @@ func main() {
 	}
 
 	client1.InitandConnect("1234567899876543210")
-	var flag int
+	//ctx, cancel :=context.WithCancel(context.Background())
+	//defer cancel()
+	//var totmsg=0
+	//var epochtime int64
+	//var phase1time int64
+	//var phase2time int64
+	//var phase3time int64
+	//for i := 0; i < counter; i++ {
+	//	msg,_:=client1.nodeService[i].Sendtestmsg(ctx,&pb.RequestMsg{})
+	//	totmsg += int(msg.GetTotmsgsize())
+	//	epochtime+= (msg.GetTotaltime())
+	//	phase1time+=(msg.GetPhase1Time())
+	//	phase2time+=(msg.GetPhase2Time())
+	//	phase3time+=(msg.GetPhase3Time())
+	//}
+	//fmt.Println(totmsg,totmsg/counter)
+	//fmt.Println(epochtime /int64(counter),epochtime/  int64(counter*1e9))
+	//fmt.Println(phase1time/int64(counter),phase1time/int64(counter*1e9))
+	//fmt.Println(phase2time/int64(counter),phase2time/int64(counter*1e9))
+	//fmt.Println(phase3time/int64(counter),phase3time/int64(counter*1e9))
+	var totmsg int
+	var epochtime int64
+	var phase1time int64
+	var phase2time int64
+	var phase3time int64
+
 	_, err1 := fmt.Scanf("%d", &flag)
+	time.Sleep(6)
+	for i := 0; i < counter; i++ {
+		totmsg += client1.nn[i].Gettot()
+		tt := client1.nn[i].Gettime()
+		epochtime += tt[0]
+		phase1time += tt[1]
+		phase2time += tt[2]
+		phase3time += tt[3]
+	}
+	fmt.Println(totmsg, totmsg/counter)
+	fmt.Println(float32(epochtime) / float32(counter*1e9))
+	fmt.Println(float32(phase1time) / float32(counter*1e9))
+	fmt.Println(float32(phase2time) / float32(counter*1e9))
+	fmt.Println(float32(phase3time) / float32(counter*1e9))
 	if err1 != nil {
 		fmt.Println("err:", err1)
 	}

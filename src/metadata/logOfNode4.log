@@ -1,41 +1,45 @@
-2021/10/17 06:34:26 Node 4 new done,ip = 127.0.0.1:10440
-2021/10/17 06:34:26 [Node 4] Now Get start Phase1
-2021/10/17 06:34:26 [Node 4] send point message to [Node 1]
-2021/10/17 06:34:26 [Node 4] send point message to [Node 2]
-2021/10/17 06:34:26 [Node 4] send point message to [Node 3]
-2021/10/17 06:34:26 [Node 4] send point message to [Node 5]
-2021/10/17 06:34:26 Phase 1 :[Node 4] receive point message from [Node 2]
-2021/10/17 06:34:26 Phase 1 :[Node 4] receive point message from [Node 1]
-2021/10/17 06:34:26 Phase 1 :[Node 4] receive point message from [Node 3]
-2021/10/17 06:34:26 Phase 1 :[Node 4] receive point message from [Node 5]
-2021/10/17 06:34:26 [Node 4] read bulletinboard in phase 1
-2021/10/17 06:34:26 [Node 4] receive zero message from [Node 3] in phase 2
-2021/10/17 06:34:26 [Node 4] receive zero message from [Node 5] in phase 2
-2021/10/17 06:34:26 [Node 4] receive zero message from [Node 2] in phase 2
-2021/10/17 06:34:26 [Node 4] receive zero message from [Node 1] in phase 2
-2021/10/17 06:34:26 [Node 4] has finish _0ShareSum
-2021/10/17 06:34:26 [node 4] write bulletinboard in phase 2
-2021/10/17 06:34:26 [Node 4] send message to [Node 1] in phase 2
-2021/10/17 06:34:26 [Node 4] send message to [Node 2] in phase 2
-2021/10/17 06:34:26 [Node 4] send message to [Node 3] in phase 2
-2021/10/17 06:34:26 [Node 4] send message to [Node 5] in phase 2
-2021/10/17 06:34:26 [Node %!d(MISSING)] start verification in phase 2
-2021/10/17 06:34:26 [Node 4] read bulletinboard in phase 2
-2021/10/17 06:34:26 node 4 send point message to node 1 in phase 3
-2021/10/17 06:34:26 node 4 send point message to node 2 in phase 3
-2021/10/17 06:34:26 node 4 send point message to node 3 in phase 3
-2021/10/17 06:34:26 node 4 send point message to node 5 in phase 3
-2021/10/17 06:34:26 [node 4] receive point message from [node 2] in phase3
-2021/10/17 06:34:26 [node 4] receive point message from [node 3] in phase3
-2021/10/17 06:34:26 [node 4] receive point message from [node 5] in phase3
-2021/10/17 06:34:26 [node 4] receive point message from [node 1] in phase3
-2021/10/17 06:34:26 [node 4] has finish sharePhase3
-2021/10/17 06:34:26 [node 4] write bulletinboard in phase 3
-2021/10/17 06:34:26 [node 4] start verification in phase 3
-2021/10/17 06:34:26 [node 4] read bulletinboard in phase 3
-2021/10/17 06:34:26 [node 4] write bulletinboard in phase 3 2
-2021/10/17 06:34:26 totMsgSize,2918
-2021/10/17 06:34:26 epochLatency,175715576
-2021/10/17 06:34:26 reconstructionLatency,43260637
-2021/10/17 06:34:26 proactivizationLatency,35466583
-2021/10/17 06:34:26 sharedistLatency,96988015
+2021/10/17 11:52:52 Node 4 new done,ip = 127.0.0.1:10004
+2021/10/17 11:52:52 [Node 4] Now Get start Phase1
+2021/10/17 11:52:52 [Node 4] send point message to [Node 1]
+2021/10/17 11:52:52 [Node 4] send point message to [Node 2]
+2021/10/17 11:52:52 [Node 4] send point message to [Node 3]
+2021/10/17 11:52:52 [Node 4] send point message to [Node 5]
+2021/10/17 11:52:52 Phase 1 :[Node 4] receive point message from [Node 3]
+2021/10/17 11:52:52 Phase 1 :[Node 4] receive point message from [Node 5]
+2021/10/17 11:52:52 Phase 1 :[Node 4] receive point message from [Node 2]
+2021/10/17 11:52:52 Phase 1 :[Node 4] receive point message from [Node 1]
+2021/10/17 11:52:52 [Node 4] read bulletinboard in phase 1
+2021/10/17 11:52:52 [2869254332397113385482076483011156568060677225131301659741967672956169945855943735380692818517096391582136041628633681640055222869663603099068201744637541, 2381342552138029233629717564174813201853911287805225663686389892961004767242557434374310287976275805027213830288803756239286146527251968140262531340441466]
+2021/10/17 11:52:52 [2945055623907764192721364637625304849138100201226496580187214928115144338418902733653029993657723944750483686665797127487684464850684363842702384249220013, 6032882046622574535506438425994067109716353457931407822171859018099054483161534612422960604361666000290250392448425697243346468542511387265696461118950352]
+2021/10/17 11:52:52 [6358207524169941005446498654344392888776786411898487132677306643300884890980780308789713848768114513613296252548508243681188309490929487921964470436641054, 4514338653872221525161221315760129511060255207898717371488971122863297153731453196421726359060628932432426667949963869604546957259833714696335263370198705]
+2021/10/17 11:52:53 [Node 4] receive zero message from [Node 1] in phase 2
+2021/10/17 11:52:53 [Node 4] send message to [Node 1] in phase 2
+2021/10/17 11:52:53 [Node 4] send message to [Node 2] in phase 2
+2021/10/17 11:52:53 [Node 4] send message to [Node 3] in phase 2
+2021/10/17 11:52:53 [Node 4] send message to [Node 5] in phase 2
+2021/10/17 11:52:53 [Node 4] receive zero message from [Node 2] in phase 2
+2021/10/17 11:52:53 [Node 4] receive zero message from [Node 3] in phase 2
+2021/10/17 11:52:53 [Node 4] receive zero message from [Node 5] in phase 2
+2021/10/17 11:52:53 4 has finish _0ShareSum
+2021/10/17 11:52:53 [node 4] write bulletinboard in phase 2
+2021/10/17 11:52:53 [Node %!d(MISSING)] start verification in phase 2
+2021/10/17 11:52:53 [Node 4] read bulletinboard in phase 2
+2021/10/17 11:52:53 node 4 send point message to node 1 in phase 3
+2021/10/17 11:52:53 node 4 send point message to node 2 in phase 3
+2021/10/17 11:52:53 node 4 send point message to node 3 in phase 3
+2021/10/17 11:52:53 node 4 send point message to node 5 in phase 3
+2021/10/17 11:52:53 [node 4] receive point message from [node 3] in phase3
+2021/10/17 11:52:53 [node 4] receive point message from [node 5] in phase3
+2021/10/17 11:52:53 [node 4] receive point message from [node 2] in phase3
+2021/10/17 11:52:53 [node 4] receive point message from [node 1] in phase3
+2021/10/17 11:52:53 [node 4] has finish sharePhase3
+2021/10/17 11:52:53 [node 4] write bulletinboard in phase 3
+2021/10/17 11:52:53 [node 4] start verification in phase 3
+2021/10/17 11:52:53 [node 4] read bulletinboard in phase 3
+2021/10/17 11:52:53 [node 4] write bulletinboard in phase 3 2
+2021/10/17 11:52:53 totMsgSize,2918
+2021/10/17 11:52:53 epochLatency,163114961
+2021/10/17 11:52:53 reconstructionLatency,22392612
+2021/10/17 11:52:53 proactivizationLatency,48673023
+2021/10/17 11:52:53 sharedistLatency,92049034
+2021/10/17 11:52:53 the secret for reconstruction is ,54973390462808166514166851181989785267937147389566605963413661166195482315342
