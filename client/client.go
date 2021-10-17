@@ -41,6 +41,8 @@ type client struct {
 	counter int
 	//controller
 	control control.Control
+	//logger file pointer
+	log *log.Logger
 }
 
 func ReadIpList(metadataPath string) []string {
@@ -51,6 +53,13 @@ func ReadIpList(metadataPath string) []string {
 	return strings.Split(string(ipData), "\n")
 }
 func newClient(degree, counter int, metadataPath string, ip string) (client, error) {
+	fileName := metadataPath + "/bulletboard.log"
+	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		tmplogger, err = os.Create(fileName)
+	}
+	os.Truncate(fileName, 0)
+	log := log.New(tmplogger, "", log.LstdFlags)
 
 	ipRaw := ReadIpList(metadataPath)[0 : counter+1]
 	bip := ipRaw[0]
@@ -64,6 +73,7 @@ func newClient(degree, counter int, metadataPath string, ip string) (client, err
 	}
 	nConn := make([]*grpc.ClientConn, counter)
 	nClient := make([]pb.NodeServiceClient, counter)
+
 	return client{
 		ip:           ip,
 		ipBorad:      bip,
@@ -73,17 +83,13 @@ func newClient(degree, counter int, metadataPath string, ip string) (client, err
 		degree:       degree,
 		counter:      counter,
 		metadataPath: metadataPath,
+		log:          log,
 	}, nil
 }
 
 func (c *client) InitandConnect(s0 string) {
-	file, err := os.OpenFile("./src/metadata/test.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log := log.New(file, "", log.LstdFlags)
-	defer file.Close()
-	log.Printf("Start to connecttion")
+
+	c.log.Printf("Start to connecttion")
 	degree := c.degree
 	counter := c.counter
 	fixedRandState := rand.New(rand.NewSource(int64(3)))
@@ -108,7 +114,7 @@ func (c *client) InitandConnect(s0 string) {
 	time.Sleep(6)
 	bconn, err := grpc.Dial(c.ipBorad, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("Client could not connect to bulletboard")
+		c.log.Fatalf("Client could not connect to bulletboard")
 	}
 	c.boardConn = bconn
 	c.boardService = pb.NewBulletinBoardServiceClient(bconn)
@@ -124,19 +130,19 @@ func (c *client) InitandConnect(s0 string) {
 		time.Sleep(1)
 		nConn, err := grpc.Dial(c.ipList[i], grpc.WithInsecure())
 		if err != nil {
-			log.Fatalf("Client could not connect to node %d", i+1)
+			c.log.Fatalf("Client could not connect to node %d", i+1)
 		}
 		c.nodeConn[i] = nConn
 		c.nodeService[i] = pb.NewNodeServiceClient(nConn)
 	}
 	time.Sleep(6)
-	log.Printf("client has connected to committee and board")
+	c.log.Printf("client has connected to committee and board")
 
 	controll, err := control.New(c.metadataPath)
 	if err != nil {
-		log.Fatalf("Fail to connect controller")
+		c.log.Fatalf("Fail to connect controller")
 	}
-	log.Printf("Has connected to controller")
+	c.log.Printf("Has connected to controller")
 	c.control = controll
 	c.control.Connect()
 	//time.Sleep(6)
@@ -147,11 +153,6 @@ func newBoard(degree int, ccounter int, metadataPath string, polyyy []poly.Poly)
 	bb.Serve(false)
 }
 func main() {
-	file, err := os.OpenFile("./src/metadata/test.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log := log.New(file, "", log.LstdFlags|log.Llongfile)
 
 	//cnt := flag.Int("c", 2, "Enter number of nodes")
 	//degree := flag.Int("d", 1, "Enter the polynomial degree")
@@ -159,13 +160,18 @@ func main() {
 	//s0 := flag.String("secret","1234567899876543210","Enter the secret")
 	////aws := flag.Bool("aws", false, "if test on real aws")
 	//flag.Parse()
-	client1, err := newClient(2, 5, "/home/gary/GolandProjects/crypto_contest/src/metadata", "192.168.0.1")
+	client1, err := newClient(2, 5, "./src/metadata", "192.168.0.1")
 	if err != nil {
-		log.Fatalf("Can't create a new client:%v", err)
+		client1.log.Fatalf("Can't create a new client:%v", err)
 	}
-	defer file.Close()
+
 	client1.InitandConnect("1234567899876543210")
-	//client1.InitandConnect("0")
-	//log.Printf("Done")
-	//client1.control.StartHandoff()
+	var flag int
+	_, err1 := fmt.Scanf("%d", &flag)
+	if err1 != nil {
+		fmt.Println("err:", err1)
+	}
+	if flag == 1 {
+		client1.control.StartHandoff()
+	}
 }
