@@ -471,6 +471,7 @@ func (node *Node) Phase2Verify(ctx context.Context, request *pb.RequestMsg) (res
 	node.ClientReadPhase2()
 	return &pb.ResponseMsg{}, nil
 }
+
 func (node *Node) ClientReadPhase2() {
 	node.log.Printf("[Node %d] read bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
