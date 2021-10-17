@@ -809,12 +809,12 @@ func (node *Node) Phase3Readboard() {
 		*node.e3 = time.Now()
 		//f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		//defer f.Close()
-		node.log.Printf("totMsgSize,%d\n", *node.totMsgSize)
-		node.log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
-		node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
-		node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
-		node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
-		node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
+		fmt.Printf("totMsgSize,%d\n", *node.totMsgSize)
+		fmt.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
+		fmt.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
+		fmt.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
+		fmt.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+		fmt.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
 		*node.totMsgSize = 0
 	}
 
