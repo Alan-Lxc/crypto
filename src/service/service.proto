@@ -26,6 +26,7 @@ service BulletinBoardService {
     // BulletinBoard RPC for share distribution phase
     rpc WritePhase3(Cmt1Msg) returns (ResponseMsg) {};
     rpc WritePhase32(Cmt1Msg) returns (ResponseMsg) {};
+    rpc ReconstructSecret(PointMsg) returns (ResponseMsg) {};
     rpc ReadPhase3(RequestMsg) returns (stream Cmt1Msg) {};
 }
 

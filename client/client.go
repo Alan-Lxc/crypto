@@ -135,6 +135,7 @@ func (c *client) InitandConnect(s0 string) {
 		c.nodeConn[i] = nConn
 		c.nodeService[i] = pb.NewNodeServiceClient(nConn)
 	}
+	//fmt.Println(counter)
 	time.Sleep(6)
 	c.log.Printf("client has connected to committee and board")
 
@@ -160,7 +161,7 @@ func main() {
 	//s0 := flag.String("secret","1234567899876543210","Enter the secret")
 	////aws := flag.Bool("aws", false, "if test on real aws")
 	//flag.Parse()
-	client1, err := newClient(2, 5, "./src/metadata", "192.168.0.1")
+	client1, err := newClient(4, 11, "./src/metadata", "192.168.0.1")
 	if err != nil {
 		client1.log.Fatalf("Can't create a new client:%v", err)
 	}
@@ -171,7 +172,11 @@ func main() {
 	if err1 != nil {
 		fmt.Println("err:", err1)
 	}
-	if flag == 1 {
+	for flag == 1 {
 		client1.control.StartHandoff()
+		fmt.Scanf("%d", &flag)
+		if err1 != nil {
+			fmt.Println("err:", err1)
+		}
 	}
 }

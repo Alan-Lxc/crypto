@@ -333,6 +333,7 @@ type BulletinBoardServiceClient interface {
 	// BulletinBoard RPC for share distribution phase
 	WritePhase3(ctx context.Context, in *Cmt1Msg, opts ...grpc.CallOption) (*ResponseMsg, error)
 	WritePhase32(ctx context.Context, in *Cmt1Msg, opts ...grpc.CallOption) (*ResponseMsg, error)
+	ReconstructSecret(ctx context.Context, in *PointMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
 	ReadPhase3(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase3Client, error)
 }
 
@@ -462,6 +463,15 @@ func (c *bulletinBoardServiceClient) WritePhase32(ctx context.Context, in *Cmt1M
 	return out, nil
 }
 
+func (c *bulletinBoardServiceClient) ReconstructSecret(ctx context.Context, in *PointMsg, opts ...grpc.CallOption) (*ResponseMsg, error) {
+	out := new(ResponseMsg)
+	err := c.cc.Invoke(ctx, "/service.BulletinBoardService/ReconstructSecret", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *bulletinBoardServiceClient) ReadPhase3(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase3Client, error) {
 	stream, err := c.cc.NewStream(ctx, &BulletinBoardService_ServiceDesc.Streams[2], "/service.BulletinBoardService/ReadPhase3", opts...)
 	if err != nil {
@@ -511,6 +521,7 @@ type BulletinBoardServiceServer interface {
 	// BulletinBoard RPC for share distribution phase
 	WritePhase3(context.Context, *Cmt1Msg) (*ResponseMsg, error)
 	WritePhase32(context.Context, *Cmt1Msg) (*ResponseMsg, error)
+	ReconstructSecret(context.Context, *PointMsg) (*ResponseMsg, error)
 	ReadPhase3(*RequestMsg, BulletinBoardService_ReadPhase3Server) error
 	//mustEmbedUnimplementedBulletinBoardServiceServer()
 }
@@ -542,6 +553,9 @@ func (UnimplementedBulletinBoardServiceServer) WritePhase3(context.Context, *Cmt
 }
 func (UnimplementedBulletinBoardServiceServer) WritePhase32(context.Context, *Cmt1Msg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WritePhase32 not implemented")
+}
+func (UnimplementedBulletinBoardServiceServer) ReconstructSecret(context.Context, *PointMsg) (*ResponseMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReconstructSecret not implemented")
 }
 func (UnimplementedBulletinBoardServiceServer) ReadPhase3(*RequestMsg, BulletinBoardService_ReadPhase3Server) error {
 	return status.Errorf(codes.Unimplemented, "method ReadPhase3 not implemented")
@@ -709,6 +723,24 @@ func _BulletinBoardService_WritePhase32_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BulletinBoardService_ReconstructSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PointMsg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BulletinBoardServiceServer).ReconstructSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.BulletinBoardService/ReconstructSecret",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BulletinBoardServiceServer).ReconstructSecret(ctx, req.(*PointMsg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BulletinBoardService_ReadPhase3_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(RequestMsg)
 	if err := stream.RecvMsg(m); err != nil {
@@ -760,6 +792,10 @@ var BulletinBoardService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WritePhase32",
 			Handler:    _BulletinBoardService_WritePhase32_Handler,
+		},
+		{
+			MethodName: "ReconstructSecret",
+			Handler:    _BulletinBoardService_ReconstructSecret_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

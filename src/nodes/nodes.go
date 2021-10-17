@@ -38,6 +38,8 @@ type Node struct {
 	degree int
 	//the polynomial was set on Z_p
 	p *gmp.Int
+	//s0 for reconstruction
+	s0 *gmp.Int
 	// Rand source
 	randState *rand.Rand
 
@@ -175,7 +177,7 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error)
 	node.recPoint[p.X.Int32()-1] = &p
 	//fmt.Println(p)
 	*node.recCounter += 1
-	flag := (*node.recCounter == node.counter)
+	flag := (*node.recCounter == node.degree*2+1)
 	node.mutex.Unlock()
 	if flag {
 		*node.recCounter = 0
@@ -190,6 +192,9 @@ func (node *Node) SendMsgToNode() {
 		node.NodeConnect()
 		*node.iniflag = false
 	}
+	if node.label > node.degree*2+1 {
+		return
+	}
 	p := point.Point{
 		X:       node.secretShares[node.label-1].X,
 		Y:       node.secretShares[node.label-1].Y,
@@ -200,14 +205,14 @@ func (node *Node) SendMsgToNode() {
 	node.recPoint[p.X.Int32()-1] = &p
 	//node.recPoint[*node.recCounter] = &p
 	*node.recCounter += 1
-	flag := *node.recCounter == node.counter
+	flag := *node.recCounter == node.degree*2+1
 	node.mutex.Unlock()
 	if flag {
 		*node.recCounter = 0
 		node.ClientReadPhase1()
 	}
 	var wg sync.WaitGroup
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		if i != node.label-1 {
 			node.log.Printf("[Node %d] send point message to [Node %d]", node.label, i+1)
 			//msg := point.Pointmsg{}
@@ -238,10 +243,10 @@ func (node *Node) SendMsgToNode() {
 }
 
 func (node *Node) ClientReadPhase1() {
-	if *node.iniflag {
-		node.NodeConnect()
-		*node.iniflag = false
-	}
+	//if *node.iniflag {
+	//	node.NodeConnect()
+	//	*node.iniflag = false
+	//}
 	node.log.Printf("[Node %d] read bulletinboard in phase 1", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -249,7 +254,7 @@ func (node *Node) ClientReadPhase1() {
 	if err != nil {
 		node.log.Fatalf("client failed to read phase1: %v", err)
 	}
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		msg, err := stream.Recv()
 		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 		if err != nil {
@@ -267,6 +272,7 @@ func (node *Node) ClientReadPhase1() {
 		x = append(x, p.X)
 		y = append(y, p.Y)
 		polyCmt.Set(node.oldPolyCmt[p.X.Int32()-1])
+		node.log.Println(polyCmt)
 		if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(node.label)), p.Y, p.PolyWit) {
 			//fmt.Println(node.label, p.X, "FAIL", polyCmt, p.Y, p.PolyWit)
 			panic("Reconstruction Verification failed")
@@ -337,7 +343,7 @@ func (node *Node) Phase1Readboard() {
 	if err != nil {
 		log.Fatalf("client failed to read phase3: %v", err)
 	}
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		msg, err := stream.Recv()
 		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 		if err != nil {
@@ -347,7 +353,9 @@ func (node *Node) Phase1Readboard() {
 		polycmt := msg.GetPolycmt()
 		node.oldPolyCmt[index-1].SetCompressedBytes(polycmt)
 	}
-	node.ClientSharePhase2()
+	if node.label <= node.degree*2+1 {
+		node.ClientSharePhase2()
+	}
 }
 
 //type ZeroMsg struct {
@@ -369,18 +377,18 @@ func (node *Node) ClientSharePhase2() {
 	//for i := 0; i < node.counter; i++ {
 	//	fmt.Println("lambda ",i+1 ,node.lambda[i])
 	//}
-	for i := 0; i < node.counter-1; i++ {
+	for i := 0; i < node.degree*2+1-1; i++ {
 		node._0Shares[i].Rand(node.randState, gmp.NewInt(10))
 		inter := gmp.NewInt(0)
 		inter.Mul(node._0Shares[i], node.lambda[i])
-		node._0Shares[node.counter-1].Sub(node._0Shares[node.counter-1], inter)
+		node._0Shares[node.degree*2+1-1].Sub(node._0Shares[node.degree*2+1-1], inter)
 	}
 	//0-share means the S
-	node._0Shares[node.counter-1].Mod(node._0Shares[node.counter-1], node.p)
+	node._0Shares[node.degree*2+1-1].Mod(node._0Shares[node.degree*2+1-1], node.p)
 	inter := gmp.NewInt(0)
-	inter.ModInverse(node.lambda[node.counter-1], node.p)
-	node._0Shares[node.counter-1].Mul(node._0Shares[node.counter-1], inter)
-	node._0Shares[node.counter-1].Mod(node._0Shares[node.counter-1], node.p)
+	inter.ModInverse(node.lambda[node.degree*2+1-1], node.p)
+	node._0Shares[node.degree*2+1-1].Mul(node._0Shares[node.degree*2+1-1], inter)
+	node._0Shares[node.degree*2+1-1].Mod(node._0Shares[node.degree*2+1-1], node.p)
 	//////
 	//exponentSum := node.dc.NewG1()
 	//exponentSum.Set1()
@@ -405,20 +413,6 @@ func (node *Node) ClientSharePhase2() {
 	//	fmt.Println("exponentsun be ",exponentSum)
 	//}
 	//fmt.Println("should be 0 but be",exponentSum)
-	X := make([]*gmp.Int, node.counter)
-	Y := make([]*gmp.Int, node.counter)
-	for i := 0; i < node.counter; i++ {
-		X[i] = gmp.NewInt(int64(i + 1))
-		Y[i] = node._0Shares[i]
-	}
-	//Y[0]=gmp.NewInt(int64(21))
-	//Y[1]=gmp.NewInt(int64(22))
-	//Y[2]=gmp.NewInt(int64(20))
-	//Y[3]=gmp.NewInt(int64(20))
-	//Y[4]=gmp.NewInt(int64(15))
-	tttmp, _ := interpolation.LagrangeInterpolate(node.counter-1, X, Y, node.p)
-
-	fmt.Println(node.counter-1, "0 is ", tttmp.GetCoeffConstant())
 	//for i := 0; i < node.counter; i++ {
 	//	tmpppp :=gmp.NewInt(int64(0))
 	//	tttmp.EvalMod(gmp.NewInt(int64(i+1)),node.p,tmpppp)
@@ -428,7 +422,7 @@ func (node *Node) ClientSharePhase2() {
 	node.mutex.Lock()
 	node._0ShareSum.Add(node._0ShareSum, node._0Shares[node.label-1])
 	*node._0ShareCount = *node._0ShareCount + 1
-	_0shareSumFinish := (*node._0ShareCount == node.counter)
+	_0shareSumFinish := (*node._0ShareCount == node.degree*2+1)
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
@@ -457,7 +451,7 @@ func (node *Node) ClientSharePhase2() {
 	}
 	// share 0-share
 	var wg sync.WaitGroup
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		if i != node.label-1 {
 			node.log.Printf("[Node %d] send message to [Node %d] in phase 2", node.label, i+1)
 			msg := &pb.ZeroMsg{
@@ -491,7 +485,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 	node.mutex.Lock()
 	node._0ShareSum.Add(node._0ShareSum, inter)
 	*node._0ShareCount = *node._0ShareCount + 1
-	_0shareSumFinish := (*node._0ShareCount == node.counter)
+	_0shareSumFinish := (*node._0ShareCount == node.degree*2+1)
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
@@ -544,7 +538,7 @@ func (node *Node) ClientReadPhase2() {
 	if err != nil {
 		node.log.Fatalf("client failed to read phase2: %v", err)
 	}
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		msg, err := stream.Recv()
 		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 		if err != nil {
@@ -568,7 +562,7 @@ func (node *Node) ClientReadPhase2() {
 	exponentSum := node.dc.NewG1()
 	exponentSum.Set1()
 	//fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		lambda := big.NewInt(0)
 		lambda.SetString(node.lambda[i].String(), 10)
 		//lambda.SetString(node.lambda[node.counter-1].String(), 10)
@@ -583,7 +577,7 @@ func (node *Node) ClientReadPhase2() {
 		panic("Proactivization Verification 1 failed")
 	}
 	flag := true
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		if !node.dpc.VerifyEval(node.zerosumPolyCmt[i], gmp.NewInt(0), gmp.NewInt(0), node.zerosumPolyWit[i]) {
 			flag = false
 		}
@@ -593,7 +587,9 @@ func (node *Node) ClientReadPhase2() {
 	}
 	*node.e2 = time.Now()
 	*node.s3 = time.Now()
-	node.ClientSharePhase3()
+	if node.label <= node.degree*2+1 {
+		node.ClientSharePhase3()
+	}
 }
 
 func (node *Node) NodeConnect() {
@@ -631,23 +627,23 @@ func (node *Node) Service() {
 	node.log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
 }
 
-func (node *Node) Serve(aws bool) {
-	port := node.ipAddress[node.label-1]
-	if aws {
-		port = "0.0.0.0:12001"
-	}
-	lis, err := net.Listen("tcp", port)
-	if err != nil {
-		node.log.Fatalf("node failed to listen %v", err)
-	}
-	s := grpc.NewServer()
-	pb.RegisterNodeServiceServer(s, node)
-	reflection.Register(s)
-	node.log.Printf("node %d serve on %s", node.label, port)
-	if err := s.Serve(lis); err != nil {
-		node.log.Fatalf("node failed to serve %v", err)
-	}
-}
+//func (node *Node) Serve(aws bool) {
+//	port := node.ipAddress[node.label-1]
+//	if aws {
+//		port = "0.0.0.0:12001"
+//	}
+//	lis, err := net.Listen("tcp", port)
+//	if err != nil {
+//		node.log.Fatalf("node failed to listen %v", err)
+//	}
+//	s := grpc.NewServer()
+//	pb.RegisterNodeServiceServer(s, node)
+//	reflection.Register(s)
+//	node.log.Printf("node %d serve on %s", node.label, port)
+//	if err := s.Serve(lis); err != nil {
+//		node.log.Fatalf("node failed to serve %v", err)
+//	}
+//}
 func ReadIpList(metadataPath string) []string {
 	ipData, err := ioutil.ReadFile(metadataPath + "/ip_list")
 	if err != nil {
@@ -667,16 +663,19 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 	Y := msg.GetY()
 	node.log.Printf("[node %d] receive point message from [node %d] in phase3", node.label, index)
 	witness := msg.GetWitness()
+	//fmt.Println("node index is ",index-1)
 	node.secretShares[index-1].Y.SetBytes(Y)
 	node.secretShares[index-1].PolyWit.SetCompressedBytes(witness)
 	node.mutex.Lock()
 	*node.shareCnt = *node.shareCnt + 1
-	flag := *node.shareCnt == node.counter
+	flag := *node.shareCnt == node.degree*2+1
 	node.mutex.Unlock()
 	if flag {
 		node.log.Printf("[node %d] has finish sharePhase3", node.label)
 		*node.shareCnt = 0
-		node.Phase3WriteOnBorad()
+		if node.label <= node.degree*2+1 {
+			node.Phase3WriteOnBorad()
+		}
 	}
 	return &pb.ResponseMsg{}, nil
 }
@@ -718,6 +717,7 @@ func (node *Node) ClientSharePhase3() {
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
 				defer wg.Done()
+				//fmt.Println(i)
 				node.nodeService[i].Phase3SendMsg(ctx, msg)
 			}(i, msg)
 		} else {
@@ -725,11 +725,14 @@ func (node *Node) ClientSharePhase3() {
 			node.secretShares[i].PolyWit.Set(witness)
 			node.mutex.Lock()
 			*node.shareCnt = *node.shareCnt + 1
-			flag := *node.shareCnt == node.counter
+			flag := *node.shareCnt == node.degree*2+1
 			node.mutex.Unlock()
 			if flag {
+				node.log.Printf("[node %d] has finish sharePhase3", node.label)
 				*node.shareCnt = 0
-				node.Phase3WriteOnBorad()
+				if node.label <= node.degree*2+1 {
+					node.Phase3WriteOnBorad()
+				}
 			}
 		}
 	}
@@ -766,7 +769,7 @@ func (node *Node) Phase3Readboard() {
 	if err != nil {
 		node.log.Fatalf("client failed to read phase3: %v", err)
 	}
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		msg, err := stream.Recv()
 		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 		if err != nil {
@@ -777,10 +780,10 @@ func (node *Node) Phase3Readboard() {
 		node.newPolyCmt[index-1].SetCompressedBytes(polycmt)
 	}
 	//fmt.Println("hhhh")
-	tmpX := make([]*gmp.Int, node.counter)
-	tmpY := make([]*gmp.Int, node.counter)
+	tmpX := make([]*gmp.Int, node.degree*2+1)
+	tmpY := make([]*gmp.Int, node.degree*2+1)
 
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		tmp := node.dpc.NewG1()
 		if !node.newPolyCmt[i].Equals(tmp.Mul(node.oldPolyCmt[i], node.midPolyCmt[i])) {
 			panic("Share Distribution Verification 1 failed")
@@ -799,7 +802,21 @@ func (node *Node) Phase3Readboard() {
 	//y := gmp.NewInt(0)
 	//node.recPoly.EvalMod(gmp.NewInt(int64(0)), node.p, y)
 	//fmt.Println(node.label,y)
-	node.Phase3WriteOnBorad2()
+	node.recPoly.EvalMod(gmp.NewInt(0), node.p, node.s0)
+	if node.label <= node.degree*2+1 {
+		node.Phase3WriteOnBorad2()
+	} else {
+		*node.e3 = time.Now()
+		//f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		//defer f.Close()
+		node.log.Printf("totMsgSize,%d\n", *node.totMsgSize)
+		node.log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
+		node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
+		node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
+		node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+		node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
+		*node.totMsgSize = 0
+	}
 
 }
 func (node *Node) Phase3WriteOnBorad2() {
@@ -818,7 +835,21 @@ func (node *Node) Phase3WriteOnBorad2() {
 	tmpPoly, _ := poly.NewPoly(node.degree * 2)
 	tmpPoly.ResetTo(*node.recPoly)
 	node.boardService.WritePhase32(ctx, msg)
-	for i := 0; i < node.counter; i++ {
+
+	YY := gmp.NewInt(0)
+	tmpPoly.EvalMod(gmp.NewInt(0), node.p, YY)
+	C2 := node.dpc.NewG1()
+	node.dpc.CreateWitness(C2, tmpPoly, gmp.NewInt(0))
+	//fmt.Println(YY)
+	msg2 := &pb.PointMsg{
+		Index:   int32(node.label),
+		X:       gmp.NewInt(int64(node.label)).Bytes(),
+		Y:       YY.Bytes(),
+		Witness: C.CompressedBytes(),
+	}
+	node.boardService.ReconstructSecret(ctx, msg2)
+
+	for i := 0; i < node.degree*2+1; i++ {
 		x := int32(i + 1)
 		y := gmp.NewInt(0)
 		w := node.dpc.NewG1()
@@ -837,8 +868,9 @@ func (node *Node) Phase3WriteOnBorad2() {
 	node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
 	node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
 	node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+	node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
 	*node.totMsgSize = 0
-	for i := 0; i < node.counter; i++ {
+	for i := 0; i < node.degree*2+1; i++ {
 		node._0Shares[i].SetInt64(0)
 	}
 	node._0ShareSum.SetInt64(0)
@@ -870,11 +902,11 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	denominator := poly.NewConstant(1)
 	tmp, _ := poly.NewPoly(1)
 	tmp.SetCoeffWithInt(1, 1)
-	for i := 0; i < counter; i++ {
+	for i := 0; i < degree*2+1; i++ {
 		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
 		denominator.MulSelf(tmp)
 	}
-	for i := 0; i < counter; i++ {
+	for i := 0; i < degree*2+1; i++ {
 		lambda[i] = gmp.NewInt(0)
 		deno, _ := poly.NewPoly(0)
 		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
@@ -908,7 +940,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	if err != nil {
 		panic("Error initializing random tmpPoly")
 	}
-	for i := 0; i < counter; i++ {
+	for i := 0; i < degree*2+1; i++ {
 		x := int32(i + 1)
 		y := gmp.NewInt(0)
 		w := dpc.NewG1()
@@ -924,6 +956,10 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	recPoly, _ := poly.NewPoly(degree)
 	newPoly, _ := poly.NewPoly(degree)
 	shareCnt := 0
+
+	s0 := gmp.NewInt(0)
+	recPoly.ResetTo(tmpPoly)
+	recPoly.EvalMod(gmp.NewInt(0), p, s0)
 
 	oldPolyCmt := make([]*pbc.Element, counter)
 	midPolyCmt := make([]*pbc.Element, counter)
@@ -980,6 +1016,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 		dc:              &dc,
 		dpc:             &dpc,
 		p:               p,
+		s0:              s0,
 		lambda:          lambda,
 		_0Shares:        _0Shares,
 		_0ShareCount:    &_0ShareCount,

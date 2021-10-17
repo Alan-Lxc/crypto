@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/commitment"
+	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
 	"github.com/golang/protobuf/proto"
@@ -24,8 +25,12 @@ import (
 type BulletinBoard struct {
 	// Metadata Directory Path
 	metadataPath string
+	// Degree
+	degree int
 	// Counter
 	counter int
+	//the polynomial was set on Z_p
+	p *gmp.Int
 	// BulletinBoard IP Address
 	bip string
 	// IP
@@ -39,7 +44,12 @@ type BulletinBoard struct {
 	proactivizationContent []*pb.CommitMsg
 	// Share Distribution BulletinBoard
 	shaCnt *int
-
+	//Secretcnt
+	secretCnt *int
+	//RecontructSecret
+	recontructSecret []*gmp.Int
+	//the secret
+	secret *gmp.Int
 	// Mutexes
 	mutex sync.Mutex
 
@@ -76,7 +86,7 @@ func (bb *BulletinBoard) StartEpoch(ctx context.Context, in *pb.RequestMsg) (*pb
 
 func (bb *BulletinBoard) ReadPhase1(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase1Server) error {
 	bb.log.Print("[bulletinboard] is being read in phase 1")
-	for i := 0; i < bb.counter; i++ {
+	for i := 0; i < bb.degree*2+1; i++ {
 		if err := stream.Send(bb.reconstructionContent[i]); err != nil {
 			bb.log.Fatalf("bulletinboard failed to read phase1: %v", err)
 			return err
@@ -88,12 +98,12 @@ func (bb *BulletinBoard) ReadPhase1(in *pb.RequestMsg, stream pb.BulletinBoardSe
 func (bb *BulletinBoard) WritePhase1(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
 	//fmt.Println("written index is xxxx")
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
-	bb.log.Print("[bulletinboard] is being written in phase 3")
+	bb.log.Print("[bulletinboard] is being writcommitmentten in phase 3")
 	index := msg.GetIndex()
 	bb.reconstructionContent[index-1] = msg
 	bb.mutex.Lock()
 	*bb.shaCnt = *bb.shaCnt + 1
-	flag := (*bb.shaCnt == bb.counter)
+	flag := (*bb.shaCnt == bb.degree*2+1)
 	bb.mutex.Unlock()
 	if flag {
 		*bb.shaCnt = 0
@@ -125,7 +135,7 @@ func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.CommitMsg) (*p
 	bb.proactivizationContent[index-1] = msg
 	bb.mutex.Lock()
 	*bb.proCnt = *bb.proCnt + 1
-	flag := (*bb.proCnt == bb.counter)
+	flag := (*bb.proCnt == bb.degree*2+1)
 	bb.mutex.Unlock()
 	if flag {
 		*bb.proCnt = 0
@@ -136,7 +146,7 @@ func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.CommitMsg) (*p
 
 func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase2Server) error {
 	bb.log.Print("[bulletinboard] is being read in phase 2")
-	for i := 0; i < bb.counter; i++ {
+	for i := 0; i < bb.degree*2+1; i++ {
 		if err := stream.Send(bb.proactivizationContent[i]); err != nil {
 			bb.log.Fatalf("bulletinboard failed to read phase2: %v", err)
 			return err
@@ -146,14 +156,14 @@ func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardSe
 }
 
 func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
-	fmt.Println("written index is xxxx")
+	//fmt.Println("written index is xxxx")
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	bb.log.Print("[bulletinboard] is being written in phase 3")
 	index := msg.GetIndex()
 	bb.reconstructionContent[index-1] = msg
 	bb.mutex.Lock()
 	*bb.shaCnt = *bb.shaCnt + 1
-	flag := (*bb.shaCnt == bb.counter)
+	flag := (*bb.shaCnt == bb.degree*2+1)
 	bb.mutex.Unlock()
 	if flag {
 		*bb.shaCnt = 0
@@ -170,16 +180,62 @@ func (bb *BulletinBoard) WritePhase32(ctx context.Context, msg *pb.Cmt1Msg) (*pb
 	bb.reconstructionContent[index-1] = msg
 	bb.mutex.Lock()
 	*bb.shaCnt = *bb.shaCnt + 1
-	flag := (*bb.shaCnt == bb.counter)
+	flag := (*bb.shaCnt == bb.degree*2+1)
 	bb.mutex.Unlock()
 	if flag {
 		*bb.shaCnt = 0
 	}
 	return &pb.ResponseMsg{}, nil
 }
+
+func (bb *BulletinBoard) ReconstructSecret(ctx context.Context, msg *pb.PointMsg) (*pb.ResponseMsg, error) {
+	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
+	bb.log.Print("[bulletinboard] recontruct secret")
+	index := msg.GetIndex()
+	Y := gmp.NewInt(0).SetBytes(msg.GetY())
+	//fmt.Println(len(bb.recontructSecret),bb.recontructSecret)
+	bb.recontructSecret[index-1] = Y
+	bb.mutex.Lock()
+	*bb.secretCnt = *bb.secretCnt + 1
+	flag := (*bb.secretCnt == bb.degree*2+1)
+	bb.mutex.Unlock()
+	if flag {
+		//bb.log.Println(*bb.secretCnt,bb.recontructSecret)
+		*bb.secretCnt = 0
+		bb.SecretPrint()
+	}
+	return &pb.ResponseMsg{}, nil
+}
+func (bb *BulletinBoard) SecretPrint() {
+	X := make([]*gmp.Int, bb.degree*2+1)
+	for i := 0; i < bb.degree*2+1; i++ {
+		X[i] = gmp.NewInt(int64(i + 1))
+	}
+	//bb.log.Println(bb.recontructSecret)
+	flg := 1
+	for flg == 1 {
+		flg = 0
+		for i := 0; i < bb.degree*2+1; i++ {
+			if bb.recontructSecret[i] == nil {
+				flg = 1
+				break
+			}
+		}
+	}
+	polytmp, _ := interpolation.LagrangeInterpolate(bb.degree, X, bb.recontructSecret[:bb.degree*2+1], bb.p)
+	polytmp.EvalMod(gmp.NewInt(0), bb.p, bb.secret)
+	bb.log.Print("[bulletinboard] the secret is ", bb.secret)
+
+	*bb.proCnt = 0
+	*bb.shaCnt = 0
+	//f, _ := os.OpenFile(bb.metadataPath+"/log0", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	//defer f.Close()
+	bb.log.Printf("totMsgSize,%d\n", *bb.totMsgSize)
+	*bb.totMsgSize = 0
+}
 func (bb *BulletinBoard) ReadPhase3(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase3Server) error {
 	bb.log.Print("[bulletinboard] is being read in phase 3")
-	for i := 0; i < bb.counter; i++ {
+	for i := 0; i < bb.degree*2+1; i++ {
 		if err := stream.Send(bb.reconstructionContent[i]); err != nil {
 			bb.log.Fatalf("bulletinboard failed to read phase2: %v", err)
 			return err
@@ -286,12 +342,6 @@ func (bb *BulletinBoard) ClientStartVerifPhase3() {
 		}(i)
 	}
 	wg.Wait()
-	*bb.proCnt = 0
-	*bb.shaCnt = 0
-	//f, _ := os.OpenFile(bb.metadataPath+"/log0", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	//defer f.Close()
-	bb.log.Printf("totMsgSize,%d\n", *bb.totMsgSize)
-	*bb.totMsgSize = 0
 }
 
 func ReadIpList(metadataPath string) []string {
@@ -331,8 +381,10 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 
 	proCnt := 0
 	shaCnt := 0
-
+	secretCnt := 0
 	reconstructionContent := make([]*pb.Cmt1Msg, counter)
+	reconstructSecret := make([]*gmp.Int, counter)
+	secret := gmp.NewInt(0)
 	//polyp, err := poly.NewRand(degree, fixedRandState, p)
 	//if err != nil {
 	//	bb.log.Fatal("Error initializing random poly")
@@ -356,12 +408,17 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 	totMsgSize := 0
 
 	return BulletinBoard{
+		degree:                 degree,
+		p:                      p,
 		metadataPath:           metadataPath,
+		recontructSecret:       reconstructSecret,
 		counter:                counter,
 		bip:                    bip,
 		ipList:                 ipList,
 		proCnt:                 &proCnt,
 		shaCnt:                 &shaCnt,
+		secretCnt:              &secretCnt,
+		secret:                 secret,
 		reconstructionContent:  reconstructionContent,
 		proactivizationContent: proactivizationContent,
 		nConn:                  nConn,

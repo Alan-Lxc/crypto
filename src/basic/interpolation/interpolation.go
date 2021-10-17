@@ -142,6 +142,7 @@ func LagrangeInterpolate(degree int, x []*gmp.Int, y []*gmp.Int, mod *gmp.Int) (
 		//求分母模逆
 		denominator.ModInverse(denominator, mod)
 		//分母真实值乘以y[i]就得到分母的真实值
+		//fmt.Println(denominator,y[i])
 		denominator.Mul(denominator, y[i])
 		//最后结果加上inter和分母模逆的乘积
 		resultPoly.AddMul(inter, denominator)
