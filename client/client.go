@@ -161,7 +161,11 @@ func main() {
 	//s0 := flag.String("secret","1234567899876543210","Enter the secret")
 	////aws := flag.Bool("aws", false, "if test on real aws")
 	//flag.Parse()
-	client1, err := newClient(4, 11, "./src/metadata", "192.168.0.1")
+	var degree int
+	var counter int
+	fmt.Println("please input degree and counter")
+	fmt.Scanf("%d%d", &degree, &counter)
+	client1, err := newClient(degree, counter, "./src/metadata", "192.168.0.1")
 	if err != nil {
 		client1.log.Fatalf("Can't create a new client:%v", err)
 	}

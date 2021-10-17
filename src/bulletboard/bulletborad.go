@@ -231,6 +231,7 @@ func (bb *BulletinBoard) SecretPrint() {
 	//f, _ := os.OpenFile(bb.metadataPath+"/log0", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	//defer f.Close()
 	bb.log.Printf("totMsgSize,%d\n", *bb.totMsgSize)
+	fmt.Println("[bulletinboard] totmsgsize is %d", *bb.totMsgSize)
 	*bb.totMsgSize = 0
 }
 func (bb *BulletinBoard) ReadPhase3(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase3Server) error {
