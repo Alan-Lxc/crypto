@@ -830,13 +830,13 @@ func (node *Node) Phase3WriteOnBorad2() {
 	}
 	//log.Printf("finish~~")
 	*node.e3 = time.Now()
-	f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	defer f.Close()
-	//fmt.Fprintf(f, "totMsgSize,%d\n", *node.totMsgSize)
-	//fmt.Fprintf(f, "epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
-	//fmt.Fprintf(f, "reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
-	//fmt.Fprintf(f, "proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
-	//fmt.Fprintf(f, "sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+	//f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	//defer f.Close()
+	node.log.Printf("totMsgSize,%d\n", *node.totMsgSize)
+	node.log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
+	node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
+	node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
+	node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
 	*node.totMsgSize = 0
 	for i := 0; i < node.counter; i++ {
 		node._0Shares[i].SetInt64(0)
@@ -848,8 +848,8 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	if label < 0 {
 		return Node{}, errors.New("Label must be a non-negative number!")
 	}
-	file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
-	defer file.Close()
+	//file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
+	//defer file.Close()
 	ipRaw := ReadIpList(logPath)[0 : counter+1]
 	bip := ipRaw[0]
 	ipList := ipRaw[1 : counter+1]
