@@ -782,11 +782,12 @@ var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+// Requires gRPC-Go v1.32.0 or later.
+const _ = grpc.SupportPackageIsVersion7
 
 // NodeServiceClient is the client API for NodeService service.
 //
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NodeServiceClient interface {
 	Phase1GetStart(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
 	Phase1ReceiveMsg(ctx context.Context, in *PointMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
@@ -879,6 +880,8 @@ func (c *nodeServiceClient) Sendtestmsg(ctx context.Context, in *RequestMsg, opt
 }
 
 // NodeServiceServer is the server API for NodeService service.
+// All implementations must embed UnimplementedNodeServiceServer
+// for forward compatibility
 type NodeServiceServer interface {
 	Phase1GetStart(context.Context, *RequestMsg) (*ResponseMsg, error)
 	Phase1ReceiveMsg(context.Context, *PointMsg) (*ResponseMsg, error)
@@ -888,39 +891,48 @@ type NodeServiceServer interface {
 	Phase3SendMsg(context.Context, *PointMsg) (*ResponseMsg, error)
 	Phase3Verify(context.Context, *RequestMsg) (*ResponseMsg, error)
 	Sendtestmsg(context.Context, *RequestMsg) (*TestMsg, error)
+	//mustEmbedUnimplementedNodeServiceServer()
 }
 
-// UnimplementedNodeServiceServer can be embedded to have forward compatible implementations.
+// UnimplementedNodeServiceServer must be embedded to have forward compatible implementations.
 type UnimplementedNodeServiceServer struct {
 }
 
-func (*UnimplementedNodeServiceServer) Phase1GetStart(context.Context, *RequestMsg) (*ResponseMsg, error) {
+func (UnimplementedNodeServiceServer) Phase1GetStart(context.Context, *RequestMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase1GetStart not implemented")
 }
-func (*UnimplementedNodeServiceServer) Phase1ReceiveMsg(context.Context, *PointMsg) (*ResponseMsg, error) {
+func (UnimplementedNodeServiceServer) Phase1ReceiveMsg(context.Context, *PointMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase1ReceiveMsg not implemented")
 }
-func (*UnimplementedNodeServiceServer) Phase1Verify(context.Context, *RequestMsg) (*ResponseMsg, error) {
+func (UnimplementedNodeServiceServer) Phase1Verify(context.Context, *RequestMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase1Verify not implemented")
 }
-func (*UnimplementedNodeServiceServer) Phase2Share(context.Context, *ZeroMsg) (*ResponseMsg, error) {
+func (UnimplementedNodeServiceServer) Phase2Share(context.Context, *ZeroMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase2Share not implemented")
 }
-func (*UnimplementedNodeServiceServer) Phase2Verify(context.Context, *RequestMsg) (*ResponseMsg, error) {
+func (UnimplementedNodeServiceServer) Phase2Verify(context.Context, *RequestMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase2Verify not implemented")
 }
-func (*UnimplementedNodeServiceServer) Phase3SendMsg(context.Context, *PointMsg) (*ResponseMsg, error) {
+func (UnimplementedNodeServiceServer) Phase3SendMsg(context.Context, *PointMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase3SendMsg not implemented")
 }
-func (*UnimplementedNodeServiceServer) Phase3Verify(context.Context, *RequestMsg) (*ResponseMsg, error) {
+func (UnimplementedNodeServiceServer) Phase3Verify(context.Context, *RequestMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Phase3Verify not implemented")
 }
-func (*UnimplementedNodeServiceServer) Sendtestmsg(context.Context, *RequestMsg) (*TestMsg, error) {
+func (UnimplementedNodeServiceServer) Sendtestmsg(context.Context, *RequestMsg) (*TestMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sendtestmsg not implemented")
 }
+func (UnimplementedNodeServiceServer) mustEmbedUnimplementedNodeServiceServer() {}
 
-func RegisterNodeServiceServer(s *grpc.Server, srv NodeServiceServer) {
-	s.RegisterService(&_NodeService_serviceDesc, srv)
+// UnsafeNodeServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to NodeServiceServer will
+// result in compilation errors.
+type UnsafeNodeServiceServer interface {
+	mustEmbedUnimplementedNodeServiceServer()
+}
+
+func RegisterNodeServiceServer(s grpc.ServiceRegistrar, srv NodeServiceServer) {
+	s.RegisterService(&NodeService_ServiceDesc, srv)
 }
 
 func _NodeService_Phase1GetStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1067,7 +1079,10 @@ func _NodeService_Sendtestmsg_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-var _NodeService_serviceDesc = grpc.ServiceDesc{
+// NodeService_ServiceDesc is the grpc.ServiceDesc for NodeService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var NodeService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "service.NodeService",
 	HandlerType: (*NodeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
@@ -1110,12 +1125,13 @@ var _NodeService_serviceDesc = grpc.ServiceDesc{
 
 // BulletinBoardServiceClient is the client API for BulletinBoardService service.
 //
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BulletinBoardServiceClient interface {
 	// Start a epoch
 	StartEpoch(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
 	// BulletinBoard RPC for recontruction phase
 	ReadPhase1(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase1Client, error)
+	ReadPhase12(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase12Client, error)
 	WritePhase1(ctx context.Context, in *Cmt1Msg, opts ...grpc.CallOption) (*ResponseMsg, error)
 	// BulletinBoard RPC for proactivization phase
 	WritePhase2(ctx context.Context, in *CommitMsg, opts ...grpc.CallOption) (*ResponseMsg, error)
@@ -1145,7 +1161,7 @@ func (c *bulletinBoardServiceClient) StartEpoch(ctx context.Context, in *Request
 }
 
 func (c *bulletinBoardServiceClient) ReadPhase1(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase1Client, error) {
-	stream, err := c.cc.NewStream(ctx, &_BulletinBoardService_serviceDesc.Streams[0], "/service.BulletinBoardService/ReadPhase1", opts...)
+	stream, err := c.cc.NewStream(ctx, &BulletinBoardService_ServiceDesc.Streams[0], "/service.BulletinBoardService/ReadPhase1", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1176,6 +1192,38 @@ func (x *bulletinBoardServiceReadPhase1Client) Recv() (*Cmt1Msg, error) {
 	return m, nil
 }
 
+func (c *bulletinBoardServiceClient) ReadPhase12(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase12Client, error) {
+	stream, err := c.cc.NewStream(ctx, &BulletinBoardService_ServiceDesc.Streams[1], "/service.BulletinBoardService/ReadPhase12", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bulletinBoardServiceReadPhase12Client{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type BulletinBoardService_ReadPhase12Client interface {
+	Recv() (*Cmt1Msg, error)
+	grpc.ClientStream
+}
+
+type bulletinBoardServiceReadPhase12Client struct {
+	grpc.ClientStream
+}
+
+func (x *bulletinBoardServiceReadPhase12Client) Recv() (*Cmt1Msg, error) {
+	m := new(Cmt1Msg)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *bulletinBoardServiceClient) WritePhase1(ctx context.Context, in *Cmt1Msg, opts ...grpc.CallOption) (*ResponseMsg, error) {
 	out := new(ResponseMsg)
 	err := c.cc.Invoke(ctx, "/service.BulletinBoardService/WritePhase1", in, out, opts...)
@@ -1195,7 +1243,7 @@ func (c *bulletinBoardServiceClient) WritePhase2(ctx context.Context, in *Commit
 }
 
 func (c *bulletinBoardServiceClient) ReadPhase2(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase2Client, error) {
-	stream, err := c.cc.NewStream(ctx, &_BulletinBoardService_serviceDesc.Streams[1], "/service.BulletinBoardService/ReadPhase2", opts...)
+	stream, err := c.cc.NewStream(ctx, &BulletinBoardService_ServiceDesc.Streams[2], "/service.BulletinBoardService/ReadPhase2", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1254,7 +1302,7 @@ func (c *bulletinBoardServiceClient) ReconstructSecret(ctx context.Context, in *
 }
 
 func (c *bulletinBoardServiceClient) ReadPhase3(ctx context.Context, in *RequestMsg, opts ...grpc.CallOption) (BulletinBoardService_ReadPhase3Client, error) {
-	stream, err := c.cc.NewStream(ctx, &_BulletinBoardService_serviceDesc.Streams[2], "/service.BulletinBoardService/ReadPhase3", opts...)
+	stream, err := c.cc.NewStream(ctx, &BulletinBoardService_ServiceDesc.Streams[3], "/service.BulletinBoardService/ReadPhase3", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1286,11 +1334,14 @@ func (x *bulletinBoardServiceReadPhase3Client) Recv() (*Cmt1Msg, error) {
 }
 
 // BulletinBoardServiceServer is the server API for BulletinBoardService service.
+// All implementations must embed UnimplementedBulletinBoardServiceServer
+// for forward compatibility
 type BulletinBoardServiceServer interface {
 	// Start a epoch
 	StartEpoch(context.Context, *RequestMsg) (*ResponseMsg, error)
 	// BulletinBoard RPC for recontruction phase
 	ReadPhase1(*RequestMsg, BulletinBoardService_ReadPhase1Server) error
+	ReadPhase12(*RequestMsg, BulletinBoardService_ReadPhase12Server) error
 	WritePhase1(context.Context, *Cmt1Msg) (*ResponseMsg, error)
 	// BulletinBoard RPC for proactivization phase
 	WritePhase2(context.Context, *CommitMsg) (*ResponseMsg, error)
@@ -1300,42 +1351,54 @@ type BulletinBoardServiceServer interface {
 	WritePhase32(context.Context, *Cmt1Msg) (*ResponseMsg, error)
 	ReconstructSecret(context.Context, *PointMsg) (*ResponseMsg, error)
 	ReadPhase3(*RequestMsg, BulletinBoardService_ReadPhase3Server) error
+	//mustEmbedUnimplementedBulletinBoardServiceServer()
 }
 
-// UnimplementedBulletinBoardServiceServer can be embedded to have forward compatible implementations.
+// UnimplementedBulletinBoardServiceServer must be embedded to have forward compatible implementations.
 type UnimplementedBulletinBoardServiceServer struct {
 }
 
-func (*UnimplementedBulletinBoardServiceServer) StartEpoch(context.Context, *RequestMsg) (*ResponseMsg, error) {
+func (UnimplementedBulletinBoardServiceServer) StartEpoch(context.Context, *RequestMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StartEpoch not implemented")
 }
-func (*UnimplementedBulletinBoardServiceServer) ReadPhase1(*RequestMsg, BulletinBoardService_ReadPhase1Server) error {
+func (UnimplementedBulletinBoardServiceServer) ReadPhase1(*RequestMsg, BulletinBoardService_ReadPhase1Server) error {
 	return status.Errorf(codes.Unimplemented, "method ReadPhase1 not implemented")
 }
-func (*UnimplementedBulletinBoardServiceServer) WritePhase1(context.Context, *Cmt1Msg) (*ResponseMsg, error) {
+func (UnimplementedBulletinBoardServiceServer) ReadPhase12(*RequestMsg, BulletinBoardService_ReadPhase12Server) error {
+	return status.Errorf(codes.Unimplemented, "method ReadPhase12 not implemented")
+}
+func (UnimplementedBulletinBoardServiceServer) WritePhase1(context.Context, *Cmt1Msg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WritePhase1 not implemented")
 }
-func (*UnimplementedBulletinBoardServiceServer) WritePhase2(context.Context, *CommitMsg) (*ResponseMsg, error) {
+func (UnimplementedBulletinBoardServiceServer) WritePhase2(context.Context, *CommitMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WritePhase2 not implemented")
 }
-func (*UnimplementedBulletinBoardServiceServer) ReadPhase2(*RequestMsg, BulletinBoardService_ReadPhase2Server) error {
+func (UnimplementedBulletinBoardServiceServer) ReadPhase2(*RequestMsg, BulletinBoardService_ReadPhase2Server) error {
 	return status.Errorf(codes.Unimplemented, "method ReadPhase2 not implemented")
 }
-func (*UnimplementedBulletinBoardServiceServer) WritePhase3(context.Context, *Cmt1Msg) (*ResponseMsg, error) {
+func (UnimplementedBulletinBoardServiceServer) WritePhase3(context.Context, *Cmt1Msg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WritePhase3 not implemented")
 }
-func (*UnimplementedBulletinBoardServiceServer) WritePhase32(context.Context, *Cmt1Msg) (*ResponseMsg, error) {
+func (UnimplementedBulletinBoardServiceServer) WritePhase32(context.Context, *Cmt1Msg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WritePhase32 not implemented")
 }
-func (*UnimplementedBulletinBoardServiceServer) ReconstructSecret(context.Context, *PointMsg) (*ResponseMsg, error) {
+func (UnimplementedBulletinBoardServiceServer) ReconstructSecret(context.Context, *PointMsg) (*ResponseMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReconstructSecret not implemented")
 }
-func (*UnimplementedBulletinBoardServiceServer) ReadPhase3(*RequestMsg, BulletinBoardService_ReadPhase3Server) error {
+func (UnimplementedBulletinBoardServiceServer) ReadPhase3(*RequestMsg, BulletinBoardService_ReadPhase3Server) error {
 	return status.Errorf(codes.Unimplemented, "method ReadPhase3 not implemented")
 }
+func (UnimplementedBulletinBoardServiceServer) mustEmbedUnimplementedBulletinBoardServiceServer() {}
 
-func RegisterBulletinBoardServiceServer(s *grpc.Server, srv BulletinBoardServiceServer) {
-	s.RegisterService(&_BulletinBoardService_serviceDesc, srv)
+// UnsafeBulletinBoardServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BulletinBoardServiceServer will
+// result in compilation errors.
+type UnsafeBulletinBoardServiceServer interface {
+	mustEmbedUnimplementedBulletinBoardServiceServer()
+}
+
+func RegisterBulletinBoardServiceServer(s grpc.ServiceRegistrar, srv BulletinBoardServiceServer) {
+	s.RegisterService(&BulletinBoardService_ServiceDesc, srv)
 }
 
 func _BulletinBoardService_StartEpoch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1374,6 +1437,27 @@ type bulletinBoardServiceReadPhase1Server struct {
 }
 
 func (x *bulletinBoardServiceReadPhase1Server) Send(m *Cmt1Msg) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _BulletinBoardService_ReadPhase12_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RequestMsg)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BulletinBoardServiceServer).ReadPhase12(m, &bulletinBoardServiceReadPhase12Server{stream})
+}
+
+type BulletinBoardService_ReadPhase12Server interface {
+	Send(*Cmt1Msg) error
+	grpc.ServerStream
+}
+
+type bulletinBoardServiceReadPhase12Server struct {
+	grpc.ServerStream
+}
+
+func (x *bulletinBoardServiceReadPhase12Server) Send(m *Cmt1Msg) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -1509,7 +1593,10 @@ func (x *bulletinBoardServiceReadPhase3Server) Send(m *Cmt1Msg) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-var _BulletinBoardService_serviceDesc = grpc.ServiceDesc{
+// BulletinBoardService_ServiceDesc is the grpc.ServiceDesc for BulletinBoardService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BulletinBoardService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "service.BulletinBoardService",
 	HandlerType: (*BulletinBoardServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
@@ -1542,6 +1629,11 @@ var _BulletinBoardService_serviceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ReadPhase1",
 			Handler:       _BulletinBoardService_ReadPhase1_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ReadPhase12",
+			Handler:       _BulletinBoardService_ReadPhase12_Handler,
 			ServerStreams: true,
 		},
 		{

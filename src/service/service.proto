@@ -13,12 +13,11 @@ service NodeService{
     rpc Sendtestmsg(RequestMsg) returns(testMsg){}
 }
 service BulletinBoardService {
-//    rpc GetCoeffofNodeSecretShares1(RequestForCoeffMsg) returns(stream CoeffMsg){}
-
     // Start a epoch
     rpc StartEpoch(RequestMsg) returns (ResponseMsg) {};
     // BulletinBoard RPC for recontruction phase
     rpc ReadPhase1(RequestMsg) returns (stream Cmt1Msg) {};
+    rpc ReadPhase12(RequestMsg) returns (stream Cmt1Msg) {};
     rpc WritePhase1(Cmt1Msg) returns (ResponseMsg) {};
     // BulletinBoard RPC for proactivization phase
     rpc WritePhase2(CommitMsg) returns (ResponseMsg) {};

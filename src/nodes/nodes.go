@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	//"fmt"
+
+	//"fmt"
 	"io/ioutil"
 	"strings"
 
@@ -45,6 +49,8 @@ type Node struct {
 
 	//Polynomial State
 	secretShares []*point.Point
+	//Polynomial State2
+	secretShares2 []*point.Point
 
 	//To store the point(shares) sent from other node
 	recPoint []*point.Point
@@ -151,6 +157,9 @@ func (node *Node) GetLabel() int {
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
 	//node.log.Printf("[Node %d] Now Get start Phase1", node.label)
 	*node.s1 = time.Now()
+	for i := 0; i < node.degree*2+1; i++ {
+		node.secretShares[i] = node.secretShares2[i]
+	}
 	node.SendMsgToNode()
 	return &pb.ResponseMsg{}, nil
 }
@@ -179,7 +188,6 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error)
 	//Receive the point and store
 	node.mutex.Lock()
 	node.recPoint[p.X.Int32()-1] = &p
-	//fmt.Println(p)
 	*node.recCounter += 1
 	flag := (*node.recCounter == node.degree*2+1)
 	node.mutex.Unlock()
@@ -258,6 +266,7 @@ func (node *Node) ClientReadPhase1() {
 	if err != nil {
 		node.log.Fatalf("client failed to read phase1: %v", err)
 	}
+	//fmt.Println(node.label,node.oldPolyCmt)
 	for i := 0; i < node.degree*2+1; i++ {
 		msg, err := stream.Recv()
 		*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
@@ -268,27 +277,27 @@ func (node *Node) ClientReadPhase1() {
 		polycmt := msg.GetPolycmt()
 		node.oldPolyCmt[index-1].SetCompressedBytes(polycmt)
 	}
+	//fmt.Println(node.label,node.oldPolyCmt)
 	x := make([]*gmp.Int, 0)
 	y := make([]*gmp.Int, 0)
 	polyCmt := node.dpc.NewG1()
+	//time.Sleep(5)
 	for i := 0; i <= node.degree; i++ {
 		p := node.recPoint[i]
 		x = append(x, p.X)
 		y = append(y, p.Y)
 		polyCmt.Set(node.oldPolyCmt[p.X.Int32()-1])
-		node.log.Println(polyCmt)
+		//node.log.Println(polyCmt,p.X.Int32(),gmp.NewInt(int64(node.label)), p.Y, p.PolyWit)
 		if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(node.label)), p.Y, p.PolyWit) {
+			//node.log.Println(111)
 			//fmt.Println(node.label, p.X, "FAIL", polyCmt, p.Y, p.PolyWit)
 			panic("Reconstruction Verification failed")
-			//
 		}
 
 	}
 	polyp, _ := interpolation.LagrangeInterpolate(node.degree, x, y, node.p)
 
 	node.recPoly.ResetTo(polyp)
-	*node.e1 = time.Now()
-	*node.s2 = time.Now()
 	node.Phase1WriteOnBorad()
 }
 
@@ -343,7 +352,7 @@ func (node *Node) Phase1Readboard() {
 	log.Printf("[node %d] read bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	stream, err := node.boardService.ReadPhase1(ctx, &pb.RequestMsg{})
+	stream, err := node.boardService.ReadPhase12(ctx, &pb.RequestMsg{})
 	if err != nil {
 		log.Fatalf("client failed to read phase3: %v", err)
 	}
@@ -357,6 +366,8 @@ func (node *Node) Phase1Readboard() {
 		polycmt := msg.GetPolycmt()
 		node.oldPolyCmt[index-1].SetCompressedBytes(polycmt)
 	}
+	*node.e1 = time.Now()
+	*node.s2 = time.Now()
 	if node.label <= node.degree*2+1 {
 		node.ClientSharePhase2()
 	}
@@ -497,7 +508,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 		*node._0ShareCount = 0
 		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
-		fmt.Println(node.label, "sum is  ", node._0ShareSum)
+		//fmt.Println(node.label, "sum is  ", node._0ShareSum)
 
 		//get a rand poly_tmp with 0-share
 		//rand a poly_tmp polynomial
@@ -677,9 +688,7 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 	if flag {
 		//node.log.Printf("[node %d] has finish sharePhase3", node.label)
 		*node.shareCnt = 0
-		if node.label <= node.degree*2+1 {
-			node.Phase3WriteOnBorad()
-		}
+		node.Phase3WriteOnBorad()
 	}
 	return &pb.ResponseMsg{}, nil
 }
@@ -734,9 +743,7 @@ func (node *Node) ClientSharePhase3() {
 			if flag {
 				//node.log.Printf("[node %d] has finish sharePhase3", node.label)
 				*node.shareCnt = 0
-				if node.label <= node.degree*2+1 {
-					node.Phase3WriteOnBorad()
-				}
+				node.Phase3WriteOnBorad()
 			}
 		}
 	}
@@ -805,13 +812,14 @@ func (node *Node) Phase3Readboard() {
 	//fmt.Println("hhhh")
 	tmpX := make([]*gmp.Int, node.degree*2+1)
 	tmpY := make([]*gmp.Int, node.degree*2+1)
-
+	//time.Sleep(5)
 	for i := 0; i < node.degree*2+1; i++ {
 		tmp := node.dpc.NewG1()
 		if !node.newPolyCmt[i].Equals(tmp.Mul(node.oldPolyCmt[i], node.midPolyCmt[i])) {
 			panic("Share Distribution Verification 1 failed")
 		}
 		if !node.dpc.VerifyEval(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit) {
+			fmt.Println(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit)
 			panic("Share Distribution Verification 2 failed")
 		}
 
@@ -826,20 +834,7 @@ func (node *Node) Phase3Readboard() {
 	//node.recPoly.EvalMod(gmp.NewInt(int64(0)), node.p, y)
 	//fmt.Println(node.label,y)
 	node.recPoly.EvalMod(gmp.NewInt(0), node.p, node.s0)
-	if node.label <= node.degree*2+1 {
-		node.Phase3WriteOnBorad2()
-	} else {
-		*node.e3 = time.Now()
-		//f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		//defer f.Close()
-		//node.log.Printf("totMsgSize,%d\n", *node.totMsgSize)
-		//node.log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
-		//node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
-		//node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
-		//node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
-		//node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
-		////*node.totMsgSize = 0
-	}
+	node.Phase3WriteOnBorad2()
 
 }
 func (node *Node) Phase3WriteOnBorad2() {
@@ -879,7 +874,7 @@ func (node *Node) Phase3WriteOnBorad2() {
 
 		tmpPoly.EvalMod(gmp.NewInt(int64(x)), node.p, y)
 		node.dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
-		node.secretShares[i] = point.NewPoint(gmp.NewInt(int64(node.label)), y, w)
+		node.secretShares2[i] = point.NewPoint(gmp.NewInt(int64(node.label)), y, w)
 		//fmt.Println(i+1,label,y,w)
 	}
 	//log.Printf("finish~~")
@@ -929,6 +924,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	denominator := poly.NewConstant(1)
 	tmp, _ := poly.NewPoly(1)
 	tmp.SetCoeffWithInt(1, 1)
+	//fmt.Println(time.Now())
 	for i := 0; i < degree*2+1; i++ {
 		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
 		denominator.MulSelf(tmp)
@@ -947,6 +943,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 		lambda[i].Mul(lambda[i], interInv)
 		lambda[i].Mod(lambda[i], p)
 	}
+	//fmt.Println(time.Now())
 
 	_0Shares := make([]*gmp.Int, counter)
 	for i := 0; i < counter; i++ {
@@ -959,6 +956,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	recCounter := 0
 
 	secretShares := make([]*point.Point, counter)
+	secretShares2 := make([]*point.Point, counter)
 	//tmpPoly, err := poly.NewRand(degree, fixedRandState, p)
 	tmpPoly, err := poly.NewPoly(len(coeff) - 1)
 	tmpPoly.SetbyCoeff(coeff)
@@ -975,10 +973,11 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 		dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
 
 		//fmt.Println(tmpPoly,x,"witness is ",w)
-		secretShares[i] = point.NewPoint(gmp.NewInt(int64(label)), y, w)
+		secretShares2[i] = point.NewPoint(gmp.NewInt(int64(label)), y, w)
 		//fmt.Println(i+1,label,y,w)
 	}
 
+	//fmt.Println(time.Now())
 	proPoly, _ := poly.NewPoly(degree)
 	recPoly, _ := poly.NewPoly(degree)
 	newPoly, _ := poly.NewPoly(degree)
@@ -1049,6 +1048,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 		_0ShareCount:    &_0ShareCount,
 		_0ShareSum:      _0ShareSum,
 		secretShares:    secretShares,
+		secretShares2:   secretShares2,
 		recPoint:        recPoint,
 		recCounter:      &recCounter,
 		recPoly:         &recPoly,

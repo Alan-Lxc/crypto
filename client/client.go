@@ -129,13 +129,14 @@ func (c *client) InitandConnect(s0 string) {
 		node, _ := nodes.New(degree, i+1, counter, c.metadataPath, coeff)
 		nn[i] = &node
 		go node.Service()
-		time.Sleep(1)
+		//time.Sleep(1)
 		nConn, err := grpc.Dial(c.ipList[i], grpc.WithInsecure())
 		if err != nil {
 			c.log.Fatalf("Client could not connect to node %d", i+1)
 		}
 		c.nodeConn[i] = nConn
 		c.nodeService[i] = pb.NewNodeServiceClient(nConn)
+		//fmt.Println(i,"'s node is ok")
 	}
 	c.nn = nn
 	//fmt.Println(counter)

@@ -39,6 +39,15 @@ type BulletinBoard struct {
 	randState *rand.Rand
 	// Reconstruction BulletinBoard
 	reconstructionContent []*pb.Cmt1Msg
+
+	// Reconstruction BulletinBoard2
+	reconstructionContent2 []*pb.Cmt1Msg
+
+	// Reconstruction BulletinBoard3
+	reconstructionContent3 []*pb.Cmt1Msg
+
+	// Reconstruction BulletinBoard4
+	reconstructionContent4 []*pb.Cmt1Msg
 	// Proactivization BulletinBoard
 	proCnt                 *int
 	proactivizationContent []*pb.CommitMsg
@@ -80,6 +89,9 @@ type BulletinBoard struct {
 
 func (bb *BulletinBoard) StartEpoch(ctx context.Context, in *pb.RequestMsg) (*pb.ResponseMsg, error) {
 	bb.log.Print("[bulletinboard] start epoch")
+	for i := 0; i < bb.counter; i++ {
+		bb.reconstructionContent[i] = bb.reconstructionContent4[i]
+	}
 	bb.ClientStartPhase1()
 	return &pb.ResponseMsg{}, nil
 }
@@ -100,7 +112,7 @@ func (bb *BulletinBoard) WritePhase1(ctx context.Context, msg *pb.Cmt1Msg) (*pb.
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	bb.log.Print("[bulletinboard] is being writcommitmentten in phase 3")
 	index := msg.GetIndex()
-	bb.reconstructionContent[index-1] = msg
+	bb.reconstructionContent2[index-1] = msg
 	bb.mutex.Lock()
 	*bb.shaCnt = *bb.shaCnt + 1
 	flag := (*bb.shaCnt == bb.degree*2+1)
@@ -128,6 +140,16 @@ func (bb *BulletinBoard) ClientStartVerifPhase1() {
 	*bb.totMsgSize = 0
 }
 
+func (bb *BulletinBoard) ReadPhase12(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase12Server) error {
+	bb.log.Print("[bulletinboard] is being read in phase 1 2")
+	for i := 0; i < bb.degree*2+1; i++ {
+		if err := stream.Send(bb.reconstructionContent2[i]); err != nil {
+			bb.log.Fatalf("bulletinboard failed to read phase1: %v", err)
+			return err
+		}
+	}
+	return nil
+}
 func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.CommitMsg) (*pb.ResponseMsg, error) {
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	bb.log.Print("[bulletinboard] is being written in phase 2")
@@ -160,10 +182,10 @@ func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	bb.log.Print("[bulletinboard] is being written in phase 3")
 	index := msg.GetIndex()
-	bb.reconstructionContent[index-1] = msg
+	bb.reconstructionContent3[index-1] = msg
 	bb.mutex.Lock()
 	*bb.shaCnt = *bb.shaCnt + 1
-	flag := (*bb.shaCnt == bb.degree*2+1)
+	flag := (*bb.shaCnt == bb.counter)
 	bb.mutex.Unlock()
 	if flag {
 		*bb.shaCnt = 0
@@ -177,7 +199,7 @@ func (bb *BulletinBoard) WritePhase32(ctx context.Context, msg *pb.Cmt1Msg) (*pb
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
 	bb.log.Print("[bulletinboard] is being written in phase 3 2")
 	index := msg.GetIndex()
-	bb.reconstructionContent[index-1] = msg
+	bb.reconstructionContent4[index-1] = msg
 	bb.mutex.Lock()
 	*bb.shaCnt = *bb.shaCnt + 1
 	flag := (*bb.shaCnt == bb.degree*2+1)
@@ -197,7 +219,8 @@ func (bb *BulletinBoard) ReconstructSecret(ctx context.Context, msg *pb.PointMsg
 	bb.recontructSecret[index-1] = Y
 	bb.mutex.Lock()
 	*bb.secretCnt = *bb.secretCnt + 1
-	flag := (*bb.secretCnt == bb.degree*2+1)
+	flag := (*bb.secretCnt == bb.counter)
+	fmt.Println(bb.counter, *bb.secretCnt)
 	bb.mutex.Unlock()
 	if flag {
 		//bb.log.Println(*bb.secretCnt,bb.recontructSecret)
@@ -237,7 +260,7 @@ func (bb *BulletinBoard) SecretPrint() {
 func (bb *BulletinBoard) ReadPhase3(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase3Server) error {
 	bb.log.Print("[bulletinboard] is being read in phase 3")
 	for i := 0; i < bb.degree*2+1; i++ {
-		if err := stream.Send(bb.reconstructionContent[i]); err != nil {
+		if err := stream.Send(bb.reconstructionContent3[i]); err != nil {
 			bb.log.Fatalf("bulletinboard failed to read phase2: %v", err)
 			return err
 		}
@@ -385,6 +408,9 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 	shaCnt := 0
 	secretCnt := 0
 	reconstructionContent := make([]*pb.Cmt1Msg, counter)
+	reconstructionContent2 := make([]*pb.Cmt1Msg, counter)
+	reconstructionContent3 := make([]*pb.Cmt1Msg, counter)
+	reconstructionContent4 := make([]*pb.Cmt1Msg, counter)
 	reconstructSecret := make([]*gmp.Int, counter)
 	secret := gmp.NewInt(0)
 	//polyp, err := poly.NewRand(degree, fixedRandState, p)
@@ -394,13 +420,14 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 	for i := 0; i < counter; i++ {
 		c := dpc.NewG1()
 		dpc.Commit(c, Polyyy[i])
+		//fmt.Println(i+1,"witness is ",c)
 		//fmt.Println(Polyyy[i].GetDegree())
 		cBytes := c.CompressedBytes()
 		msg := &pb.Cmt1Msg{
 			Index:   int32(i + 1),
 			Polycmt: cBytes,
 		}
-		reconstructionContent[i] = msg
+		reconstructionContent4[i] = msg
 	}
 	proactivizationContent := make([]*pb.CommitMsg, counter)
 
@@ -422,6 +449,9 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 		secretCnt:              &secretCnt,
 		secret:                 secret,
 		reconstructionContent:  reconstructionContent,
+		reconstructionContent2: reconstructionContent2,
+		reconstructionContent3: reconstructionContent3,
+		reconstructionContent4: reconstructionContent4,
 		proactivizationContent: proactivizationContent,
 		nConn:                  nConn,
 		nClient:                nClient,

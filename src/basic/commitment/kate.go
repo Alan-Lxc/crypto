@@ -150,8 +150,9 @@ func (c *DLPolyCommit) CreateWitness(res *Element, polynomial poly.Poly, x0 *Int
 
 	quot.Divide(poly_t, denominator)
 	// fmt.Printf("CreateWitness2\n%s\n", quot.String())
-
+	//fmt.Println("t1",time.Now())
 	c.polyEvalInExponent(res, quot)
+	//fmt.Println("t2",time.Now())
 }
 
 // VerifyEval checks the correctness of w, returns true/false
