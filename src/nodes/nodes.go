@@ -149,7 +149,7 @@ func (node *Node) GetLabel() int {
 
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
-	node.log.Printf("[Node %d] Now Get start Phase1", node.label)
+	//node.log.Printf("[Node %d] Now Get start Phase1", node.label)
 	*node.s1 = time.Now()
 	node.SendMsgToNode()
 	return &pb.ResponseMsg{}, nil
@@ -162,8 +162,8 @@ func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (respo
 
 func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error) {
 	*node.totMsgSize = *node.totMsgSize + proto.Size(pointmsg)
-	index := pointmsg.GetIndex()
-	node.log.Printf("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
+	//index := pointmsg.GetIndex()
+	//node.log.Printf("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
 	x := gmp.NewInt(0)
 	x.SetBytes(pointmsg.GetX())
 	y := gmp.NewInt(0)
@@ -218,8 +218,8 @@ func (node *Node) SendMsgToNode() {
 	var wg sync.WaitGroup
 	for i := 0; i < node.degree*2+1; i++ {
 		if i != node.label-1 {
-			node.log.Printf("[Node %d] send point message to [Node %d]", node.label, i+1)
-			//msg := point.Pointmsg{}
+			//node.log.Printf("[Node %d] send point message to [Node %d]", node.label, i+1)
+			////msg := point.Pointmsg{}
 			//msg.SetIndex(node.label)
 			//msg.SetPoint(node.secretShares[i])
 			//(*node.Client[i]).GetMsgFromNode(msg)
@@ -251,7 +251,7 @@ func (node *Node) ClientReadPhase1() {
 	//	node.NodeConnect()
 	//	*node.iniflag = false
 	//}
-	node.log.Printf("[Node %d] read bulletinboard in phase 1", node.label)
+	//node.log.Printf("[Node %d] read bulletinboard in phase 1", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream, err := node.boardService.ReadPhase1(ctx, &pb.RequestMsg{})
@@ -430,7 +430,7 @@ func (node *Node) ClientSharePhase2() {
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
-		node.log.Printf("[Node %d] has finish _0ShareSum", node.label)
+		//node.log.Printf("[Node %d] has finish _0ShareSum", node.label)
 		*node._0ShareCount = 0
 		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
@@ -457,7 +457,7 @@ func (node *Node) ClientSharePhase2() {
 	var wg sync.WaitGroup
 	for i := 0; i < node.degree*2+1; i++ {
 		if i != node.label-1 {
-			node.log.Printf("[Node %d] send message to [Node %d] in phase 2", node.label, i+1)
+			//node.log.Printf("[Node %d] send message to [Node %d] in phase 2", node.label, i+1)
 			msg := &pb.ZeroMsg{
 				Index: int32(node.label),
 				Share: node._0Shares[i].Bytes(),
@@ -479,8 +479,8 @@ func (node *Node) ClientSharePhase2() {
 }
 func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.ResponseMsg, error) {
 	*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
-	index := msg.GetIndex()
-	node.log.Printf("[Node %d] receive zero message from [Node %d] in phase 2", node.label, index)
+	//index := msg.GetIndex()
+	//node.log.Printf("[Node %d] receive zero message from [Node %d] in phase 2", node.label, index)
 	inter := gmp.NewInt(0)
 	inter.SetBytes(msg.GetShare())
 
@@ -493,7 +493,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 	node.mutex.Unlock()
 
 	if _0shareSumFinish {
-		node.log.Printf("%d has finish _0ShareSum", node.label)
+		//node.log.Printf("%d has finish _0ShareSum", node.label)
 		*node._0ShareCount = 0
 		//fmt.Println(node.label,"sum is  ",node._0ShareSum)
 		node._0ShareSum.Mod(node._0ShareSum, node.p)
@@ -516,7 +516,7 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 	return &pb.ResponseMsg{}, nil
 }
 func (node *Node) Phase2Write() {
-	node.log.Printf("[node %d] write bulletinboard in phase 2", node.label)
+	//node.log.Printf("[node %d] write bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Commitment and Witness from BulletinBoard
 	msg := &pb.CommitMsg{
@@ -529,13 +529,13 @@ func (node *Node) Phase2Write() {
 	node.boardService.WritePhase2(ctx, msg)
 }
 func (node *Node) Phase2Verify(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
-	node.log.Printf("[Node %d] start verification in phase 2")
+	//node.log.Printf("[Node %d] start verification in phase 2")
 	node.ClientReadPhase2()
 	return &pb.ResponseMsg{}, nil
 }
 
 func (node *Node) ClientReadPhase2() {
-	node.log.Printf("[Node %d] read bulletinboard in phase 2", node.label)
+	//node.log.Printf("[Node %d] read bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream, err := node.boardService.ReadPhase2(ctx, &pb.RequestMsg{})
@@ -628,7 +628,7 @@ func (node *Node) Service() {
 		node.log.Fatalf("[Node %d] fail to provide service", node.label)
 	}
 
-	node.log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
+	//node.log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
 }
 
 //func (node *Node) Serve(aws bool) {
@@ -665,7 +665,7 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 	*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 	index := msg.GetIndex()
 	Y := msg.GetY()
-	node.log.Printf("[node %d] receive point message from [node %d] in phase3", node.label, index)
+	//node.log.Printf("[node %d] receive point message from [node %d] in phase3", node.label, index)
 	witness := msg.GetWitness()
 	//fmt.Println("node index is ",index-1)
 	node.secretShares[index-1].Y.SetBytes(Y)
@@ -675,7 +675,7 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 	flag := *node.shareCnt == node.degree*2+1
 	node.mutex.Unlock()
 	if flag {
-		node.log.Printf("[node %d] has finish sharePhase3", node.label)
+		//node.log.Printf("[node %d] has finish sharePhase3", node.label)
 		*node.shareCnt = 0
 		if node.label <= node.degree*2+1 {
 			node.Phase3WriteOnBorad()
@@ -708,7 +708,7 @@ func (node *Node) ClientSharePhase3() {
 		node.dpc.CreateWitness(witness, *node.newPoly, gmp.NewInt(int64(i+1)))
 
 		if i != node.label-1 {
-			node.log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
+			//node.log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
 			msg := &pb.PointMsg{
 				Index:   int32(node.label),
 				X:       gmp.NewInt(int64(node.label)).Bytes(),
@@ -732,7 +732,7 @@ func (node *Node) ClientSharePhase3() {
 			flag := *node.shareCnt == node.degree*2+1
 			node.mutex.Unlock()
 			if flag {
-				node.log.Printf("[node %d] has finish sharePhase3", node.label)
+				//node.log.Printf("[node %d] has finish sharePhase3", node.label)
 				*node.shareCnt = 0
 				if node.label <= node.degree*2+1 {
 					node.Phase3WriteOnBorad()
@@ -742,7 +742,7 @@ func (node *Node) ClientSharePhase3() {
 	}
 }
 func (node *Node) Phase3WriteOnBorad() {
-	node.log.Printf("[node %d] write bulletinboard in phase 3", node.label)
+	//node.log.Printf("[node %d] write bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	C := node.dpc.NewG1()
@@ -760,7 +760,7 @@ func (node *Node) Phase3WriteOnBorad() {
 	//log.Printf("finish~~")
 }
 func (node *Node) Phase3Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
-	node.log.Printf("[node %d] start verification in phase 3", node.label)
+	//node.log.Printf("[node %d] start verification in phase 3", node.label)
 	node.Phase3Readboard()
 	return &pb.ResponseMsg{}, nil
 }
@@ -785,7 +785,7 @@ func (node *Node) Sendtestmsg(ctx context.Context, msg *pb.RequestMsg) (*pb.Test
 	}, nil
 }
 func (node *Node) Phase3Readboard() {
-	node.log.Printf("[node %d] read bulletinboard in phase 3", node.label)
+	//node.log.Printf("[node %d] read bulletinboard in phase 3", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream, err := node.boardService.ReadPhase3(ctx, &pb.RequestMsg{})
@@ -832,18 +832,18 @@ func (node *Node) Phase3Readboard() {
 		*node.e3 = time.Now()
 		//f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		//defer f.Close()
-		node.log.Printf("totMsgSize,%d\n", *node.totMsgSize)
-		node.log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
-		node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
-		node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
-		node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
-		node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
-		//*node.totMsgSize = 0
+		//node.log.Printf("totMsgSize,%d\n", *node.totMsgSize)
+		//node.log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
+		//node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
+		//node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
+		//node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+		//node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
+		////*node.totMsgSize = 0
 	}
 
 }
 func (node *Node) Phase3WriteOnBorad2() {
-	node.log.Printf("[node %d] write bulletinboard in phase 3 2", node.label)
+	//node.log.Printf("[node %d] write bulletinboard in phase 3 2", node.label)
 	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -886,17 +886,17 @@ func (node *Node) Phase3WriteOnBorad2() {
 	*node.e3 = time.Now()
 	//f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	//defer f.Close()
-	node.log.Printf("totMsgSize,%d\n", *node.totMsgSize)
-	node.log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
-	node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
-	node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
-	node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+	//node.log.Printf("totMsgSize,%d\n", *node.totMsgSize)
+	//node.log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
+	//node.log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
+	//node.log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
+	//node.log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
 	node.tott = (node.e3.Sub(*node.s1).Nanoseconds())
 	node.t1 = (node.e1.Sub(*node.s1).Nanoseconds())
 	node.t2 = (node.e2.Sub(*node.s2).Nanoseconds())
 	node.t3 = (node.e3.Sub(*node.s3).Nanoseconds())
-	node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
-	//*node.totMsgSize = 0
+	//node.log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
+	////*node.totMsgSize = 0
 	for i := 0; i < node.degree*2+1; i++ {
 		node._0Shares[i].SetInt64(0)
 	}
@@ -1031,7 +1031,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	}
 	os.Truncate(fileName, 0)
 	log := log.New(tmplogger, "", log.LstdFlags)
-	log.Printf("Node %d new done,ip = %s", label, ipList[label-1])
+	//log.Printf("Node %d new done,ip = %s", label, ipList[label-1])
 	return Node{
 		metadataPath:    logPath,
 		ipAddress:       ipList,
