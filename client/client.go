@@ -262,6 +262,7 @@ func testAMT(degree int) {
 		dpc.CreateWitness(c, polyy, gmp.NewInt(1))
 		dpc.VerifyEval(c, gmp.NewInt(1), gmp.NewInt(1), c)
 	}
+
 	e2 = time.Now()
 	fmt.Println(s1, s2, '\n', e1, e2)
 	fmt.Println(e2.Sub(s2).Nanoseconds(), e1.Sub(s1).Nanoseconds())
