@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/Alan-Lxc/crypto_contest/src/basic/commitment"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/Alan-Lxc/crypto_contest/src/bulletboard"
 	"github.com/Alan-Lxc/crypto_contest/src/control"
@@ -158,7 +159,7 @@ func newBoard(degree int, ccounter int, metadataPath string, polyyy []poly.Poly)
 	bb.Serve(false)
 }
 func main() {
-
+	testAMT(1000)
 	//cnt := flag.Int("c", 2, "Enter number of nodes")
 	//degree := flag.Int("d", 1, "Enter the polynomial degree")
 	//metadataPath := flag.String("path", "/mpss/metadata", "Enter the metadata path")
@@ -228,4 +229,40 @@ func main() {
 			fmt.Println("err:", err1)
 		}
 	}
+}
+
+func testtt(degree int, devide int, fixedRandState *rand.Rand, p *gmp.Int, dpc commitment.DLPolyCommit) {
+	polyy, _ := poly.NewRand(degree, fixedRandState, p)
+	c := dpc.NewG1()
+	dpc.Commit(c, polyy)
+	dpc.VerifyEval(c, gmp.NewInt(1), gmp.NewInt(1), c)
+	dpc.VerifyEval(c, gmp.NewInt(1), gmp.NewInt(1), c)
+	if devide != 1 {
+		testtt(devide, devide/2, fixedRandState, p, dpc)
+		testtt(devide, devide/2, fixedRandState, p, dpc)
+	}
+}
+func testAMT(degree int) {
+	fixedRandState := rand.New(rand.NewSource(int64(3)))
+	p := gmp.NewInt(0)
+	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
+	dpc := commitment.DLPolyCommit{}
+	dpc.SetupFix(degree*2 + 1)
+	s1 := time.Now()
+	s2 := time.Now()
+	e1 := time.Now()
+	e2 := time.Now()
+	testtt(degree, degree*2+1, fixedRandState, p, dpc)
+	s2 = time.Now()
+	e1 = time.Now()
+	polyy, _ := poly.NewRand(degree, fixedRandState, p)
+	c := dpc.NewG1()
+	dpc.Commit(c, polyy)
+	for i := 0; i < degree*2+1; i++ {
+		dpc.CreateWitness(c, polyy, gmp.NewInt(1))
+		dpc.VerifyEval(c, gmp.NewInt(1), gmp.NewInt(1), c)
+	}
+	e2 = time.Now()
+	fmt.Println(s1, s2, '\n', e1, e2)
+	fmt.Println(e2.Sub(s2).Nanoseconds(), e1.Sub(s1).Nanoseconds())
 }
