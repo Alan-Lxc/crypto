@@ -438,7 +438,7 @@ func (poly Poly) GetLeadingCoefficient() gmp.Int {
 
 // DivMod sets computes q, r such that a = b*q + r.
 // This is an implementation of Euclidean division. The complexity is O(n^3)!!
-func DivMod(a Poly, b Poly, p *gmp.Int, q Poly, r *Poly) (err error) {
+func DivMod(a Poly, b Poly, p *gmp.Int, q, r *Poly) (err error) {
 	if b.IsZero() {
 		return errors.New("divide by zero")
 	}
