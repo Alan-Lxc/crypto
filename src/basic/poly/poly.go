@@ -378,3 +378,102 @@ func (poly Poly) IsSame(op Poly) bool {
 
 	return true
 }
+
+func (poly Poly) GetCap() int {
+	return len(poly.Coeffs)
+}
+func (poly *Poly) GrowCapTo(cap int) {
+	current := poly.GetCap()
+	if cap <= current {
+		return
+	}
+
+	// if we need to grow the slice
+	needed := cap - current
+	neededPointers := make([]*gmp.Int, needed)
+	for i := 0; i < len(neededPointers); i++ {
+		neededPointers[i] = gmp.NewInt(0)
+	}
+
+	poly.Coeffs = append(poly.Coeffs, neededPointers...)
+}
+
+// AddSelf sets poly to poly + op
+func (poly *Poly) AddSelf(op Poly) {
+	op1 := poly.DeepCopy()
+	poly.Add(op1, op)
+}
+
+// SubSelf sets poly to poly - op
+func (poly *Poly) SubSelf(op Poly) error {
+	// make sure poly is as long as the longest of op1 and op2
+	deg1 := op.GetDegree()
+
+	poly.GrowCapTo(deg1 + 1)
+
+	for i := 0; i < deg1+1; i++ {
+		poly.Coeffs[i].Sub(poly.Coeffs[i], op.Coeffs[i])
+	}
+
+	poly.Coeffs = poly.Coeffs[:poly.GetDegree()+1]
+
+	// FIXME: no need to return error
+	return nil
+}
+
+// IsZero returns if poly == 0
+func (poly Poly) IsZero() bool {
+	if poly.GetDegree() != 0 {
+		return false
+	}
+
+	return poly.GetPtrtoConstant().CmpInt32(0) == 0
+}
+func (poly Poly) GetLeadingCoefficient() gmp.Int {
+	lc := gmp.NewInt(0)
+	lc.Set(poly.Coeffs[poly.GetDegree()])
+
+	return *lc
+}
+
+// DivMod sets computes q, r such that a = b*q + r.
+// This is an implementation of Euclidean division. The complexity is O(n^3)!!
+func DivMod(a Poly, b Poly, p *gmp.Int, q Poly, r *Poly) (err error) {
+	if b.IsZero() {
+		return errors.New("divide by zero")
+	}
+
+	q.ResetDegree(0)
+	r.ResetTo(a)
+
+	d := b.GetDegree()
+	c := b.GetLeadingCoefficient()
+
+	// cInv = 1/c
+	cInv := gmp.NewInt(0)
+	cInv.ModInverse(&c, p)
+
+	for r.GetDegree() >= d {
+		lc := r.GetLeadingCoefficient()
+		s, err := NewPoly(r.GetDegree() - d)
+		if err != nil {
+			return err
+		}
+
+		s.SetCoeffWithGmp(r.GetDegree()-d, lc.Mul(&lc, cInv))
+
+		q.AddSelf(s)
+
+		sb := NewEmpty()
+		sb.Multiply(s, b)
+
+		// deg r reduces by each iteration
+		r.SubSelf(sb)
+
+		// modulo p
+		q.Mod(p)
+		r.Mod(p)
+	}
+
+	return nil
+}
