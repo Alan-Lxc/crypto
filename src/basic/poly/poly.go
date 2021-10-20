@@ -35,6 +35,7 @@ func (poly Poly) GetDegree() int {
 
 	// note: i == 0 is not tested, because even the constant term is zero, we consider it's degree 0
 	for i := deg; i > 0; i-- {
+		//fmt.Println(poly.Coeffs[i])
 		if poly.Coeffs[i].CmpInt32(0) == 0 {
 			deg--
 		} else {
@@ -412,6 +413,7 @@ func (poly *Poly) SubSelf(op Poly) error {
 	poly.GrowCapTo(deg1 + 1)
 
 	for i := 0; i < deg1+1; i++ {
+		fmt.Println(poly.Coeffs[i], op.Coeffs[i])
 		poly.Coeffs[i].Sub(poly.Coeffs[i], op.Coeffs[i])
 	}
 
