@@ -476,6 +476,5 @@ func DivMod(a Poly, b Poly, p *gmp.Int, q, r *Poly) (err error) {
 		q.Mod(p)
 		r.Mod(p)
 	}
-
 	return nil
 }
