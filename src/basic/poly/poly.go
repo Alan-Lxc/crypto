@@ -440,41 +440,36 @@ func (poly Poly) GetLeadingCoefficient() gmp.Int {
 
 // DivMod sets computes q, r such that a = b*q + r.
 // This is an implementation of Euclidean division. The complexity is O(n^3)!!
-func DivMod(a Poly, b Poly, p *gmp.Int, q, r *Poly) (err error) {
+func DivMod(tmp1 Poly, tmp2 Poly, p *gmp.Int, q, r *Poly) (err error) {
+
+	a := tmp1.Copy()
+	b := tmp2.Copy()
 	if b.IsZero() {
 		return errors.New("divide by zero")
 	}
+	d1, d2 := a.GetDegree(), b.GetDegree()
+	if d1 < d2 {
+		q.ResetDegree(0)
+		r.ResetTo(a)
+		return nil
+	}
 
-	q.ResetDegree(0)
+	q.ResetDegree(d1 - d2 + 1)
 	r.ResetTo(a)
 
-	d := b.GetDegree()
-	c := b.GetLeadingCoefficient()
-
-	// cInv = 1/c
-	cInv := gmp.NewInt(0)
-	cInv.ModInverse(&c, p)
-
-	for r.GetDegree() >= d {
-		lc := r.GetLeadingCoefficient()
-		s, err := NewPoly(r.GetDegree() - d)
-		if err != nil {
-			return err
+	for i := d1; i >= d2; i-- {
+		r.Coeffs[i].Mod(r.Coeffs[i], p)
+		c, _ := r.GetCoeff(i)
+		cInv := gmp.NewInt(0)
+		cInv.ModInverse(&c, p)
+		*q.Coeffs[i-d2] = c
+		for j := 0; j <= d2; j++ {
+			tmp := gmp.NewInt(0)
+			tmp.Mul(b.Coeffs[d2-j], cInv)
+			r.Coeffs[i-j].Sub(r.Coeffs[i], tmp)
 		}
-
-		s.SetCoeffWithGmp(r.GetDegree()-d, lc.Mul(&lc, cInv))
-
-		q.AddSelf(s)
-
-		sb := NewEmpty()
-		sb.Multiply(s, b)
-
-		// deg r reduces by each iteration
-		r.SubSelf(sb)
-
-		// modulo p
-		q.Mod(p)
-		r.Mod(p)
 	}
+	q.Mod(p)
+	r.Mod(p)
 	return nil
 }

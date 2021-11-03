@@ -109,6 +109,11 @@ type Node struct {
 	dc  *commitment.DLCommit
 	dpc *commitment.DLPolyCommit
 
+	// amt
+	amtPoly         []*poly.Poly
+	amtPolyCmt      []*pbc.Element
+	amtBasicPolyCmt []*pbc.Element
+	amtStep         int
 	// Metrics
 	totMsgSize   *int
 	metadataPath string "github.com/Alan-Lxc/crypto_contest/src/basic/poly"
@@ -144,14 +149,57 @@ func (node *Node) GetLabel() int {
 
 }
 
-//func (node *Node) connect(ptrs []*Node) {
-//	for i := 0; i < node.counter; i++ {
-//
-//		if i != node.label-1 {
-//			node.Client[i] ="github.com/Alan-Lxc/crypto_contest/src/basic/poly" ptrs[i]
-//		}
-//	}
-//}
+func (node *Node) CreatAmtPoly(pos, l, r int) {
+	if l == r {
+		//set poly to l-1
+		tmp, _ := poly.NewPoly(1)
+		tmp.SetCoeffWithInt(1, 1)
+		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(l)))
+		*node.amtPoly[pos] = tmp
+		return
+	}
+	mid := (l + r) >> 1
+	node.CreatAmtPoly(pos<<1, l, mid)
+	node.CreatAmtPoly(pos<<1|1, mid+1, r)
+
+	//f pos =f lspos * rspos
+	node.amtPoly[pos].Multiply(*node.amtPoly[pos<<1], *node.amtPoly[pos<<1|1])
+}
+func (node *Node) CreatAmtPolyCmt(pos, l, r, step int) {
+	node.dpc.Commit(node.amtPolyCmt[step], *node.amtPoly[pos])
+	if l == r {
+		node.amtStep = step
+		return
+	}
+	mid := (l + r) >> 1
+	if node.label+1 <= mid {
+		node.CreatAmtPolyCmt(pos<<1, l, mid, step+1)
+	} else {
+		node.CreatAmtPolyCmt(pos<<1|1, mid+1, r, step+1)
+	}
+}
+func (node *Node) CreatAmtWitness(pos, l, r int, basicPoly poly.Poly) {
+
+	qPoly, _ := poly.NewPoly(node.counter)
+	rPoly, _ := poly.NewPoly(node.counter)
+	poly.DivMod(basicPoly, *node.amtPoly[pos], node.p, &qPoly, &rPoly)
+	node.dpc.Commit(node.amtBasicPolyCmt[pos], qPoly)
+	if l == r {
+		//rpoly=phi(l)
+		return
+	}
+	mid := (l + r) >> 1
+	node.CreatAmtWitness(pos<<1, l, mid, rPoly)
+	node.CreatAmtWitness(pos<<1|1, mid+1, r, rPoly)
+
+}
+func (node *Node) CreatAmt(size int) {
+	tmpPoly, _ := poly.NewPoly(node.counter)
+	node.CreatAmtPoly(1, 1, size)
+	node.CreatAmtPolyCmt(1, 1, size, 0)
+	node.CreatAmtWitness(1, 1, size, tmpPoly)
+
+}
 
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
@@ -372,18 +420,6 @@ func (node *Node) Phase1Readboard() {
 		node.ClientSharePhase2()
 	}
 }
-
-//type ZeroMsg struct {
-//	Index int32
-//	Share []byte
-//}
-//
-//func (msg *ZeroMsg) GetIndex() int32 {
-//	return msg.Index
-//}
-//func (msg *ZeroMsg) GetShare() []byte {
-//	return msg.Share
-//}
 
 //phase2
 func (node *Node) ClientSharePhase2() {
