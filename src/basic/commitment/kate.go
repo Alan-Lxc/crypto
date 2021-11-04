@@ -185,3 +185,21 @@ func (c *DLPolyCommit) VerifyEval(C *Element, x *Int, polyX *Int, w *Element) bo
 	// fmt.Printf("e1\n%s\ne2\n%s\n", e1.String(), e2.String())
 	return e1.Equals(e2)
 }
+
+func (c *DLPolyCommit) CalcAmtWitness(C *Element, Witness, tmpWitness []*Element, polyX *Element, step int) bool {
+
+	e1 := c.pairing.NewGT()
+	e2 := c.pairing.NewGT()
+	e1.Pair(c.pk[0].Source(), c.pk[0].Source())
+	for i := 0; i < step; i++ {
+		e2.Pair(Witness[i], tmpWitness[i])
+		e1.Mul(e1, e2)
+	}
+	e2.Pair(c.pk[0].Source(), c.pk[0].Source())
+	exp := big.NewInt(0)
+	exp.SetString(polyX.String(), 10)
+	e2.PowBig(e2, exp)
+	e1.Mul(e1, e2)
+	e2.Pair(C, c.pk[0].Source())
+	return e2.Equals(e1)
+}
