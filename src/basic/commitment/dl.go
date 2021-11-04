@@ -54,4 +54,5 @@ func (c *DLCommit) Verify(C *pbc.Element, x *gmp.Int) bool {
 	exp.SetString(x.String(), 10)
 	tmp.PowBig(c.pk, exp)
 	return tmp.Equals(C)
+
 }
