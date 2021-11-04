@@ -37,7 +37,7 @@ message PointMsg{
     int32 index  = 1;
     bytes x = 2;
     bytes y = 3;
-    bytes witness = 4;
+    repeated bytes witness = 4;
 }
 
 message ZeroMsg{
@@ -63,4 +63,7 @@ message testMsg{
     int64 phase1time=3;
     int64 phase2time=4;
     int64 phase3time=5;
+}
+message amtmsg{
+    repeated bytes Witness = 1;
 }
