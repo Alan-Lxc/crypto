@@ -202,4 +202,5 @@ func (c *DLPolyCommit) CalcAmtWitness(C *Element, Witness, tmpWitness []*Element
 	e1.Mul(e1, e2)
 	e2.Pair(C, c.pk[0].Source())
 	return e2.Equals(e1)
+
 }
