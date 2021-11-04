@@ -186,7 +186,7 @@ func (c *DLPolyCommit) VerifyEval(C *Element, x *Int, polyX *Int, w *Element) bo
 	return e1.Equals(e2)
 }
 
-func (c *DLPolyCommit) CalcAmtWitness(C *Element, Witness, tmpWitness []*Element, polyX *Element, step int) bool {
+func (c *DLPolyCommit) CalcAmtWitness(C *Element, Witness, tmpWitness []*Element, polyX *Int, step int) bool {
 
 	e1 := c.pairing.NewGT()
 	e2 := c.pairing.NewGT()
