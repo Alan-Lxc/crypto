@@ -454,7 +454,7 @@ func DivMod(tmp1 Poly, tmp2 Poly, p *gmp.Int, q, r *Poly) (err error) {
 		return nil
 	}
 
-	q.ResetDegree(d1 - d2 + 1)
+	q.ResetDegree(d1 - d2)
 	r.ResetTo(a)
 
 	for i := d1; i >= d2; i-- {
@@ -466,7 +466,7 @@ func DivMod(tmp1 Poly, tmp2 Poly, p *gmp.Int, q, r *Poly) (err error) {
 		for j := 0; j <= d2; j++ {
 			tmp := gmp.NewInt(0)
 			tmp.Mul(b.Coeffs[d2-j], cInv)
-			r.Coeffs[i-j].Sub(r.Coeffs[i], tmp)
+			r.Coeffs[i-j].Sub(r.Coeffs[i-j], tmp)
 		}
 	}
 	q.Mod(p)
