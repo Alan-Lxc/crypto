@@ -155,6 +155,7 @@ func (node *Node) CreatAmtPoly(pos, l, r int) {
 		tmp, _ := poly.NewPoly(1)
 		tmp.SetCoeffWithInt(1, 1)
 		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(l)))
+		fmt.Println(pos)
 		*node.amtPoly[pos] = tmp
 		return
 	}
@@ -193,11 +194,30 @@ func (node *Node) CreatAmtWitness(pos, l, r int, basicPoly poly.Poly) {
 	node.CreatAmtWitness(pos<<1|1, mid+1, r, rPoly)
 
 }
-func (node *Node) CreatAmt(size int) {
-	tmpPoly, _ := poly.NewPoly(node.counter)
-	node.CreatAmtPoly(1, 1, size)
-	node.CreatAmtPolyCmt(1, 1, size, 0)
-	node.CreatAmtWitness(1, 1, size, tmpPoly)
+func (node *Node) GroupAmtWitness(id int) []*pbc.Element {
+	pos, l, r := 1, 0, node.counter
+	step := 0
+	tmp := make([]*pbc.Element, 0)
+	for l != r {
+		tmp = append(tmp, node.amtBasicPolyCmt[pos])
+		step = step + 1
+		mid := (l + r) >> 1
+		fmt.Println(pos, l, r, mid, id+1)
+		if id+1 <= mid {
+			pos = pos << 1
+			r = mid
+		} else {
+			pos = pos<<1 | 1
+			l = mid + 1
+		}
+	}
+	return tmp
+}
+func (node *Node) CreatAmt(ployy poly.Poly, size int) {
+	tmpPoly := ployy
+	node.CreatAmtPoly(1, 0, size)
+	node.CreatAmtPolyCmt(1, 0, size, 0)
+	node.CreatAmtWitness(1, 0, size, tmpPoly)
 
 }
 
@@ -205,44 +225,24 @@ func (node *Node) CreatAmt(size int) {
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
 	node.log.Printf("[Node %d] Now Get start Phase1", node.label)
 	*node.s1 = time.Now()
+	node.CreatAmt(*node.recPoly, node.degree)
+	tmpPoly, _ := poly.NewPoly(node.degree * 2)
+	tmpPoly.ResetTo(*node.recPoly)
+	for i := 0; i < node.degree*2+1; i++ {
+		x := int32(i + 1)
+		y := gmp.NewInt(0)
+		//w := node.dpc.NewG1()
+
+		tmpPoly.EvalMod(gmp.NewInt(int64(x)), node.p, y)
+		//node.dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
+		tmpWitness := node.GroupAmtWitness(i)
+		node.secretShares2[i] = point.NewPoint(gmp.NewInt(int64(node.label)), y, tmpWitness)
+		//fmt.Println(i+1,label,y,w)
+	}
 	for i := 0; i < node.degree*2+1; i++ {
 		node.secretShares[i] = node.secretShares2[i]
 	}
 	node.SendMsgToNode()
-	return &pb.ResponseMsg{}, nil
-}
-
-func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (response *pb.ResponseMsg, err error) {
-	node.GetMsgFromNode(msg)
-	return &pb.ResponseMsg{}, nil
-}
-
-func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error) {
-	*node.totMsgSize = *node.totMsgSize + proto.Size(pointmsg)
-	index := pointmsg.GetIndex()
-	node.log.Printf("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
-	x := gmp.NewInt(0)
-	x.SetBytes(pointmsg.GetX())
-	y := gmp.NewInt(0)
-	y.SetBytes(pointmsg.GetY())
-	witness := node.dpc.NewG1()
-	witness.SetCompressedBytes(pointmsg.Witness)
-	p := point.Point{
-		X:       x,
-		Y:       y,
-		PolyWit: witness,
-	}
-	//fmt.Println(p.X, node.label, p.Y, p.PolyWit)
-	//Receive the point and store
-	node.mutex.Lock()
-	node.recPoint[p.X.Int32()-1] = &p
-	*node.recCounter += 1
-	flag := (*node.recCounter == node.degree*2+1)
-	node.mutex.Unlock()
-	if flag {
-		*node.recCounter = 0
-		node.ClientReadPhase1()
-	}
 	return &pb.ResponseMsg{}, nil
 }
 
@@ -279,11 +279,16 @@ func (node *Node) SendMsgToNode() {
 			//msg.SetIndex(node.label)
 			//msg.SetPoint(node.secretShares[i])
 			//(*node.Client[i]).GetMsgFromNode(msg)
+			tmpLength := len(node.secretShares[i].PolyWit)
+			bb := make([][]byte, tmpLength)
+			for j := 0; j < tmpLength; j++ {
+				bb[j] = node.secretShares[i].PolyWit[j].CompressedBytes()
+			}
 			msg := &pb.PointMsg{
 				Index:   int32(node.label),
 				X:       node.secretShares[i].X.Bytes(),
 				Y:       node.secretShares[i].Y.Bytes(),
-				Witness: node.secretShares[i].PolyWit.CompressedBytes(),
+				Witness: bb,
 				//Witness: nil,
 			}
 			//fmt.Println(node.secretShares[i].X, i+1, node.secretShares[i].Y, node.secretShares[i].PolyWit)
@@ -300,6 +305,43 @@ func (node *Node) SendMsgToNode() {
 		}
 	}
 	wg.Wait()
+}
+func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (response *pb.ResponseMsg, err error) {
+	node.GetMsgFromNode(msg)
+	return &pb.ResponseMsg{}, nil
+}
+
+func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error) {
+	*node.totMsgSize = *node.totMsgSize + proto.Size(pointmsg)
+	index := pointmsg.GetIndex()
+	node.log.Printf("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
+	x := gmp.NewInt(0)
+	x.SetBytes(pointmsg.GetX())
+	y := gmp.NewInt(0)
+	y.SetBytes(pointmsg.GetY())
+
+	witness := make([]*pbc.Element, node.amtStep)
+	for i := 0; i < node.amtStep; i++ {
+		witness[i] = node.dc.NewG1()
+		witness[i].SetCompressedBytes(pointmsg.Witness[i])
+	}
+	p := point.Point{
+		X:       x,
+		Y:       y,
+		PolyWit: witness,
+	}
+	//fmt.Println(p.X, node.label, p.Y, p.PolyWit)
+	//Receive the point and store
+	node.mutex.Lock()
+	node.recPoint[p.X.Int32()-1] = &p
+	*node.recCounter += 1
+	flag := (*node.recCounter == node.degree*2+1)
+	node.mutex.Unlock()
+	if flag {
+		*node.recCounter = 0
+		node.ClientReadPhase1()
+	}
+	return &pb.ResponseMsg{}, nil
 }
 
 func (node *Node) ClientReadPhase1() {
@@ -336,7 +378,13 @@ func (node *Node) ClientReadPhase1() {
 		y = append(y, p.Y)
 		polyCmt.Set(node.oldPolyCmt[p.X.Int32()-1])
 		//node.log.Println(polyCmt,p.X.Int32(),gmp.NewInt(int64(node.label)), p.Y, p.PolyWit)
-		if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(node.label)), p.Y, p.PolyWit) {
+		//tmpWitness:=node.CalcAmtWitness(p.PolyWit,p.Y)
+		//if !node.dpc.VerifyEval(polyCmt, gmp.NewInt(int64(node.label)), p.Y, tmpWitness) {
+		//	//node.log.Println(111)
+		//	//fmt.Println(node.label, p.X, "FAIL", polyCmt, p.Y, p.PolyWit)
+		//	panic("Reconstruction Verification failed")
+		//}
+		if !node.dpc.CalcAmtWitness(polyCmt, node.amtPolyCmt, p.PolyWit, p.Y, node.amtStep) {
 			//node.log.Println(111)
 			//fmt.Println(node.label, p.X, "FAIL", polyCmt, p.Y, p.PolyWit)
 			panic("Reconstruction Verification failed")
@@ -368,30 +416,6 @@ func (node *Node) Phase1WriteOnBorad() {
 }
 func (node *Node) Phase1Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
 	log.Printf("[node %d] start verification in phase 3", node.label)
-	//x := make([]*gmp.Int, 0)
-	//y := make([]*gmp.Int, 0)
-	//x=append(x, gmp.NewInt(1),gmp.NewInt(2),gmp.NewInt(3))
-	//t1 := gmp.NewInt(0)
-	//t1.SetString("7343003390229545479771395739651417438480557364638257548670918175510748426479",10)
-	////t1.Add(t1,gmp.NewInt(17))
-	//t2 := gmp.NewInt(0)
-	//t2.SetString("14686006780459090959542791479302834876961114729276515097340601783121620309748",10)
-	////t2.Add(t2,gmp.NewInt(18))
-	//t3 := gmp.NewInt(0)
-	//t3.SetString("22029010170688636439314187218954252315441672093914772646010285390732492193017",10)
-	//t4 := gmp.NewInt(0)
-	//t4.SetString("3",10)
-	////t3.Add(t3,t4)
-	//
-	//p := gmp.NewInt(0)
-	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-	//y=append(y,t1,t2,t3)
-	//
-	//ans := gmp.NewInt(0)
-	//ans.Mul(ans,node.p)
-	//polyy,_:=interpolation.LagrangeInterpolate(2,x,y,node.p)
-	//polyy.EvalMod(gmp.NewInt(0),p,ans)
-	//fmt.Println("ans is ",ans)
 	node.Phase1Readboard()
 	return &pb.ResponseMsg{}, nil
 }
@@ -707,30 +731,9 @@ func ReadIpList(metadataPath string) []string {
 //通过新的多项式B（x，i），对包括自己的每一个node发送B（i，i）
 //最后重建多项式
 
-//重建secretShare
-func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.ResponseMsg, error) {
-	*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
-	index := msg.GetIndex()
-	Y := msg.GetY()
-	node.log.Printf("[node %d] receive point message from [node %d] in phase3", node.label, index)
-	witness := msg.GetWitness()
-	//fmt.Println("node index is ",index-1)
-	node.secretShares[index-1].Y.SetBytes(Y)
-	node.secretShares[index-1].PolyWit.SetCompressedBytes(witness)
-	node.mutex.Lock()
-	*node.shareCnt = *node.shareCnt + 1
-	flag := *node.shareCnt == node.degree*2+1
-	node.mutex.Unlock()
-	if flag {
-		node.log.Printf("[node %d] has finish sharePhase3", node.label)
-		*node.shareCnt = 0
-		node.Phase3WriteOnBorad()
-	}
-	return &pb.ResponseMsg{}, nil
-}
 func (node *Node) ClientSharePhase3() {
 	node.newPoly.Add(*node.recPoly, *node.proPoly)
-
+	node.CreatAmt(*node.newPoly, node.counter)
 	C := node.dpc.NewG1()
 	node.dpc.Commit(C, *node.newPoly)
 	//old1 := node.dpc.NewG1()
@@ -748,17 +751,22 @@ func (node *Node) ClientSharePhase3() {
 	for i := 0; i < node.counter; i++ {
 		value := gmp.NewInt(0)
 		node.newPoly.EvalMod(gmp.NewInt(int64(i+1)), node.p, value)
-		//witness
-		witness := node.dpc.NewG1()
-		node.dpc.CreateWitness(witness, *node.newPoly, gmp.NewInt(int64(i+1)))
-
+		//witness := node.dpc.NewG1()
+		//node.dpc.CreateWitness(witness, *node.newPoly, gmp.NewInt(int64(i+1)))
+		tmpWitness := node.GroupAmtWitness(i)
+		tmpLength := len(tmpWitness)
+		bb := make([][]byte, tmpLength)
+		for j := 0; j < tmpLength; j++ {
+			bb[j] = tmpWitness[j].CompressedBytes()
+		}
 		if i != node.label-1 {
 			node.log.Printf("node %d send point message to node %d in phase 3", node.label, i+1)
+
 			msg := &pb.PointMsg{
 				Index:   int32(node.label),
 				X:       gmp.NewInt(int64(node.label)).Bytes(),
 				Y:       value.Bytes(),
-				Witness: witness.CompressedBytes(),
+				Witness: bb,
 			}
 			//把消息发送给不同的节点
 			wg.Add(1)
@@ -771,7 +779,7 @@ func (node *Node) ClientSharePhase3() {
 			}(i, msg)
 		} else {
 			node.secretShares[i].Y.Set(value)
-			node.secretShares[i].PolyWit.Set(witness)
+			node.secretShares[i].PolyWit = tmpWitness
 			node.mutex.Lock()
 			*node.shareCnt = *node.shareCnt + 1
 			flag := *node.shareCnt == node.degree*2+1
@@ -783,6 +791,30 @@ func (node *Node) ClientSharePhase3() {
 			}
 		}
 	}
+}
+
+//重建secretShare
+func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.ResponseMsg, error) {
+	*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
+	index := msg.GetIndex()
+	Y := msg.GetY()
+	node.log.Printf("[node %d] receive point message from [node %d] in phase3", node.label, index)
+	witness := msg.GetWitness()
+	//fmt.Println("node index is ",index-1)
+	node.secretShares[index-1].Y.SetBytes(Y)
+	for i := 0; i < node.amtStep; i++ {
+		node.secretShares[index-1].PolyWit[i].SetCompressedBytes(witness[i])
+	}
+	node.mutex.Lock()
+	*node.shareCnt = *node.shareCnt + 1
+	flag := *node.shareCnt == node.degree*2+1
+	node.mutex.Unlock()
+	if flag {
+		node.log.Printf("[node %d] has finish sharePhase3", node.label)
+		*node.shareCnt = 0
+		node.Phase3WriteOnBorad()
+	}
+	return &pb.ResponseMsg{}, nil
 }
 func (node *Node) Phase3WriteOnBorad() {
 	node.log.Printf("[node %d] write bulletinboard in phase 3", node.label)
@@ -854,8 +886,12 @@ func (node *Node) Phase3Readboard() {
 		if !node.newPolyCmt[i].Equals(tmp.Mul(node.oldPolyCmt[i], node.midPolyCmt[i])) {
 			panic("Share Distribution Verification 1 failed")
 		}
-		if !node.dpc.VerifyEval(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit) {
-			fmt.Println(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit)
+		//if !node.dpc.VerifyEval(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit) {
+		//	fmt.Println(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit)
+		//	panic("Share Distribution Verification 2 failed")
+		//}
+		if !node.dpc.CalcAmtWitness(node.newPolyCmt[i], node.amtPolyCmt, node.secretShares[i].PolyWit, node.secretShares[i].Y, node.amtStep) {
+			//fmt.Println(node.newPolyCmt[i], gmp.NewInt(int64(node.label)), node.secretShares[i].Y, node.secretShares[i].PolyWit)
 			panic("Share Distribution Verification 2 failed")
 		}
 
@@ -886,33 +922,29 @@ func (node *Node) Phase3WriteOnBorad2() {
 		Index:   int32(node.label),
 		Polycmt: C.CompressedBytes(),
 	}
+
+	node.boardService.WritePhase32(ctx, msg)
 	tmpPoly, _ := poly.NewPoly(node.degree * 2)
 	tmpPoly.ResetTo(*node.recPoly)
-	node.boardService.WritePhase32(ctx, msg)
-
 	YY := gmp.NewInt(0)
 	tmpPoly.EvalMod(gmp.NewInt(0), node.p, YY)
 	C2 := node.dpc.NewG1()
 	node.dpc.CreateWitness(C2, tmpPoly, gmp.NewInt(0))
+	tmpWitness := node.GroupAmtWitness(-1)
+	tmpLength := len(tmpWitness)
+	bb := make([][]byte, tmpLength)
+	for j := 0; j < tmpLength; j++ {
+		bb[j] = tmpWitness[j].CompressedBytes()
+	}
 	//fmt.Println(YY)
 	msg2 := &pb.PointMsg{
 		Index:   int32(node.label),
 		X:       gmp.NewInt(int64(node.label)).Bytes(),
 		Y:       YY.Bytes(),
-		Witness: C.CompressedBytes(),
+		Witness: bb,
 	}
 	node.boardService.ReconstructSecret(ctx, msg2)
 
-	for i := 0; i < node.degree*2+1; i++ {
-		x := int32(i + 1)
-		y := gmp.NewInt(0)
-		w := node.dpc.NewG1()
-
-		tmpPoly.EvalMod(gmp.NewInt(int64(x)), node.p, y)
-		node.dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
-		node.secretShares2[i] = point.NewPoint(gmp.NewInt(int64(node.label)), y, w)
-		//fmt.Println(i+1,label,y,w)
-	}
 	//log.Printf("finish~~")
 	*node.e3 = time.Now()
 	f, _ := os.OpenFile(node.metadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -1001,17 +1033,6 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	if err != nil {
 		panic("Error initializing random tmpPoly")
 	}
-	for i := 0; i < degree*2+1; i++ {
-		x := int32(i + 1)
-		y := gmp.NewInt(0)
-		w := dpc.NewG1()
-		tmpPoly.EvalMod(gmp.NewInt(int64(x)), p, y)
-		dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
-
-		//fmt.Println(tmpPoly,x,"witness is ",w)
-		secretShares2[i] = point.NewPoint(gmp.NewInt(int64(label)), y, w)
-		//fmt.Println(i+1,label,y,w)
-	}
 
 	//fmt.Println(time.Now())
 	proPoly, _ := poly.NewPoly(degree)
@@ -1044,6 +1065,17 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 		zerosumShareCmt[i] = dc.NewG1()
 		zerosumPolyCmt[i] = dpc.NewG1()
 		zerosumPolyWit[i] = dpc.NewG1()
+	}
+	// amt
+	amtPoly := make([]*poly.Poly, (counter+1)<<1)
+	amtPolyCmt := make([]*pbc.Element, (counter+1)<<1)
+	amtBasicPolyCmt := make([]*pbc.Element, (counter+1)<<1)
+	amtStep := 0
+	for i := 0; i < ((counter + 1) << 1); i++ {
+		tmp2Poly, _ := poly.NewPoly(degree)
+		amtPoly[i] = &tmp2Poly
+		amtPolyCmt[i] = dpc.NewG1()
+		amtBasicPolyCmt[i] = dpc.NewG1()
 	}
 
 	totMsgSize := 0
@@ -1111,6 +1143,10 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 		nodeService:     nodeService,
 		iniflag:         &iniflag,
 		log:             log,
+		amtStep:         amtStep,
+		amtPolyCmt:      amtPolyCmt,
+		amtPoly:         amtPoly,
+		amtBasicPolyCmt: amtBasicPolyCmt,
 	}, nil
 
 }
