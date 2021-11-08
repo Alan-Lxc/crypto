@@ -413,7 +413,7 @@ func (poly *Poly) SubSelf(op Poly) error {
 	poly.GrowCapTo(deg1 + 1)
 
 	for i := 0; i < deg1+1; i++ {
-		fmt.Println(poly.Coeffs[i], op.Coeffs[i])
+		//fmt.Println(poly.Coeffs[i], op.Coeffs[i])
 		poly.Coeffs[i].Sub(poly.Coeffs[i], op.Coeffs[i])
 	}
 

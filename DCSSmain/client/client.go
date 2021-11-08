@@ -172,7 +172,7 @@ func main() {
 	var flag int
 
 	fmt.Scanf("%d%d", &degree, &counter)
-	client1, err := newClient(degree, counter, "./src/metadata", "192.168.0.1")
+	client1, err := newClient(degree, counter, "/home/gary/GolandProjects/crypto_contest3/DCSSmain/src/metadata", "192.168.0.1")
 	if err != nil {
 		client1.log.Fatalf("Can't create a new client:%v", err)
 	}

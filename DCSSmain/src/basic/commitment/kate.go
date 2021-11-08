@@ -200,6 +200,7 @@ func (c *DLPolyCommit) CalcAmtWitness(C *Element, Witness, tmpWitness []*Element
 	//fmt.Println("test ",tmpWitness,e2.Pair(Witness[0], tmpWitness[0]), e2.Pair(tmpWitness[0], tmpWitness[0]))
 
 	for i := 0; i < step; i++ {
+		//fmt.Println(len(Witness),len(tmpWitness))
 		e2.Pair(Witness[i], tmpWitness[i])
 		e1.Mul(e1, e2)
 	}

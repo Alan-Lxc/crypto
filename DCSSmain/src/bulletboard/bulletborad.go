@@ -225,7 +225,7 @@ func (bb *BulletinBoard) ReconstructSecret(ctx context.Context, msg *pb.PointMsg
 	bb.mutex.Lock()
 	*bb.secretCnt = *bb.secretCnt + 1
 	flag := (*bb.secretCnt == bb.counter)
-	fmt.Println(bb.counter, *bb.secretCnt)
+	//fmt.Println(bb.counter, *bb.secretCnt)
 	bb.mutex.Unlock()
 	if flag {
 		//bb.log.Println(*bb.secretCnt,bb.recontructSecret)
