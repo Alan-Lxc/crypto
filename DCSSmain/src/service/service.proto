@@ -4,7 +4,7 @@ package service;
 
 service NodeService{
     rpc Initsecret(InitMsg) returns(ResponseMsg){};
-    rpc Phase1GetStart(RequestMsg)  returns (ResponseMsg) {};
+    rpc Phase1GetStart(StartMsg)  returns (ResponseMsg) {};
     rpc Phase1ReceiveMsg (PointMsg)    returns (ResponseMsg){};
     rpc Phase1Verify(RequestMsg)returns(ResponseMsg){};
     rpc Phase2Share(ZeroMsg)    returns(ResponseMsg){};
@@ -33,12 +33,18 @@ service BulletinBoardService {
 message RequestMsg{}
 
 message ResponseMsg{}
+
 message InitMsg{
     int32 degree = 1;
     int32 counter = 2;
     int32 secretid = 3;
     repeated bytes coeff =4;
 }
+
+message StartMsg{
+    int32 id = 1;
+}
+
 message PointMsg{
     int32 index  = 1;
     bytes x = 2;

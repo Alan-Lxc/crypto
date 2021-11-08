@@ -202,9 +202,13 @@ func (node *Node) CreatAmt(size int) {
 }
 
 //Server Handler
-func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
+func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (response *pb.ResponseMsg, err error) {
 	node.log.Printf("[Node %d] Now Get start Phase1", node.label)
 	*node.s1 = time.Now()
+	//
+	id := int(msg.GetId())
+	node.get_secret(id)
+	//
 	for i := 0; i < node.degree*2+1; i++ {
 		node.secretShares[i] = node.secretShares2[i]
 	}
@@ -1159,17 +1163,20 @@ func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.Response
 		coeff[i] = gmp.NewInt(0)
 		coeff[i].SetBytes(coeffbytes[i])
 	}
-
+	node.store_secret(degree, counter, secretid, coeff)
 	return &pb.ResponseMsg{}, nil
 }
 func (node *Node) store_secret(degree, counter, secretid int, coeff []*gmp.Int) {
-	dc := commitment.DLCommit{}
-	dc.SetupFix()
-	dpc := commitment.DLPolyCommit{}
-	dpc.SetupFix(counter)
-	p := gmp.NewInt(0)
-	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
+	//dc := commitment.DLCommit{}
+	//dc.SetupFix()
+	//dpc := commitment.DLPolyCommit{}
+	//dpc.SetupFix(counter)
+	//p := gmp.NewInt(0)
+	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 
 	//store to mysql
 
+}
+func (node *Node) get_secret(secretid int) {
+	//get secret from mysql
 }

@@ -103,17 +103,17 @@ export default {
       }
     }
 
-    const validatorNumber = (rule, value, callback) => {
-      if (!value) {
-        return callback(new Error("请输入账户信息"));
-      } else {
-        if (1) {
-          callback();
-        } else {
-          return callback(new Error('账号格式不正确'))
-        }
-      }
-    };
+    // const validatorNumber = (rule, value, callback) => {
+    //   if (!value) {
+    //     return callback(new Error("请输入账户信息"));
+    //   } else {
+    //     if (1) {
+    //       callback();
+    //     } else {
+    //       return callback(new Error('账号格式不正确'))
+    //     }
+    //   }
+    // };
 
     const rules = {
       name: [
@@ -122,7 +122,14 @@ export default {
       numberOfN: [
         {  validator: checkNum, message: "委员会成员数需要大于2倍的门限阈值", trigger: "change"}
       ],
-
+      // numberOfT:[
+      //   {validator:(rule,value,callback)=>{
+      //       if (value<=0){
+      //         callback(new Error("门限阈值必须为正数"));
+      //       }
+      //       callback();
+      //     },trigger:'blur'}
+      // ],
     };
     return {
       rules,

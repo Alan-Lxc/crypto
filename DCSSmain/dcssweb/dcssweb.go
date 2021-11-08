@@ -99,4 +99,5 @@ func newSecret(secretid int, degree int, counter int, s0 string, controll Contro
 	}
 	controll.boardConn[secretid-1] = bconn
 	controll.boardService[secretid-1] = pb.NewBulletinBoardServiceClient(bconn)
+
 }

@@ -23,6 +23,7 @@ import (
 
 // BulletinBoard Simulator Structure
 type BulletinBoard struct {
+	id int
 	// Metadata Directory Path
 	metadataPath string
 	// Degree
@@ -216,7 +217,7 @@ func (bb *BulletinBoard) WritePhase32(ctx context.Context, msg *pb.Cmt1Msg) (*pb
 
 func (bb *BulletinBoard) ReconstructSecret(ctx context.Context, msg *pb.PointMsg) (*pb.ResponseMsg, error) {
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
-	bb.log.Print("[bulletinboard] recontruct secret")
+	bb.log.Print("[bulletinboard] reconstruct secret")
 	index := msg.GetIndex()
 	Y := gmp.NewInt(0).SetBytes(msg.GetY())
 	//fmt.Println(len(bb.recontructSecret),bb.recontructSecret)
@@ -326,7 +327,8 @@ func (bb *BulletinBoard) ClientStartPhase1() {
 			defer wg.Done()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			bb.nClient[i].Phase1GetStart(ctx, &pb.RequestMsg{})
+			msg := pb.StartMsg{Id: int32(bb.id)}
+			bb.nClient[i].Phase1GetStart(ctx, &msg)
 		}(i)
 	}
 	wg.Wait()
@@ -513,6 +515,7 @@ func New_bulletboard_for_web(degree, counter int, metadatapath string, secretid 
 	//put bulletinboard into mysql
 
 	return BulletinBoard{
+		id:                     secretid,
 		degree:                 degree,
 		p:                      p,
 		metadataPath:           metadatapath,
