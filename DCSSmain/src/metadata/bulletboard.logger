@@ -1,0 +1,107 @@
+2021/11/08 07:03:21 bulletinboard failed to listen listen tcp 127.0.0.1:100: bind: permission denied
+2021/11/08 07:04:26 bulletinboard failed to listen listen tcp 127.0.0.1:1000: bind: permission denied
+2021/11/08 07:05:27 bulletinboard serve on 127.0.0.1:11000
+2021/11/08 07:05:27 [bulletinboard] start epoch
+2021/11/08 07:05:27 [bulletinboard] start phase 1
+2021/11/08 07:05:27 [bulletinboard] start phase 1
+2021/11/08 07:05:27 [bulletinboard] start phase 1
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 1
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 1
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 1
+2021/11/08 07:05:27 [bulletinboard] is being writcommitmentten in phase 3
+2021/11/08 07:05:27 [bulletinboard] is being writcommitmentten in phase 3
+2021/11/08 07:05:27 [bulletinboard] is being writcommitmentten in phase 3
+2021/11/08 07:05:27 [bulletinboard] start verification in phase 3
+2021/11/08 07:05:27 [bulletinboard] start verification in phase 3
+2021/11/08 07:05:27 [bulletinboard] start verification in phase 3
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 1 2
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 1 2
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 1 2
+2021/11/08 07:05:27 [bulletinboard] is being written in phase 2
+2021/11/08 07:05:27 [bulletinboard] is being written in phase 2
+2021/11/08 07:05:27 [bulletinboard] is being written in phase 2
+2021/11/08 07:05:27 [bulletinboard] start verification in phase 2
+2021/11/08 07:05:27 [bulletinboard] start verification in phase 2
+2021/11/08 07:05:27 [bulletinboard] start verification in phase 2
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 2
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 2
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 2
+2021/11/08 07:05:27 [bulletinboard] is being written in phase 3
+2021/11/08 07:05:27 [bulletinboard] is being written in phase 3
+2021/11/08 07:05:27 [bulletinboard] is being written in phase 3
+2021/11/08 07:05:27 [bulletinboard] start verification in phase 3
+2021/11/08 07:05:27 [bulletinboard] start verification in phase 3
+2021/11/08 07:05:27 [bulletinboard] start verification in phase 3
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 3
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 3
+2021/11/08 07:05:27 [bulletinboard] is being read in phase 3
+2021/11/08 07:11:36 bulletinboard serve on 127.0.0.1:11000
+2021/11/08 07:11:36 [bulletinboard] start epoch
+2021/11/08 07:11:36 [bulletinboard] start phase 1
+2021/11/08 07:11:36 [bulletinboard] start phase 1
+2021/11/08 07:11:36 [bulletinboard] start phase 1
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 1
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 1
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 1
+2021/11/08 07:11:36 [bulletinboard] is being writcommitmentten in phase 3
+2021/11/08 07:11:36 [bulletinboard] is being writcommitmentten in phase 3
+2021/11/08 07:11:36 [bulletinboard] is being writcommitmentten in phase 3
+2021/11/08 07:11:36 [bulletinboard] start verification in phase 3
+2021/11/08 07:11:36 [bulletinboard] start verification in phase 3
+2021/11/08 07:11:36 [bulletinboard] start verification in phase 3
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 1 2
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 1 2
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 1 2
+2021/11/08 07:11:36 [bulletinboard] is being written in phase 2
+2021/11/08 07:11:36 [bulletinboard] is being written in phase 2
+2021/11/08 07:11:36 [bulletinboard] is being written in phase 2
+2021/11/08 07:11:36 [bulletinboard] start verification in phase 2
+2021/11/08 07:11:36 [bulletinboard] start verification in phase 2
+2021/11/08 07:11:36 [bulletinboard] start verification in phase 2
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 2
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 2
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 2
+2021/11/08 07:11:36 [bulletinboard] is being written in phase 3
+2021/11/08 07:11:36 [bulletinboard] is being written in phase 3
+2021/11/08 07:11:36 [bulletinboard] is being written in phase 3
+2021/11/08 07:11:36 [bulletinboard] start verification in phase 3
+2021/11/08 07:11:36 [bulletinboard] start verification in phase 3
+2021/11/08 07:11:36 [bulletinboard] start verification in phase 3
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 3
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 3
+2021/11/08 07:11:36 [bulletinboard] is being read in phase 3
+2021/11/08 07:19:02 bulletinboard serve on 127.0.0.1:11000
+2021/11/08 07:19:02 [bulletinboard] start epoch
+2021/11/08 07:19:02 [bulletinboard] start phase 1
+2021/11/08 07:19:02 [bulletinboard] start phase 1
+2021/11/08 07:19:02 [bulletinboard] start phase 1
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 1
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 1
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 1
+2021/11/08 07:19:02 [bulletinboard] is being writcommitmentten in phase 3
+2021/11/08 07:19:02 [bulletinboard] is being writcommitmentten in phase 3
+2021/11/08 07:19:02 [bulletinboard] is being writcommitmentten in phase 3
+2021/11/08 07:19:02 [bulletinboard] start verification in phase 3
+2021/11/08 07:19:02 [bulletinboard] start verification in phase 3
+2021/11/08 07:19:02 [bulletinboard] start verification in phase 3
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 1 2
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 1 2
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 1 2
+2021/11/08 07:19:02 [bulletinboard] is being written in phase 2
+2021/11/08 07:19:02 [bulletinboard] is being written in phase 2
+2021/11/08 07:19:02 [bulletinboard] is being written in phase 2
+2021/11/08 07:19:02 [bulletinboard] start verification in phase 2
+2021/11/08 07:19:02 [bulletinboard] start verification in phase 2
+2021/11/08 07:19:02 [bulletinboard] start verification in phase 2
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 2
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 2
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 2
+2021/11/08 07:19:02 [bulletinboard] is being written in phase 3
+2021/11/08 07:19:02 [bulletinboard] is being written in phase 3
+2021/11/08 07:19:02 [bulletinboard] is being written in phase 3
+2021/11/08 07:19:02 [bulletinboard] start verification in phase 3
+2021/11/08 07:19:02 [bulletinboard] start verification in phase 3
+2021/11/08 07:19:02 [bulletinboard] start verification in phase 3
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 3
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 3
+2021/11/08 07:19:02 [bulletinboard] is being read in phase 3

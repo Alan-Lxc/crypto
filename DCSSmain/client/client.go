@@ -155,7 +155,7 @@ func (c *client) InitandConnect(s0 string) {
 }
 func newBoard(degree int, ccounter int, metadataPath string, polyyy []poly.Poly) {
 	bb, _ := bulletboard.New(degree, ccounter, metadataPath, polyyy)
-	fmt.Println(metadataPath)
+	//fmt.Println(metadataPath)
 	bb.Serve(false)
 }
 func main() {
