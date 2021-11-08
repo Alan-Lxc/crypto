@@ -1,0 +1,75 @@
+syntax = "proto3";
+option go_package = "../service";
+package service;
+
+service NodeService{
+    rpc Initsecret(InitMsg) returns(ResponseMsg){};
+    rpc Phase1GetStart(RequestMsg)  returns (ResponseMsg) {};
+    rpc Phase1ReceiveMsg (PointMsg)    returns (ResponseMsg){};
+    rpc Phase1Verify(RequestMsg)returns(ResponseMsg){};
+    rpc Phase2Share(ZeroMsg)    returns(ResponseMsg){};
+    rpc Phase2Verify(RequestMsg) returns(ResponseMsg){};
+    rpc Phase3SendMsg(PointMsg) returns(ResponseMsg){};
+    rpc Phase3Verify(RequestMsg)returns(ResponseMsg){};
+    rpc Sendtestmsg(RequestMsg) returns(testMsg){}
+}
+service BulletinBoardService {
+    // Start a epoch
+    rpc StartEpoch(RequestMsg) returns (ResponseMsg) {};
+    // BulletinBoard RPC for recontruction phase
+    rpc ReadPhase1(RequestMsg) returns (stream Cmt1Msg) {};
+    rpc ReadPhase12(RequestMsg) returns (stream Cmt1Msg) {};
+    rpc WritePhase1(Cmt1Msg) returns (ResponseMsg) {};
+    // BulletinBoard RPC for proactivization phase
+    rpc WritePhase2(CommitMsg) returns (ResponseMsg) {};
+    rpc ReadPhase2(RequestMsg) returns (stream CommitMsg) {};
+    // BulletinBoard RPC for share distribution phase
+    rpc WritePhase3(Cmt1Msg) returns (ResponseMsg) {};
+    rpc WritePhase32(Cmt1Msg) returns (ResponseMsg) {};
+    rpc ReconstructSecret(PointMsg) returns (ResponseMsg) {};
+    rpc ReadPhase3(RequestMsg) returns (stream Cmt1Msg) {};
+}
+
+message RequestMsg{}
+
+message ResponseMsg{}
+message InitMsg{
+    int32 degree = 1;
+    int32 counter = 2;
+    int32 secretid = 3;
+    repeated bytes coeff =4;
+}
+message PointMsg{
+    int32 index  = 1;
+    bytes x = 2;
+    bytes y = 3;
+    repeated bytes witness = 4;
+}
+
+message ZeroMsg{
+    int32 index = 1 ;
+    bytes share = 2 ;
+}
+message CommitMsg{
+    int32 Index = 1;
+    bytes ShareCommit = 2;
+    bytes PolyCommit = 3;
+    bytes ZeroWitness = 4;
+}
+message Cmt1Msg {
+    int32 index = 1;
+    bytes polycmt = 2;
+}
+message RequestForCoeffMsg{
+    int32 label =1;
+}
+message testMsg{
+    int32 totmsgsize=1;
+    int64 totaltime=2;
+    int64 phase1time=3;
+    int64 phase2time=4;
+    int64 phase3time=5;
+}
+message amtmsg{
+    repeated bytes Witness = 1;
+}
