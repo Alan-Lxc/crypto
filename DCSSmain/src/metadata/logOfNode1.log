@@ -1,78 +1,22 @@
-2021/10/21 21:23:04 [Node 1] Now Get start Phase1
-2021/10/21 21:23:04 [Node 1] send point message to [Node 2]
-2021/10/21 21:23:04 [Node 1] send point message to [Node 3]
-2021/10/21 21:23:04 [Node 1] send point message to [Node 4]
-2021/10/21 21:23:04 [Node 1] send point message to [Node 5]
-2021/10/21 21:23:04 [Node 1] send point message to [Node 6]
-2021/10/21 21:23:04 [Node 1] send point message to [Node 7]
-2021/10/21 21:23:04 [Node 1] send point message to [Node 8]
-2021/10/21 21:23:04 [Node 1] send point message to [Node 9]
-2021/10/21 21:23:04 [Node 1] send point message to [Node 10]
-2021/10/21 21:23:04 [Node 1] send point message to [Node 11]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 9]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 10]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 2]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 5]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 3]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 11]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 4]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 6]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 7]
-2021/10/21 21:23:04 Phase 1 :[Node 1] receive point message from [Node 8]
-2021/10/21 21:23:04 [Node 1] read bulletinboard in phase 1
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 6] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 2] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 3] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 4] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 5] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 6] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 7] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 8] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 9] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 10] in phase 2
-2021/10/21 21:23:04 [Node 1] send message to [Node 11] in phase 2
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 9] in phase 2
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 4] in phase 2
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 2] in phase 2
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 8] in phase 2
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 3] in phase 2
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 7] in phase 2
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 10] in phase 2
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 5] in phase 2
-2021/10/21 21:23:04 [Node 1] receive zero message from [Node 11] in phase 2
-2021/10/21 21:23:04 1 has finish _0ShareSum
-2021/10/21 21:23:04 [node 1] write bulletinboard in phase 2
-2021/10/21 21:23:04 [Node %!d(MISSING)] start verification in phase 2
-2021/10/21 21:23:04 [Node 1] read bulletinboard in phase 2
-2021/10/21 21:23:04 [node 1] receive point message from [node 7] in phase3
-2021/10/21 21:23:04 [node 1] receive point message from [node 9] in phase3
-2021/10/21 21:23:04 [node 1] receive point message from [node 11] in phase3
-2021/10/21 21:23:04 node 1 send point message to node 2 in phase 3
-2021/10/21 21:23:04 node 1 send point message to node 3 in phase 3
-2021/10/21 21:23:04 node 1 send point message to node 4 in phase 3
-2021/10/21 21:23:04 [node 1] receive point message from [node 10] in phase3
-2021/10/21 21:23:04 [node 1] receive point message from [node 3] in phase3
-2021/10/21 21:23:04 [node 1] receive point message from [node 5] in phase3
-2021/10/21 21:23:04 [node 1] receive point message from [node 4] in phase3
-2021/10/21 21:23:04 [node 1] receive point message from [node 6] in phase3
-2021/10/21 21:23:04 node 1 send point message to node 5 in phase 3
-2021/10/21 21:23:04 node 1 send point message to node 6 in phase 3
-2021/10/21 21:23:04 node 1 send point message to node 7 in phase 3
-2021/10/21 21:23:04 node 1 send point message to node 8 in phase 3
-2021/10/21 21:23:04 [node 1] receive point message from [node 2] in phase3
-2021/10/21 21:23:04 node 1 send point message to node 9 in phase 3
-2021/10/21 21:23:04 node 1 send point message to node 10 in phase 3
-2021/10/21 21:23:04 node 1 send point message to node 11 in phase 3
-2021/10/21 21:23:04 node 1 send point message to node 12 in phase 3
-2021/10/21 21:23:04 [node 1] receive point message from [node 8] in phase3
-2021/10/21 21:23:04 [node 1] has finish sharePhase3
-2021/10/21 21:23:04 [node 1] write bulletinboard in phase 3
-2021/10/21 21:23:04 [node 1] start verification in phase 3
-2021/10/21 21:23:04 [node 1] read bulletinboard in phase 3
-2021/10/21 21:23:05 [node 1] write bulletinboard in phase 3 2
-2021/10/21 21:23:05 totMsgSize,6680
-2021/10/21 21:23:05 epochLatency,337704929
-2021/10/21 21:23:05 reconstructionLatency,83621684
-2021/10/21 21:23:05 proactivizationLatency,96565910
-2021/10/21 21:23:05 sharedistLatency,157517128
-2021/10/21 21:23:05 the secret for reconstruction is ,27990575614377985367946797540348400535529052423606458497803359288685599238786
+2021/11/08 07:05:27 [Node 1] Now Get start Phase1
+2021/11/08 07:05:27 [Node 1] send point message to [Node 2]
+2021/11/08 07:05:27 [Node 1] send point message to [Node 3]
+2021/11/08 07:05:27 Phase 1 :[Node 1] receive point message from [Node 3]
+2021/11/08 07:05:27 Phase 1 :[Node 1] receive point message from [Node 2]
+2021/11/08 07:05:27 [Node 1] read bulletinboard in phase 1
+2021/11/08 07:05:27 [Node 1] send message to [Node 2] in phase 2
+2021/11/08 07:05:27 [Node 1] send message to [Node 3] in phase 2
+2021/11/08 07:05:27 [Node 1] receive zero message from [Node 3] in phase 2
+2021/11/08 07:05:27 [Node 1] receive zero message from [Node 2] in phase 2
+2021/11/08 07:05:27 1 has finish _0ShareSum
+2021/11/08 07:05:27 [node 1] write bulletinboard in phase 2
+2021/11/08 07:05:27 [Node %!d(MISSING)] start verification in phase 2
+2021/11/08 07:05:27 [Node 1] read bulletinboard in phase 2
+2021/11/08 07:05:27 node 1 send point message to node 2 in phase 3
+2021/11/08 07:05:27 node 1 send point message to node 3 in phase 3
+2021/11/08 07:05:27 [node 1] receive point message from [node 3] in phase3
+2021/11/08 07:05:27 [node 1] receive point message from [node 2] in phase3
+2021/11/08 07:05:27 [node 1] has finish sharePhase3
+2021/11/08 07:05:27 [node 1] write bulletinboard in phase 3
+2021/11/08 07:05:27 [node 1] start verification in phase 3
+2021/11/08 07:05:27 [node 1] read bulletinboard in phase 3

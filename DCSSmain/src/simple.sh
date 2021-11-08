@@ -15,7 +15,7 @@ if [ -d "ip_list" ]; then
 fi
 for i in `seq 0 $COUNTER`
 do
-  port=$(($i+100))
+  port=$(($i+11000))
   echo 127.0.0.1:$port >> ip_list
 done
 cd ..

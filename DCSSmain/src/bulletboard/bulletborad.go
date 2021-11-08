@@ -406,7 +406,7 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 	dpc := commitment.DLPolyCommit{}
 	dpc.SetupFix(counter)
 
-	ipRaw := ReadIpList(metadataPath)[0 : counter+1]
+	ipRaw := ReadIpList(metadataPath + "/ip_list")[0 : counter+1]
 	bip := ipRaw[0]
 	ipList := ipRaw[1 : counter+1]
 
