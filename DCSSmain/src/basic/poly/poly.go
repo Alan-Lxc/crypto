@@ -454,22 +454,39 @@ func DivMod(tmp1 Poly, tmp2 Poly, p *gmp.Int, q, r *Poly) (err error) {
 		return nil
 	}
 
-	q.ResetDegree(d1 - d2 + 1)
+	q.ResetDegree(d1 - d2)
 	r.ResetTo(a)
-
+	c, _ := b.GetCoeff(d2)
+	cInv := gmp.NewInt(0)
+	cInv.ModInverse(&c, p)
+	//fmt.Println("new term")
 	for i := d1; i >= d2; i-- {
 		r.Coeffs[i].Mod(r.Coeffs[i], p)
-		c, _ := r.GetCoeff(i)
-		cInv := gmp.NewInt(0)
-		cInv.ModInverse(&c, p)
-		*q.Coeffs[i-d2] = c
+		mulTmp := gmp.NewInt(0)
+		mulTmp.Mul(cInv, r.Coeffs[i])
+		q.Coeffs[i-d2] = mulTmp
 		for j := 0; j <= d2; j++ {
 			tmp := gmp.NewInt(0)
-			tmp.Mul(b.Coeffs[d2-j], cInv)
-			r.Coeffs[i-j].Sub(r.Coeffs[i], tmp)
+			tmp.Mul(b.Coeffs[d2-j], mulTmp)
+			r.Coeffs[i-j].Sub(r.Coeffs[i-j], tmp)
 		}
+		r.Mod(p)
+		//r.ResetDegree(r.GetDegree())
+		r.Coeffs = r.Coeffs[:i]
+		//fmt.Println("q&r is: ",q,r)
 	}
+
 	q.Mod(p)
 	r.Mod(p)
+	//c := tmp2.Copy()
+	////fmt.Println("q is",q)
+	////fmt.Println("b is",c)
+	//c.Multiply(*q,b)
+	//c.Add(c.Copy(),*r)
+	//c.Mod(p)
+	//a.Mod(p)
+	//fmt.Println("1st is",c)
+	//fmt.Println("2nd is",a)
+
 	return nil
 }

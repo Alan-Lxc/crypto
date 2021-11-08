@@ -8,10 +8,10 @@ import (
 type Point struct {
 	X       *gmp.Int
 	Y       *gmp.Int
-	PolyWit *pbc.Element
+	PolyWit []*pbc.Element
 }
 
-func NewPoint(x *gmp.Int, y *gmp.Int, w *pbc.Element) *Point {
+func NewPoint(x *gmp.Int, y *gmp.Int, w []*pbc.Element) *Point {
 	return &Point{
 		X:       x,
 		Y:       y,
