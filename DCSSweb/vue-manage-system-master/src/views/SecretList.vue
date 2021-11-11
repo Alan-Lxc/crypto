@@ -12,29 +12,31 @@
       <el-header height="40px" >
           <router-link to="/newsecret">
             <el-button @click="" type="mini" bgcolor="bule" >新建秘密</el-button>
+
           </router-link>
+        <el-button @click="fresh" type="mini" >Refresh</el-button>
       </el-header>
       <el-table
           :data="tableData"
           style="width: 100%"
           :row-class-name="tableRowClassName">
         <el-table-column
-            prop="name"
+            prop="secretname"
             label="秘密名称"
             width="180">
         </el-table-column>
         <el-table-column
-            prop="description"
-            label="描述"
+            prop="secretid"
+            label="秘密ID"
             width="500">
         </el-table-column>
         <el-table-column
-            prop="numberOfT"
-            label="委员会t值">
+            prop="degree"
+            label="门限阈值">
         </el-table-column>
         <el-table-column
-            prop="numberOfN"
-            label="委员会n值">
+            prop="counter"
+            label="委员会成员数">
         </el-table-column>
         <el-table-column
             fixed="right"
@@ -45,7 +47,7 @@
               <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
             </router-link>
 
-            <el-button type="text" size="small">编辑</el-button>
+            <el-button  type="text" size="small">编辑</el-button>
 <!--          </template>-->
         </el-table-column>
       </el-table>
@@ -55,17 +57,28 @@
 </template>
 
 <style>
-.el-table .warning-row {
-  background: oldlace;
-}
+/*.el-table .warning-row {*/
+/*  background: oldlace;*/
+/*}*/
 
-.el-table .success-row {
-  background: #f0f9eb;
-}
+/*.el-table .success-row {*/
+/*  background: #f0f9eb;*/
+/*}*/
 </style>
 
 <script>
+import axios from "axios";
+
 export default {
+  data() {
+    return {
+      tableData: [],
+      total:0,
+    }
+  },
+  created() {
+   this.getsecretlist()
+  },
   methods: {
     tableRowClassName({row, rowIndex}) {
       if (rowIndex === 1) {
@@ -74,41 +87,32 @@ export default {
         return 'success-row';
       }
       return '';
+    },
+     getsecretlist(){
+       let arr = this;
+       const url = "http://localhost:8080/api/getsecretlist"
+      axios({
+        methods: 'get',
+        url:url
+      }).then(
+          function (res) {
+            // var arr = this;
+            console.log(res);
+            console.log(res.data.total);
+            console.log(res.data.datalist);
+            arr.tableData = res.data.datalist;
+          }
+      ).catch(err =>{
+
+      })
+    },
+    handleClick(){
+
+    },
+    fresh(){
+      this.getsecretlist()
     }
   },
-  data() {
-    return {
-      tableData: [{
-        name: '秘密1',
-        description: '第一个秘密',
-        numberOfN: 10,
-        numberOfT: 3,
-      },{
-        name: '秘密2',
-        description: '第二个秘密',
-        numberOfN: 100,
-        numberOfT: 20,
-
-
-      },{
-        name: '秘密3',
-        description: '第三个秘密',
-        numberOfN: 12,
-        numberOfT: 4,
-
-      },{
-        name: '秘密4',
-        description: '第四个秘密',
-        numberOfN: 21,
-        numberOfT: 9,
-      },{
-        name: '456',
-        description: '',
-        numberOfN: 3,
-        numberOfT: 1,
-      },],
-
-    }
-  }
 }
+
 </script>

@@ -1,4 +1,4 @@
-package main
+package systeminit
 
 import (
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
@@ -28,13 +28,8 @@ type Controll struct {
 	bb_num int
 }
 
-func connect() {
-
-}
-
-func main() {
+func Initsystem() *Controll {
 	//metadatapath := "./src/metadata"
-
 	metadatapath := "./src/metadata"
 	var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, 100)
@@ -63,13 +58,15 @@ func main() {
 	controll.boardConn = make([]*grpc.ClientConn, 10)
 	controll.boardService = make([]pb.BulletinBoardServiceClient, 10)
 	controll.bb_num = 10
+	return controll
 }
-func newSecret(secretid int, degree int, counter int, s0 string, controll Controll) {
+func NewSecret(secretid int, degree int, counter int, s0 string, controll Controll) *bulletboard.BulletinBoard {
 	metadatapath := "./src/metadata"
 	fixedRandState := rand.New(rand.NewSource(int64(3)))
 	p := gmp.NewInt(0)
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 	tmp := gmp.NewInt(0)
+	//tmp.SetString(s0, 10)
 	tmp.SetString(s0, 10)
 	polyy, _ := poly.NewRand(degree, fixedRandState, p)
 	polyy.SetCoeffWithGmp(0, tmp)
@@ -85,7 +82,6 @@ func newSecret(secretid int, degree int, counter int, s0 string, controll Contro
 	bb, _ := bulletboard.New_bulletboard_for_web(degree, counter, metadatapath, secretid, polyyy)
 	go bb.Serve(false)
 	time.Sleep(2)
-
 	bconn, err := grpc.Dial(bb.Getbip(), grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("System could not connect to bulletboard %d", secretid)
@@ -99,5 +95,5 @@ func newSecret(secretid int, degree int, counter int, s0 string, controll Contro
 	}
 	controll.boardConn[secretid-1] = bconn
 	controll.boardService[secretid-1] = pb.NewBulletinBoardServiceClient(bconn)
-
+	return &bb
 }

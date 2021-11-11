@@ -9,31 +9,32 @@
       <div class="form-box">
         <el-form ref="secretRef" :rules="rules" :model="secret" label-width="160px">
           <el-form-item label="秘密名称" prop="name">
-            <el-input v-model="secret.name"></el-input>
+            <el-input v-model="secret.secretname"></el-input>
           </el-form-item>
           <el-form-item label="门限阈值" prop="numberOfT">
-            <el-input-number v-model.number="secret.numberOfT" :min="1" :max="100" prop="numberOfT"></el-input-number>
+            <el-input-number v-model.number="secret.degree" :min="1" :max="100" prop="numberOfT"></el-input-number>
           </el-form-item>
           <el-form-item label="委员会成员数" prop="numberOfN">
-            <el-input-number v-model.number="secret.numberOfN" :min="1" :max="100" prop="numberOfN"></el-input-number>
+            <el-input-number v-model.number="secret.counter" :min="1" :max="100" prop="numberOfN"></el-input-number>
           </el-form-item>
-          <el-form-item label="秘密文件">
-            <div class="content-title">支持拖拽</div>
-<!--            <div class="plugins-tips">-->
-<!--              Element UI自带上传组件。-->
-<!--              访问地址：-->
-<!--              <a href="http://element.eleme.io/#/zh-CN/component/upload" target="_blank">Element UI Upload</a>-->
-<!--            </div>-->
-            <el-upload class="upload-demo" drag action="http://jsonplaceholder.typicode.com/api/posts/" multiple>
-              <i class="el-icon-upload"></i>
-              <div class="el-upload__text">
-                将秘密文件拖到此处，或
-                <em>点击上传</em>
-              </div>
-<!--              <template #tip>-->
-<!--                <div class="el-upload__tip">只能上传 jpg/png 文件，且不超过 500kb</div>-->
-<!--              </template>-->
-            </el-upload>
+          <el-form-item label="秘密文件" prop="secret">
+            <el-input v-model.number="secret.secret"></el-input>
+<!--            <div class="content-title">支持拖拽</div>-->
+<!--&lt;!&ndash;            <div class="plugins-tips">&ndash;&gt;-->
+<!--&lt;!&ndash;              Element UI自带上传组件。&ndash;&gt;-->
+<!--&lt;!&ndash;              访问地址：&ndash;&gt;-->
+<!--&lt;!&ndash;              <a href="http://element.eleme.io/#/zh-CN/component/upload" target="_blank">Element UI Upload</a>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--            <el-upload class="upload-demo" drag action="http://jsonplaceholder.typicode.com/api/posts/" multiple>-->
+<!--              <i class="el-icon-upload"></i>-->
+<!--              <div class="el-upload__text">-->
+<!--                将秘密文件拖到此处，或-->
+<!--                <em>点击上传</em>-->
+<!--              </div>-->
+<!--&lt;!&ndash;              <template #tip>&ndash;&gt;-->
+<!--&lt;!&ndash;                <div class="el-upload__tip">只能上传 jpg/png 文件，且不超过 500kb</div>&ndash;&gt;-->
+<!--&lt;!&ndash;              </template>&ndash;&gt;-->
+<!--            </el-upload>-->
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="onSubmit">提交秘密</el-button>
@@ -51,36 +52,55 @@
 <script>
 import {ref, reactive} from "vue";
 import { ElMessage } from "element-plus";
+import axios from "axios";
 export default {
   name: "NewSecret",
   data() {
 
 
   },
+  headers:{
+      'Content-Type':'applicaion/x-www-form-urlencoded;charset=UTF-8'
+  },
   setup() {
 
     const secretRef = ref(null);
     const secret = reactive({
-      name: "",
-      numberOfT: 0,
-      numberOfN: 0,
-      test: "",
+      secretname: "",
+      degree: 0,
+      counter: 0,
+      secret: "",
 
     });
 
     // 提交
     const onSubmit = () => {
       // 表单校验
-      console.log(secret.numberOfN,secret.numberOfT)
-
+      console.log(secret.degree,secret.counter)
+      const api = "http://localhost:8080/api/newsecret"
       secretRef.value.validate((valid) => {
         if (valid) {
-          if (secret.numberOfT*2+1>secret.numberOfN){
+          if (secret.degree*2+1>secret.counter){
             // console.log(form);
             console.log("t*2+1>n");
             ElMessage.error("t*2+1>n");
             return false;
           }else {
+            console.log(secret.degree,secret.counter)
+            axios({
+              method:'post',
+              url:api,
+              data:secret,
+              transformRequest:[function (data) {
+                let param = '';
+                for (var it in data){
+                  param += it + '=' + data[it] + '&'
+                }
+                return param
+              }]
+            }).then(function (response) {
+              console.log(response.data)
+            })
             ElMessage.success("提交成功！");
           }
         } else {
@@ -95,7 +115,7 @@ export default {
     };
     //检验t,n代数关系
     const checkNum = (rule, value, callback) => {
-      if (secret.numberOfN<secret.numberOfT*2+1){
+      if (secret.degree<secret.counter*2+1){
         callback(new Error("不对"));
       }else {
         console.log("对不对");
@@ -103,33 +123,26 @@ export default {
       }
     }
 
-    // const validatorNumber = (rule, value, callback) => {
-    //   if (!value) {
-    //     return callback(new Error("请输入账户信息"));
-    //   } else {
-    //     if (1) {
-    //       callback();
-    //     } else {
-    //       return callback(new Error('账号格式不正确'))
-    //     }
-    //   }
-    // };
+    const validatorNumber = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error("请输入账户信息"));
+      } else {
+        if (1) {
+          callback();
+        } else {
+          return callback(new Error('账号格式不正确'))
+        }
+      }
+    };
 
     const rules = {
-      name: [
+      secretname: [
         { required: true, message: "请输入秘密名称", trigger: "blur"},
       ],
-      numberOfN: [
+      counter: [
         {  validator: checkNum, message: "委员会成员数需要大于2倍的门限阈值", trigger: "change"}
       ],
-      // numberOfT:[
-      //   {validator:(rule,value,callback)=>{
-      //       if (value<=0){
-      //         callback(new Error("门限阈值必须为正数"));
-      //       }
-      //       callback();
-      //     },trigger:'blur'}
-      // ],
+
     };
     return {
       rules,
