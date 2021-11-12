@@ -17,7 +17,7 @@
           <el-form-item label="委员会成员数" prop="numberOfN">
             <el-input-number v-model.number="secret.counter" :min="1" :max="100" prop="numberOfN"></el-input-number>
           </el-form-item>
-          <el-form-item label="秘密文件" prop="secret">
+          <el-form-item label="秘密值" prop="secret">
             <el-input v-model.number="secret.secret"></el-input>
 <!--            <div class="content-title">支持拖拽</div>-->
 <!--&lt;!&ndash;            <div class="plugins-tips">&ndash;&gt;-->
@@ -57,10 +57,14 @@ export default {
   name: "NewSecret",
   data() {
 
-
   },
   headers:{
       'Content-Type':'applicaion/x-www-form-urlencoded;charset=UTF-8'
+  },
+  methods:{
+    turntolist(){
+      this.$router.push({path:'/secretlist'})
+    }
   },
   setup() {
 
@@ -77,8 +81,10 @@ export default {
     const onSubmit = () => {
       // 表单校验
       console.log(secret.degree,secret.counter)
+      let arr = this;
       const api = "http://localhost:8080/api/newsecret"
       secretRef.value.validate((valid) => {
+
         if (valid) {
           if (secret.degree*2+1>secret.counter){
             // console.log(form);
@@ -87,6 +93,7 @@ export default {
             return false;
           }else {
             console.log(secret.degree,secret.counter)
+
             axios({
               method:'post',
               url:api,
@@ -100,6 +107,8 @@ export default {
               }]
             }).then(function (response) {
               console.log(response.data)
+              //panduan
+              arr.turntolist()
             })
             ElMessage.success("提交成功！");
           }

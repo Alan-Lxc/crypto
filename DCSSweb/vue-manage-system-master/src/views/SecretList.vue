@@ -12,7 +12,6 @@
       <el-header height="40px" >
           <router-link to="/newsecret">
             <el-button @click="" type="mini" bgcolor="bule" >新建秘密</el-button>
-
           </router-link>
         <el-button @click="fresh" type="mini" >Refresh</el-button>
       </el-header>
