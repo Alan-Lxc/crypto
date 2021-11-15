@@ -1,23 +1,37 @@
 package router
 
 import (
-	"github.com/Alan-Lxc/crypto_contest/dcssweb/handlers"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/controller"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/middleware"
-	"github.com/Alan-Lxc/crypto_contest/dcssweb/systeminit"
+	_ "github.com/Alan-Lxc/crypto_contest/dcssweb/systeminit"
 	"github.com/gin-gonic/gin"
 )
 
-var controll systeminit.Controll
+//var controll systeminit.Controll
+
+func CollectRoute(r *gin.Engine) *gin.Engine {
+	r.POST("/api/auth/register", controller.Register)
+	r.POST("/api/auth/login", controller.Login)
+	r.GET("/api/auth/info", middleware.AuthMiddleware(), controller.Info)
+
+	r.POST("/api/secret/newsecret", controller.NewSecret)
+	r.POST("/api/secret/updatesecretcounter", controller.UpdateSecretCounter)
+	r.POST("/api/secret/deletesecret", controller.DeleteSecret)
+	r.GET("/api/secret/retrievesecret", controller.RetrieveSecretById)
+	r.GET("/api/secret/reconstructsecret", controller.ReconstructSecret)
+	r.GET("/api/secret/retrievelist", controller.RetrieveSecretByUserid)
+	return r
+}
 
 func NewRouter() *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.Cors())
 	v1 := r.Group("/api")
 	{
-		v1.GET("/ping", handlers.Ping)
+		v1.GET("/ping", controller.Ping)
 
 	}
-	r.POST("/api/newsecret", handlers.NewSecret)
-	r.GET("/api/getsecretlist", handlers.Getsecretlist)
+	r.POST("/api/newsecret", controller.NewSecret)
+	r.GET("/api/getsecretlist", controller.Getsecretlist)
 	return r
 }
