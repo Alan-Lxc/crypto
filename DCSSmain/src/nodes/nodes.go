@@ -1292,6 +1292,9 @@ func New_for_web(label int, metadatapath string) (*Node, error) {
 		randState:    randState,
 	}, nil
 }
+func (node *Node) Connect_for_web() {
+
+}
 func (node *Node) Serve_for_web() {
 	port := node.ipAddress[node.label-1]
 	listener, err := net.Listen("tcp", port)
@@ -1316,7 +1319,7 @@ func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.Response
 	for i := 0; i < degree+1; i++ {
 		coeff[i] = gmp.NewInt(0)
 		coeff[i].SetBytes(coeffbytes[i])
-	}
+	} //turn to char?
 	node.store_secret(degree, counter, secretid, coeff)
 	return &pb.ResponseMsg{}, nil
 }

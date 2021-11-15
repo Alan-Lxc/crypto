@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	"github.com/gin-gonic/gin"
 	"strconv"
 )
@@ -18,35 +19,33 @@ type secret_data struct {
 }
 
 var Data = make([]secret_data, 0)
+var controll *model.Controll
 
-//func Getstart() {
-//	file = "./data"
-//
-//
-//}
+func Init_control() {
+	controll = model.Initsystem()
+}
 func NewSecret(c *gin.Context) {
 	secretname := c.PostForm("secretname")
-	degree := c.PostForm("degree")
-	counter := c.PostForm("counter")
-	//secret := c.PostForm("secret")
+	degree_s := c.PostForm("degree")
+	counter_s := c.PostForm("counter")
+	secret := c.PostForm("secret")
 	// 查找该secretname是否存在。
 	newsecret_check(secretname)
-
 	//
 	var tmp = secret_data{
 		Secretname: secretname,
 		Secretid:   strconv.Itoa(secretid),
-		Degree:     degree,
-		Counter:    counter,
+		Degree:     degree_s,
+		Counter:    counter_s,
 		//Secret:   secret,
 	}
 	fmt.Println(tmp)
-	//jsonbyte,err := json.Marshal(tmp)
-	//
 	Data = append(Data, tmp)
 	secretid += 1
 	//newsecret
-
+	degree, _ := strconv.Atoi(degree_s)
+	counter, _ := strconv.Atoi(counter_s)
+	controll.NewSecret(secretid, degree, counter, secret)
 }
 
 func newsecret_check(secretname string) {

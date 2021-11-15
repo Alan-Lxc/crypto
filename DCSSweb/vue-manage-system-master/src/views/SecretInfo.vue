@@ -9,13 +9,8 @@
     </div>
     <div class="container">
       <el-header>
-
-
-          <el-button type="mini">修改门限阈值</el-button>
-
-          <el-button type="mini">修改委员会成员数</el-button>
-
-
+        <el-button type="mini">修改门限阈值</el-button>
+        <el-button type="mini">修改委员会成员数</el-button>
         <el-button type="mini">重构秘密值</el-button>
       </el-header>
       <el-container>

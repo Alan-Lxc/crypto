@@ -3,8 +3,11 @@ package router
 import (
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/handlers"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/middleware"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/systeminit"
 	"github.com/gin-gonic/gin"
 )
+
+var controll systeminit.Controll
 
 func NewRouter() *gin.Engine {
 	r := gin.Default()

@@ -75,6 +75,9 @@ export default {
       total:0,
     }
   },
+  headers:{
+    'Content-Type':'applicaion/x-www-form-urlencoded;charset=UTF-8'
+  },
   created() {
    this.getsecretlist()
   },
