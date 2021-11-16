@@ -34,6 +34,9 @@ message RequestMsg{}
 
 message ResponseMsg{}
 
+message StartMsg{
+    int32 secretid = 1;
+}
 message InitMsg{
     int32 degree = 1;
     int32 counter = 2;
@@ -41,9 +44,6 @@ message InitMsg{
     repeated bytes coeff =4;
 }
 
-message StartMsg{
-    int32 id = 1;
-}
 
 message PointMsg{
     int32 index  = 1;

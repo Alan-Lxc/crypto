@@ -97,7 +97,8 @@ func (bb *BulletinBoard) StartEpoch(ctx context.Context, in *pb.RequestMsg) (*pb
 	for i := 0; i < bb.counter; i++ {
 		bb.reconstructionContent[i] = bb.reconstructionContent4[i]
 	}
-	bb.ClientStartPhase1()
+	//secretid:=in.GetSecretid()
+	bb.ClientStartPhase1(bb.id)
 	return &pb.ResponseMsg{}, nil
 }
 
@@ -315,7 +316,7 @@ func (bb *BulletinBoard) Serve(aws bool) {
 	}
 }
 
-func (bb *BulletinBoard) ClientStartPhase1() {
+func (bb *BulletinBoard) ClientStartPhase1(secretid int) {
 	if bb.nConn[0] == nil {
 		bb.Connect()
 	}
@@ -327,7 +328,7 @@ func (bb *BulletinBoard) ClientStartPhase1() {
 			defer wg.Done()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			msg := pb.StartMsg{Id: int32(bb.id)}
+			msg := pb.StartMsg{Secretid: int32(secretid)}
 			bb.nClient[i].Phase1GetStart(ctx, &msg)
 		}(i)
 	}

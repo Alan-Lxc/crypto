@@ -95,7 +95,6 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		tmp2 := make([]pb.BulletinBoardServiceClient, secretid-controll.bbNum)
 		controll.boardService = append(controll.boardService, tmp2...)
 		controll.bbNum = secretid
-
 	}
 	controll.boardConn[secretid-1] = bconn
 	controll.boardService[secretid-1] = pb.NewBulletinBoardServiceClient(bconn)

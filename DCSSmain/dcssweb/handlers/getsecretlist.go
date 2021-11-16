@@ -12,6 +12,7 @@ type secretlist struct {
 }
 
 func Getsecretlist(c *gin.Context) {
+	//get secret list from database
 	if len(Data) != 0 {
 		fmt.Println(gin.H{
 			"total":    len(Data),
