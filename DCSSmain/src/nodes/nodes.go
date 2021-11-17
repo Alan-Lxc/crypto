@@ -3,11 +3,13 @@ package nodes
 import (
 	"context"
 	"errors"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
+
 	//"fmt"
 	"io/ioutil"
 	"strings"
 
-	//"fmt"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/commitment"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/point"
@@ -1310,30 +1312,51 @@ func (node *Node) Serve_for_web() {
 	}
 	log.Println("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
 }
+
 func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.ResponseMsg, error) {
 	degree := int(msg.GetDegree())
 	counter := int(msg.GetCounter())
 	secretid := int(msg.GetSecretid())
+	nodeId := int(msg.GetNodeid())
 	coeffbytes := msg.GetCoeff()
 	coeff := make([]*gmp.Int, degree+1)
 	for i := 0; i < degree+1; i++ {
 		coeff[i] = gmp.NewInt(0)
 		coeff[i].SetBytes(coeffbytes[i])
 	} //turn to char?
-	node.store_secret(degree, counter, secretid, coeff)
+	node.store_secret(nodeId, degree, counter, secretid, coeffbytes)
 	return &pb.ResponseMsg{}, nil
 }
-func (node *Node) store_secret(degree, counter, secretid int, coeff []*gmp.Int) {
+func (node *Node) store_secret(unitId int, degree int, counter int, secretId int, coeffbyte [][]byte) {
+	db := common.GetDB()
+	//向数据库中插入新纪录
+
+	newSecretshare := model.Secretshare{
+		SecretId: uint(secretId),
+		UnitId:   uint(unitId),
+		Degree:   degree,
+		Counter:  counter,
+		Data:     coeffbyte,
+	}
+	//返回结果
+	db.Create(&newSecretshare)
+
 	//dc := commitment.DLCommit{}
 	//dc.SetupFix()
 	//dpc := commitment.DLPolyCommit{}
 	//dpc.SetupFix(counter)
-	//p := gmp.NewInt(0)
+	//p := gmp.NewInt(0)lkjakdsfjlk      iopiopqerwokakldfjmxzcvnakldsf
 	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 
 	//store to mysql
 
 }
-func (node *Node) get_secret(secretid int) {
+func (node *Node) get_secret(secretid int) (secretshare model.Secretshare){
 	//get secret from mysql
+	db := common.GetDB()
+
+	var newsecretshare model.Secretshare
+
+	db.Where("secretid = ?",secretid).Find(&newsecretshare)
+	return newsecretshare
 }

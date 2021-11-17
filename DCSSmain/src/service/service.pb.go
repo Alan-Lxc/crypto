@@ -108,6 +108,7 @@ type InitMsg struct {
 	Degree   int32    `protobuf:"varint,1,opt,name=degree,proto3" json:"degree,omitempty"`
 	Counter  int32    `protobuf:"varint,2,opt,name=counter,proto3" json:"counter,omitempty"`
 	Secretid int32    `protobuf:"varint,3,opt,name=secretid,proto3" json:"secretid,omitempty"`
+	Nodeid   int32    `protobuf:"varint,4,opt,name=nodeid,proto3" json:"nodeid,omitempty"`
 	Coeff    [][]byte `protobuf:"bytes,4,rep,name=coeff,proto3" json:"coeff,omitempty"`
 }
 
@@ -169,6 +170,13 @@ func (x *InitMsg) GetCoeff() [][]byte {
 		return x.Coeff
 	}
 	return nil
+}
+
+func (x *InitMsg) GetNodeid() int32 {
+	if x != nil {
+		return x.Nodeid
+	}
+	return 0
 }
 
 type StartMsg struct {
