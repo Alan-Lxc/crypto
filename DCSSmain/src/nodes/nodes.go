@@ -1349,14 +1349,15 @@ func (node *Node) store_secret(unitId int, degree int, counter int, secretId int
 	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 
 	//store to mysql
-
 }
 func (node *Node) get_secret(secretid int) (secretshare model.Secretshare){
 	//get secret from mysql
 	db := common.GetDB()
-
 	var newsecretshare model.Secretshare
 
-	db.Where("secretid = ?",secretid).Find(&newsecretshare)
+	db.Where("secretid = ? and unitid = ?",secretid,node.label).Find(&newsecretshare)
+	//Data存放秘密份额,多项式
+	Data := newsecretshare.Data
+
 	return newsecretshare
 }
