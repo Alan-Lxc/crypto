@@ -4,6 +4,7 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/middleware"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/router"
+	"github.com/Alan-Lxc/crypto_contest/src/controller"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -11,7 +12,7 @@ import (
 func main() {
 	common.InitConfig()
 	common.InitDB()
-
+	controller.Initsystem()
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 	r = router.CollectRoute(r)

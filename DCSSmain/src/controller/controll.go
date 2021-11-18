@@ -33,13 +33,13 @@ type Controll struct {
 //
 func Initsystem() *Controll {
 	//metadatapath := "./src/metadata"
-	metadatapath := "./src/metadata"
+	metadatapath := "/home/alan/Desktop/crypto_contest/DCSSmain/src/metadata"
 	var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, 100) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, 100)
 	ipList := nodes.ReadIpList(metadatapath + "/ip_list")
 	for i := 0; i < 100; i++ {
-		node, err := nodes.New_for_web(i, metadatapath)
+		node, err := nodes.New_for_web(i+1, metadatapath)
 		nodeConnnect = append(nodeConnnect, node)
 		if err != nil {
 			println(err)
