@@ -36,7 +36,7 @@ var Controller *Controll
 //
 func Initsystem() *Controll {
 	//metadatapath := "./src/metadata"
-	metadatapath := "/home/kzl/Desktop/test/crypto_contest/DCSSmain/src/metadata"
+	metadatapath := "/home/kzl/Desktop/crypto_contest/DCSSmain/src/metadata"
 	var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, 100) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, 100)
