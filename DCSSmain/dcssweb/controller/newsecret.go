@@ -20,6 +20,7 @@ type secret_data struct {
 
 var Data = make([]secret_data, 0)
 var controll *controller.Controll
+
 //
 //func Init_control() {
 //	controll = model.Initsystem()
@@ -29,7 +30,7 @@ func NewSecret(c *gin.Context) {
 	secretname := c.PostForm("secretname")
 	degree_s := c.PostForm("degree")
 	counter_s := c.PostForm("counter")
-	//secret := c.PostForm("secret")
+	secret := c.PostForm("secret")
 	// 查找该secretname是否存在。
 	newsecret_check(secretname)
 	//
@@ -44,9 +45,9 @@ func NewSecret(c *gin.Context) {
 	Data = append(Data, tmp)
 	secretid += 1
 	//newsecret
-	//degree, _ := strconv.Atoi(degree_s)
-	//counter, _ := strconv.Atoi(counter_s)
-	//controll.NewSecret(secretid, degree, counter, secret)
+	degree, _ := strconv.Atoi(degree_s)
+	counter, _ := strconv.Atoi(counter_s)
+	controll.NewSecret(secretid, degree, counter, secret)
 }
 
 func newsecret_check(secretname string) {

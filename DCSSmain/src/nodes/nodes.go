@@ -802,7 +802,7 @@ func (node *Node) ClientReadPhase2() {
 //	}
 //}
 func ReadIpList(metadataPath string) []string {
-	ipData, err := ioutil.ReadFile(metadataPath + "/ip_list")
+	ipData, err := ioutil.ReadFile(metadataPath)
 	if err != nil {
 		log.Fatalf("node failed to read iplist %v\n", err)
 	}

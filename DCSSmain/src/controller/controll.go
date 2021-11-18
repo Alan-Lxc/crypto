@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-
 type Controll struct {
 	//nodeConn
 	nodeConn []*grpc.ClientConn
@@ -31,7 +30,6 @@ type Controll struct {
 	nodeNum int
 }
 
-
 //
 func Initsystem() *Controll {
 	//metadatapath := "./src/metadata"
@@ -39,7 +37,7 @@ func Initsystem() *Controll {
 	var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, 100) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, 100)
-	ipList := nodes.ReadIpList(metadatapath + "ip_list")
+	ipList := nodes.ReadIpList(metadatapath + "/ip_list")
 	for i := 0; i < 100; i++ {
 		node, err := nodes.New_for_web(i, metadatapath)
 		nodeConnnect = append(nodeConnnect, node)
@@ -54,7 +52,7 @@ func Initsystem() *Controll {
 		nConn[i] = Conn
 		nodeService[i] = pb.NewNodeServiceClient(Conn)
 	}
-	boradList := nodes.ReadIpList(metadatapath + "bulletboard_list")
+	boradList := nodes.ReadIpList(metadatapath + "/bulletboard_list")
 	controll := new(Controll)
 	controll.ipList = ipList
 	controll.nodeConn = nConn

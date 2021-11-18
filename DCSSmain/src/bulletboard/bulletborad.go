@@ -484,7 +484,7 @@ func New_bulletboard_for_web(degree, counter int, metadatapath string, secretid 
 	dpc := commitment.DLPolyCommit{}
 	dpc.SetupFix(counter)
 	ipList := ReadIpList(metadatapath + "/ip_list")
-	borad_list := ReadIpList(metadatapath + "bulletborad_list")
+	borad_list := ReadIpList(metadatapath + "/bulletborad_list")
 	nodeiplist := ipList[0 : counter+1]
 	proCnt := 0
 	shaCnt := 0
