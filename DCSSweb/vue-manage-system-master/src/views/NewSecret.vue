@@ -93,7 +93,6 @@ export default {
             return false;
           }else {
             console.log(secret.degree,secret.counter)
-
             axios({
               method:'post',
               url:api,

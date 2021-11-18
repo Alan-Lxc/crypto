@@ -8580,3 +8580,6 @@
 2021/11/08 21:41:17 [bulletinboard] the secret is 1234567899876543210
 2021/11/08 21:41:17 totMsgSize,2087
 2021/11/08 22:19:04 bulletinboard serve on 127.0.0.1:11000
+2021/11/18 00:41:33 bulletinboard serve on 127.0.0.1:10001
+2021/11/18 00:41:36 bulletinboard serve on 127.0.0.1:10002
+2021/11/18 00:46:51 bulletinboard serve on 127.0.0.1:10001

@@ -12,7 +12,7 @@ import (
 func main() {
 	common.InitConfig()
 	common.InitDB()
-	controller.Initsystem()
+	controller.Controller = controller.Initsystem()
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 	r = router.CollectRoute(r)
@@ -20,7 +20,6 @@ func main() {
 	if port != "" {
 		panic(r.Run(":" + port))
 	}
-
 	panic(r.Run(":8889"))
 	//r.Run() // listen and serve on 0.0.0.0:8080
 	//fmt.Println("helloworld")

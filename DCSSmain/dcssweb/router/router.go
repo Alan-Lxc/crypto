@@ -12,7 +12,8 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	r.POST("/api/auth/register", controller.Register)
 	r.POST("/api/auth/login", controller.Login)
 	r.GET("/api/auth/info", middleware.AuthMiddleware(), controller.Info)
-
+	r.POST("/api/newsecret", controller.NewSecret)
+	r.GET("/api/getsecretlist", controller.Getsecretlist)
 	r.POST("/api/secret/newsecret", controller.NewSecret)
 	r.POST("/api/secret/updatesecretcounter", controller.UpdateSecretCounter)
 	r.POST("/api/secret/deletesecret", controller.DeleteSecret)
