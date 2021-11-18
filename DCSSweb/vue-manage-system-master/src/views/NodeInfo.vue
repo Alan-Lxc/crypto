@@ -25,10 +25,10 @@
 
         <el-timeline :reverse="reverse">
           <el-timeline-item
-              v-for="(activity, index) in activities"
+              v-for="(log, index) in logs"
               :key="index"
-              :timestamp="activity.timestamp">
-            {{activity.content}}
+              :timestamp="log.timestamp">
+            {{log.content}}
           </el-timeline-item>
         </el-timeline>
       </div>
@@ -40,13 +40,13 @@
 
 <script>
 import {reactive, ref} from "vue";
+import axios from "axios";
 
 export default {
   name: "NodeInfo",
-
-  setup(){
-    var reverse=ref(true)
-    const activities = reactive([{
+  data(){
+    return{
+      logs : [{
         content: 'Node 1 new done,ip = 127.0.0.1:10001',
         timestamp: '2021/10/15 01:58:42'
       },{
@@ -145,14 +145,37 @@ export default {
       },{
         content: ' [Node 1] write bulletinboard in phase 3',
         timestamp: '2021/10/15 01:58:44'
-      },
-    ])
-    return {
-      activities,
-      reverse,
+      },],
+      total: 0,
+      reverse:true,
     }
+  },
+  created() {
+    this.getloglist()
+  },
+  methods: {
+    getloglist(){
+      let arr = this;
+      let secretid = arr.$route.query.secretid;
+      let unitid = arr.$route.query.unitid;
+      const url = "http://localhost:8080/api/unit/getunitlog";
+      axios({
+        methods: 'get',
+        url:url,
+        params: {
+          "secretid": secretid,
+          "unitid": unitid,
+        },
+      }).then(
+          function (res) {
+            // var arr = this;
+            arr.logs = res.data.data.logs;
+          }
+      ).catch(err =>{
+        console.log(err);
+      })
+    },
   }
-
 }
 </script>
 

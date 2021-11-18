@@ -33,18 +33,19 @@
     </div>
 
     <el-table
-        :data=null
+        :data="nodelist"
         style="width: 100%"
-        :row-class-name="tableRowClassName">
+        :row-class-name="tableRowClassName"
+        @row-click="handleClick">
       <el-table-column
-          prop="nodeID"
+          prop="UnitId"
           label="节点ID"
-          width="180">
+          width="480">
       </el-table-column>
       <el-table-column
-          prop="nodeIP"
+          prop="UnitIp"
           label="节点IP"
-          width="300">
+          width="700">
       </el-table-column>
       <el-table-column>
 
@@ -73,48 +74,40 @@ export default {
         user_id: 1,
         description: "",
       },
-      nodelist: {
-        node
-      },
+      nodelist: [],
     }
   },
   created() {
     let arr = this;
-    let id = this.$route.params.id;
-    console.log(id);
+    let secretid = arr.$route.query.id;
     axios.get("http://localhost:8080/api/secret/getsecret",{
       params: {
-        id: id
+        "secretid": secretid,
       }
     }).then(
         function (res) {
-          console.log(res.data.data.secret);
+          console.log(res.data);
           arr.secretinfo=res.data.data.secret;
         }
     ).catch(err =>{
 
     });
+    axios.get("http://localhost:8080/api/unit/getunitlist",{
+      params:{
+        "secretid": secretid
+      }
+    }).then(function (res){
+      console.log(res.data.data.unitlist);
+      arr.nodelist = res.data.data.unitlist;
+    }).catch()
   },
-  setup() {
-    const tableData = reactive( [
-      {
-        nodeID: 1,
-        nodeIP: "193.168.0.1:10001"
-      },
-      {
-        nodeID: 2,
-        nodeIP: "193.168.0.1:10002"
-      },
-      {
-        nodeID: 3,
-        nodeIP: "193.168.0.1:10003"
-      },
+  methods :{
+    handleClick(row){
+      let secretid = this.$route.query.id;
+      this.$router.push({path:"/unitinfo",query:{unitid:row["UnitId"],secretid:secretid}})
+    },
+  },
 
-    ]);
-    return {
-      tableData,
-    }
-  }
 }
 </script>
 

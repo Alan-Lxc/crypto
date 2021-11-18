@@ -7,15 +7,15 @@ type SecretDto struct {
 	Telephone string `json:"telephone"`
 }
 
-type RetrieveSecretByIdDto struct {
+type GetSecretDto struct {
 	Degree      int64  `json:"degree"`
 	Counter     int64  `json:"counter"`
 	UserId      uint   `json:"user_id"`
 	Description string `json:"description"`
 }
 
-func ToRetrieveSecretByIdDto(secret model.Secret) RetrieveSecretByIdDto {
-	return RetrieveSecretByIdDto{
+func ToGetSecretDto(secret model.Secret) GetSecretDto {
+	return GetSecretDto{
 		Degree:      secret.Degree,
 		Counter:     secret.Counter,
 		UserId:      secret.UserId,

@@ -26,7 +26,7 @@ const routes = [
                 },
                 component: () => import(/* webpackChunkName: "secretlist" */ "../views/SecretList.vue")
             },{
-                path: "/secretinfo",
+                path: "/secretinfo/",
                 name: "secretinfo",
                 meta: {
                     title: '秘密详情',
@@ -40,7 +40,7 @@ const routes = [
                 },
                 component: () => import(/* webpackChunkName: "changesecret" */ "../views/ChangeSecret.vue")
             }, {
-                path: "/nodeinfo",
+                path: "/unitinfo/",
                 name: "nodeinfo",
                 meta: {
                     title: '节点日志',

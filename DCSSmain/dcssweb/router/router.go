@@ -21,6 +21,9 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	r.GET("/api/secret/getsecret", controller.GetSecretById)
 	r.GET("/api/secret/reconstructsecret", controller.ReconstructSecret)
 	r.GET("/api/secret/getsecretlist", controller.GetSecretList)
+
+	r.GET("/api/unit/getunitlist",controller.GetUnitList)
+	r.GET("/api/unit/getunitlog",controller.GetUnitLog)
 	return r
 }
 

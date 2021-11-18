@@ -97,7 +97,7 @@ export default {
       })
     },
     handleClick(row){
-      this.$router.push("/secretinfo/"+row.ID)
+      this.$router.push("/secretinfo/?id="+row.ID)
     },
     fresh(){
       this.getsecretlist()

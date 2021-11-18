@@ -43,20 +43,20 @@ func  GetSecretById(ctx *gin.Context) {
 	db := common.GetDB()
 
 	//	获取参数并进行数据验证
-	id, err := strconv.Atoi(ctx.Query("id"))
+	secretid, err := strconv.Atoi(ctx.Query("secretid"))
 	if err != nil {
 		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "id错误")
 		return
 	}
-
-	result := db.Where("user_id = ?", id).Find(&secret)
+	var secret model.Secret
+	result := db.Where("id = ?", secretid).First(&secret)
 	if result.Error != nil {
 		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "查询错误")
 		return
 	}
 	//这里写重构秘密，把重构出的秘密
 	reponse.Success(ctx, gin.H{
-		"secret": dto.ToRetrieveSecretByIdDto(secret),
+		"secret": dto.ToGetSecretDto(secret),
 	}, "获取成功")
 }
 

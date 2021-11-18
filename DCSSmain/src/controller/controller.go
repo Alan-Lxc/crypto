@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/Alan-Lxc/crypto_contest/src/bulletboard"
 	"github.com/Alan-Lxc/crypto_contest/src/nodes"
@@ -48,6 +49,12 @@ func Initsystem() *Controll {
 	ipList := nodes.ReadIpList(metadatapath + "/ip_list")
 	for i := 0; i < 100; i++ {
 		node, err := nodes.New_for_web(i+1, metadatapath)
+		newunit := model.Unit{
+			UnitId:  node.GetLabel(),
+			UnitIp:  node.IpAddress[node.GetLabel()],
+			//Secretnum: 0,
+		}
+		db.Create(&newunit)
 		nodeConnnect = append(nodeConnnect, node)
 		if err != nil {
 			println(err)
@@ -141,6 +148,7 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		defer cancel()
 		controll.nodeService[i].Initsecret(ctx, &msg)
 	}
+	//controll.Handoff(secretid)
 }
 
 func (controll *Controll) Handoff(secretid int) {
