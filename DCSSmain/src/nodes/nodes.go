@@ -272,7 +272,7 @@ func (node *Node) CreatAmt(ployy poly.Poly, size int) {
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (response *pb.ResponseMsg, err error) {
 	node.log.Printf("[Node %d] Now Get start Phase1", node.label)
 	*node.s1 = time.Now()
-	id := int(msg.GetId())
+	id := int(msg.GetSecretid())
 	node.get_secret(id)
 	node.secretid = id
 	node.CreatAmt(*node.recPoly, node.degree*2+1)
