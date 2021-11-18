@@ -1,53 +1,67 @@
 package controller
 
 import (
-	"fmt"
-	"github.com/Alan-Lxc/crypto_contest/src/controller"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
+	reponse "github.com/Alan-Lxc/crypto_contest/dcssweb/response"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"strconv"
 )
 
 var secretid = 0
 
 //dic = {}
-type secret_data struct {
-	Secretname string `form:"secretname" json:"secretname"`
-	Secretid   string `form:"secretid" json:"secretid"`
-	Degree     string `form:"degree" json:"degree"`
-	Counter    string `form:"counter" json:"counter"`
-	//Secret		string	`form:"secret" json:"secret"`
-}
+//type secret_data struct {
+//	Secretname string `form:"secretname" json:"secretname"`
+//	Secretid   string `form:"secretid" json:"secretid"`
+//	Degree     string `form:"degree" json:"degree"`
+//	Counter    string `form:"counter" json:"counter"`
+//	//Secret		string	`form:"secret" json:"secret"`
+//}
 
-var Data = make([]secret_data, 0)
+//var Data = make([]secret_data, 0)
 
 //
 //func Init_control() {
 //	controll = model.Initsystem()
 //}
 
-func NewSecret(c *gin.Context) {
+func NewSecret(ctx *gin.Context) {
+	db := common.GetDB()
+	//	获取参数并进行数据验证
+	secretname := ctx.PostForm("secretname")
 
-	secretname := c.PostForm("secretname")
-	degree_s := c.PostForm("degree")
-	counter_s := c.PostForm("counter")
-	secret := c.PostForm("secret")
-	// 查找该secretname是否存在。
-	newsecret_check(secretname)
-	//
-	var tmp = secret_data{
-		Secretname: secretname,
-		Secretid:   strconv.Itoa(secretid),
-		Degree:     degree_s,
-		Counter:    counter_s,
-		//Secret:   secret,
+	degree, err := strconv.Atoi(ctx.PostForm("degree"))
+	if err != nil {
+		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "t不符合规范")
+		return
 	}
-	fmt.Println(tmp)
-	Data = append(Data, tmp)
-	secretid += 1
+	counter, err := strconv.Atoi(ctx.PostForm("counter"))
+	if err != nil {
+		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "n不符合规范")
+		return
+	}
+	userId, err := strconv.Atoi(ctx.PostForm("userId"))
+	if err != nil {
+		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "userId不符合规范")
+		return
+	}
+	Description := ctx.PostForm("description")
+	secretcontent := ctx.PostForm("secret")
+	//创建秘密
+	newSecret := model.Secret{
+		Secretname:  secretname,
+		Degree:      int64(degree),
+		Counter:     int64(counter),
+		UserId:      uint(userId),
+		Description: Description,
+		Secret:      secretcontent,
+	}
+	db.Create(&newSecret)
 	//newsecret
-	degree, _ := strconv.Atoi(degree_s)
-	counter, _ := strconv.Atoi(counter_s)
-	controller.Controller.NewSecret(secretid, degree, counter, secret)
+
+	//controller.Controller.NewSecret(secretid, degree, counter, secretcontent)
 }
 
 func newsecret_check(secretname string) {

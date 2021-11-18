@@ -9,26 +9,35 @@
     </div>
     <div class="container">
       <el-header>
+
+
         <el-button type="mini">修改门限阈值</el-button>
+
         <el-button type="mini">修改委员会成员数</el-button>
+
+
         <el-button type="mini">重构秘密值</el-button>
       </el-header>
       <el-container>
         <el-descriptions style="width: 100%" title="基本信息" :column="3" border>
           <el-descriptions-item
-              label="门限阈值">1
+              label="门限阈值">{{secretinfo.degree}}
 
           </el-descriptions-item>
           <el-descriptions-item
-            label="委员会成员数">3
+              label="委员会成员数">{{secretinfo.counter}}
 
           </el-descriptions-item>
         </el-descriptions>
-
+      </el-container>
+      <el-container>
+        <el-descriptions-item label="描述">
+          {{secretinfo.description}}
+        </el-descriptions-item>
       </el-container>
 
       <el-table
-          :data="tableData"
+          :data=null
           style="width: 100%"
           :row-class-name="tableRowClassName">
         <el-table-column
@@ -68,8 +77,32 @@
 import { ref, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { fetchData } from "../api/index";
+import axios from "axios";
 export default {
+
   name: "SecretInfo",
+  data() {
+    return {
+      secretinfo: {},
+    }
+  },
+  created() {
+    let arr = this;
+    let id = this.$route.params.id;
+    console.log(id);
+    axios.get("http://localhost:8080/api/secret/getsecret",{
+      params: {
+        id: id
+      }
+    }).then(
+        function (res) {
+          console.log(res.data.data.secret);
+          arr.secretinfo=res.data.data.secret;
+        }
+    ).catch(err =>{
+
+    });
+  },
   setup() {
     const tableData = reactive( [
       {

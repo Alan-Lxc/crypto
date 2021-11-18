@@ -14,7 +14,7 @@ import (
 var secret model.Secret
 var secrets []model.Secret
 
-func RetrieveSecretByUserid(ctx *gin.Context) {
+func GetSecretList(ctx *gin.Context) {
 	db := common.GetDB()
 
 	userid, err := strconv.Atoi(ctx.Query("userid"))
@@ -28,10 +28,18 @@ func RetrieveSecretByUserid(ctx *gin.Context) {
 	for _, v := range secrets {
 		gh[strconv.Itoa(int(v.ID))] = v
 	}
-	reponse.Success(ctx, gh, "获取成功")
+
+	reponse.Success(
+		ctx,
+		gin.H{
+			"total":    len(secrets),
+			"secretlist":secrets ,
+		},
+		"获取成功",
+	)
 
 }
-func GetSecret(ctx *gin.Context) {
+func  GetSecretById(ctx *gin.Context) {
 	db := common.GetDB()
 
 	//	获取参数并进行数据验证
@@ -51,8 +59,9 @@ func GetSecret(ctx *gin.Context) {
 		"secret": dto.ToRetrieveSecretByIdDto(secret),
 	}, "获取成功")
 }
+
 func ReconstructSecret(ctx *gin.Context) {
-	GetSecret(ctx)
+	GetSecretById(ctx)
 }
 func DeleteSecret(ctx *gin.Context) {
 	db := common.GetDB()

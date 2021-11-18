@@ -12,26 +12,27 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	r.POST("/api/auth/register", controller.Register)
 	r.POST("/api/auth/login", controller.Login)
 	r.GET("/api/auth/info", middleware.AuthMiddleware(), controller.Info)
-	r.POST("/api/newsecret", controller.NewSecret)
-	r.GET("/api/getsecretlist", controller.Getsecretlist)
+	//r.POST("/api/newsecret", controller.NewSecret)
+	//r.GET("/api/getsecretlist", controller.Getsecretlist)
+
 	r.POST("/api/secret/newsecret", controller.NewSecret)
 	r.POST("/api/secret/updatesecretcounter", controller.UpdateSecretCounter)
 	r.POST("/api/secret/deletesecret", controller.DeleteSecret)
-	r.GET("/api/secret/retrievesecret", controller.GetSecret)
+	r.GET("/api/secret/getsecret", controller.GetSecretById)
 	r.GET("/api/secret/reconstructsecret", controller.ReconstructSecret)
-	r.GET("/api/secret/retrievelist", controller.RetrieveSecretByUserid)
+	r.GET("/api/secret/getsecretlist", controller.GetSecretList)
 	return r
 }
 
-func NewRouter() *gin.Engine {
-	r := gin.Default()
-	r.Use(middleware.Cors())
-	v1 := r.Group("/api")
-	{
-		v1.GET("/ping", controller.Ping)
-
-	}
-	r.POST("/api/newsecret", controller.NewSecret)
-	r.GET("/api/getsecretlist", controller.Getsecretlist)
-	return r
-}
+//func NewRouter() *gin.Engine {
+//	r := gin.Default()
+//	r.Use(middleware.Cors())
+//	v1 := r.Group("/api")
+//	{
+//		v1.GET("/ping", controller.Ping)
+//
+//	}
+//	r.POST("/api/newsecret", controller.NewSecret)
+//	r.GET("/api/getsecretlist", controller.Getsecretlist)
+//	return r
+//}

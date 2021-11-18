@@ -19,22 +19,22 @@
           </el-form-item>
           <el-form-item label="秘密值" prop="secret">
             <el-input v-model.number="secret.secret"></el-input>
-<!--            <div class="content-title">支持拖拽</div>-->
-<!--&lt;!&ndash;            <div class="plugins-tips">&ndash;&gt;-->
-<!--&lt;!&ndash;              Element UI自带上传组件。&ndash;&gt;-->
-<!--&lt;!&ndash;              访问地址：&ndash;&gt;-->
-<!--&lt;!&ndash;              <a href="http://element.eleme.io/#/zh-CN/component/upload" target="_blank">Element UI Upload</a>&ndash;&gt;-->
-<!--&lt;!&ndash;            </div>&ndash;&gt;-->
-<!--            <el-upload class="upload-demo" drag action="http://jsonplaceholder.typicode.com/api/posts/" multiple>-->
-<!--              <i class="el-icon-upload"></i>-->
-<!--              <div class="el-upload__text">-->
-<!--                将秘密文件拖到此处，或-->
-<!--                <em>点击上传</em>-->
-<!--              </div>-->
-<!--&lt;!&ndash;              <template #tip>&ndash;&gt;-->
-<!--&lt;!&ndash;                <div class="el-upload__tip">只能上传 jpg/png 文件，且不超过 500kb</div>&ndash;&gt;-->
-<!--&lt;!&ndash;              </template>&ndash;&gt;-->
-<!--            </el-upload>-->
+            <!--            <div class="content-title">支持拖拽</div>-->
+            <!--&lt;!&ndash;            <div class="plugins-tips">&ndash;&gt;-->
+            <!--&lt;!&ndash;              Element UI自带上传组件。&ndash;&gt;-->
+            <!--&lt;!&ndash;              访问地址：&ndash;&gt;-->
+            <!--&lt;!&ndash;              <a href="http://element.eleme.io/#/zh-CN/component/upload" target="_blank">Element UI Upload</a>&ndash;&gt;-->
+            <!--&lt;!&ndash;            </div>&ndash;&gt;-->
+            <!--            <el-upload class="upload-demo" drag action="http://jsonplaceholder.typicode.com/api/posts/" multiple>-->
+            <!--              <i class="el-icon-upload"></i>-->
+            <!--              <div class="el-upload__text">-->
+            <!--                将秘密文件拖到此处，或-->
+            <!--                <em>点击上传</em>-->
+            <!--              </div>-->
+            <!--&lt;!&ndash;              <template #tip>&ndash;&gt;-->
+            <!--&lt;!&ndash;                <div class="el-upload__tip">只能上传 jpg/png 文件，且不超过 500kb</div>&ndash;&gt;-->
+            <!--&lt;!&ndash;              </template>&ndash;&gt;-->
+            <!--            </el-upload>-->
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="onSubmit">提交秘密</el-button>
@@ -52,29 +52,28 @@
 <script>
 import {ref, reactive} from "vue";
 import { ElMessage } from "element-plus";
+import {useRouter} from "vue-router";
 import axios from "axios";
 export default {
   name: "NewSecret",
   data() {
-
   },
   headers:{
-      'Content-Type':'applicaion/x-www-form-urlencoded;charset=UTF-8'
+    'Content-Type':'applicaion/x-www-form-urlencoded;charset=UTF-8'
   },
   methods:{
-    turntolist(){
-      this.$router.push({path:'/secretlist'})
-    }
+
   },
   setup() {
-
+    const router = useRouter();
     const secretRef = ref(null);
     const secret = reactive({
       secretname: "",
-      degree: 0,
-      counter: 0,
+      degree: 0,//t值
+      counter: 0,//n值
+      userId: 0,
       secret: "",
-
+      description: "",
     });
 
     // 提交
@@ -82,16 +81,17 @@ export default {
       // 表单校验
       console.log(secret.degree,secret.counter)
       let arr = this;
-      const api = "http://localhost:8080/api/newsecret"
+      const api = "http://localhost:8080/api/secret/newsecret"
       secretRef.value.validate((valid) => {
-
+        //验证输入的数据符合格式规范
         if (valid) {
+          //验证t，n是否符合规范
           if (secret.degree*2+1>secret.counter){
             // console.log(form);
             console.log("t*2+1>n");
-            ElMessage.error("t*2+1>n");
+            ElMessage.error("参数不符合规范");
             return false;
-          }else {
+          }else {//如果t，n符合规范，就向后端传值
             console.log(secret.degree,secret.counter)
             axios({
               method:'post',
@@ -106,10 +106,10 @@ export default {
               }]
             }).then(function (response) {
               console.log(response.data)
-              //panduan
-              arr.turntolist()
+              //判断
             })
             ElMessage.success("提交成功！");
+            router.push('/secretlist');
           }
         } else {
           ElMessage.error("缺少必要的输入项");
@@ -159,7 +159,6 @@ export default {
       onSubmit,
       onReset,
       checkNum,
-
     };
   },
 
