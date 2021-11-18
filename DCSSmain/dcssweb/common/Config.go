@@ -11,7 +11,7 @@ func InitConfig() {
 	fmt.Println(workdDir)
 	viper.SetConfigName("application")
 	viper.SetConfigType("yml")
-	viper.SetConfigFile(workdDir + "/config/application.yml")
+	viper.SetConfigFile(workdDir + "/dcssweb/config/application.yml")
 	err := viper.ReadInConfig()
 	if err != nil {
 		//fmt.Println(err.Error())

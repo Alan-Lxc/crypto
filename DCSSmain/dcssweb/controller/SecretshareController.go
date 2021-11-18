@@ -5,7 +5,7 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 )
 
-func Newsecretshare(secretId uint, unitId uint, degree int, counter int, data string) {
+func Newsecretshare(secretId uint, unitId uint, degree int, counter int, data [][]byte) {
 	db := common.GetDB()
 	//	获取参数
 

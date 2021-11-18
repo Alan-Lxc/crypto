@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
-	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
+	"github.com/Alan-Lxc/crypto_contest/src/model"
 
 	//"fmt"
 	"io/ioutil"
@@ -1353,6 +1353,7 @@ func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.Response
 	node.store_secret(degree, counter, secretid, coeffbytes)
 	return &pb.ResponseMsg{}, nil
 }
+
 func (node *Node) store_secret(degree, counter, secretid int, coeffbyte [][]byte) {
 	db := common.GetDB()
 	//向数据库中插入新纪录

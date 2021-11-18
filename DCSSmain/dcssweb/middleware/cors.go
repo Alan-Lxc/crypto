@@ -29,7 +29,7 @@ func Cors() gin.HandlerFunc {
 	config.AllowCredentials = true
 	return cors.New(config)
 }
-func Coremiddleware() gin.HandlerFunc {
+func CORSMiddleware() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		context.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		context.Writer.Header().Set("Access-Control-Max-Age", "86400")

@@ -1,4 +1,4 @@
-package model
+package controller
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"time"
 )
+
 
 type Controll struct {
 	//nodeConn
@@ -30,6 +31,8 @@ type Controll struct {
 	nodeNum int
 }
 
+
+//
 func Initsystem() *Controll {
 	//metadatapath := "./src/metadata"
 	metadatapath := "./src/metadata"

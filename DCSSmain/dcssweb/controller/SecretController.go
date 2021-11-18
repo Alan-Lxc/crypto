@@ -31,7 +31,7 @@ func RetrieveSecretByUserid(ctx *gin.Context) {
 	reponse.Success(ctx, gh, "获取成功")
 
 }
-func RetrieveSecretById(ctx *gin.Context) {
+func GetSecret(ctx *gin.Context) {
 	db := common.GetDB()
 
 	//	获取参数并进行数据验证
@@ -52,7 +52,7 @@ func RetrieveSecretById(ctx *gin.Context) {
 	}, "获取成功")
 }
 func ReconstructSecret(ctx *gin.Context) {
-	RetrieveSecretById(ctx)
+	GetSecret(ctx)
 }
 func DeleteSecret(ctx *gin.Context) {
 	db := common.GetDB()

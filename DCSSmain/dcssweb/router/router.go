@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/controller"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/middleware"
-	_ "github.com/Alan-Lxc/crypto_contest/dcssweb/systeminit"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,7 +16,7 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	r.POST("/api/secret/newsecret", controller.NewSecret)
 	r.POST("/api/secret/updatesecretcounter", controller.UpdateSecretCounter)
 	r.POST("/api/secret/deletesecret", controller.DeleteSecret)
-	r.GET("/api/secret/retrievesecret", controller.RetrieveSecretById)
+	r.GET("/api/secret/retrievesecret", controller.GetSecret)
 	r.GET("/api/secret/reconstructsecret", controller.ReconstructSecret)
 	r.GET("/api/secret/retrievelist", controller.RetrieveSecretByUserid)
 	return r
