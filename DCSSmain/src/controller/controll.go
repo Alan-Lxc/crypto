@@ -68,7 +68,7 @@ func Initsystem() *Controll {
 }
 func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 string) {
 	fmt.Println(controll.bbNum)
-
+	metadatapath := "./src/metadata"
 	fixedRandState := rand.New(rand.NewSource(int64(3)))
 	p := gmp.NewInt(0)
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
