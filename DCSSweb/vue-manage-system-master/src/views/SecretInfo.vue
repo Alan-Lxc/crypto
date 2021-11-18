@@ -50,9 +50,6 @@
             label="节点IP"
             width="300">
         </el-table-column>
-        <el-table-column>
-
-        </el-table-column>
 
 
         <el-table-column
