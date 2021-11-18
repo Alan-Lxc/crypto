@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/Alan-Lxc/crypto_contest/src/bulletboard"
 	"github.com/Alan-Lxc/crypto_contest/src/nodes"
@@ -32,10 +33,13 @@ type Controll struct {
 }
 
 var Controller *Controll
+//这里写了metadatapath，后面就不需要写了
 var metadatapath = "/home/kzl/Desktop/test/crypto_contest/DCSSmain/src/metadata"
-//
 func Initsystem() *Controll {
-
+	db := common.GetDB()
+	if db!=nil {
+		
+	}
 	var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, 100) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, 100)
@@ -68,7 +72,6 @@ func Initsystem() *Controll {
 }
 func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 string) {
 	fmt.Println(controll.bbNum)
-	metadatapath := "./src/metadata"
 	fixedRandState := rand.New(rand.NewSource(int64(3)))
 	p := gmp.NewInt(0)
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)

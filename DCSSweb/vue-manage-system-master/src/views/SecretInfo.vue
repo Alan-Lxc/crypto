@@ -9,65 +9,52 @@
     </div>
     <div class="container">
       <el-header>
-
-
         <el-button type="mini">修改门限阈值</el-button>
-
         <el-button type="mini">修改委员会成员数</el-button>
-
 
         <el-button type="mini">重构秘密值</el-button>
       </el-header>
-      <el-container>
-        <el-descriptions style="width: 100%" title="基本信息" :column="3" border>
-          <el-descriptions-item
-              label="门限阈值">{{secretinfo.degree}}
-
-          </el-descriptions-item>
-          <el-descriptions-item
-              label="委员会成员数">{{secretinfo.counter}}
-
-          </el-descriptions-item>
-        </el-descriptions>
-      </el-container>
-      <el-container>
-        <el-descriptions-item label="描述">
-          {{secretinfo.description}}
-        </el-descriptions-item>
-      </el-container>
-
-      <el-table
-          :data=null
-          style="width: 100%"
-          :row-class-name="tableRowClassName">
-        <el-table-column
-            prop="nodeID"
-            label="节点ID"
-            width="180">
-        </el-table-column>
-        <el-table-column
-            prop="nodeIP"
-            label="节点IP"
-            width="300">
-        </el-table-column>
-
-
-        <el-table-column
-            fixed="right"
-            label="操作"
-            width="100">
-          <!--          <template slot-scope="scope">-->
-          <router-link to="/nodeinfo">
-            <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
-          </router-link>
-
-          <el-button type="text" size="small">重构</el-button>
-          <!--          </template>-->
-        </el-table-column>
-      </el-table>
-
     </div>
+    <div class="container">
+      <div class="form-box">
+        <el-form ref="secretRef" label-width="160px">
+
+          <el-form-item label="门限阈值" >
+            {{secretinfo.degree}}
+          </el-form-item>
+          <el-form-item label="委员会成员数" prop="numberOfN">
+            {{secretinfo.counter}}
+          </el-form-item>
+          <el-form-item label="秘密描述" prop="secret">
+            {{secretinfo.description}}
+          </el-form-item>
+        </el-form>
+      </div>
+    </div>
+
+    <el-table
+        :data=null
+        style="width: 100%"
+        :row-class-name="tableRowClassName">
+      <el-table-column
+          prop="nodeID"
+          label="节点ID"
+          width="180">
+      </el-table-column>
+      <el-table-column
+          prop="nodeIP"
+          label="节点IP"
+          width="300">
+      </el-table-column>
+      <el-table-column>
+
+      </el-table-column>
+
+
+    </el-table>
+
   </div>
+
 </template>
 
 <script>
@@ -80,7 +67,15 @@ export default {
   name: "SecretInfo",
   data() {
     return {
-      secretinfo: {},
+      secretinfo: {
+        degree: 0,
+        counter: 0,
+        user_id: 1,
+        description: "",
+      },
+      nodelist: {
+        node
+      },
     }
   },
   created() {
