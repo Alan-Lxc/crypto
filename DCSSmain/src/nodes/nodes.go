@@ -115,6 +115,7 @@ type Node struct {
 	amtPoly         []*poly.Poly
 	amtPolyCmt      []*pbc.Element
 	amtBasicPolyCmt []*pbc.Element
+	amtPolyCmtSize  int
 	amtStep         int
 	// Metrics
 	totMsgSize   *int
@@ -287,8 +288,9 @@ func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (respons
 		tmpPoly.EvalMod(gmp.NewInt(int64(x)), node.p, y)
 		//node.dpc.CreateWitness(w, tmpPoly, gmp.NewInt(int64(x)))
 		tmpWitness := node.GroupAmtWitness(i, node.degree*2+1)
-		tmpWitness = append(tmpWitness, node.dpc.NewG1())
-		tmpWitness = append(tmpWitness, node.dpc.NewG1())
+		for j := len(tmpWitness); j <= node.amtPolyCmtSize; j++ {
+			tmpWitness = append(tmpWitness, node.dpc.NewG1())
+		}
 		//fmt.Println(node.label, i+1, tmpWitness, node.recPoly)
 		//fmt.Println("tttt ",tmpWitness)
 		node.secretShares2[i] = point.NewPoint(gmp.NewInt(int64(node.label)), y, tmpWitness)
@@ -374,9 +376,9 @@ func (node *Node) SendMsgToNode(secretid int) {
 	wg.Wait()
 }
 func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (response *pb.ResponseMsg, err error) {
-	for node.amtflag1 == 0 {
-		continue
-	}
+	//for node.amtflag1 == 0 {
+	//	continue
+	//}
 	node.GetMsgFromNode(msg)
 	return &pb.ResponseMsg{}, nil
 }
@@ -391,9 +393,10 @@ func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error)
 	y.SetBytes(pointmsg.GetY())
 	//fmt.Println(node.amtStep)
 	//fmt.Println("333",node.label,node.amtStep)
-	witness := make([]*pbc.Element, node.amtStep)
+	tmpLength := len(pointmsg.Witness)
+	witness := make([]*pbc.Element, tmpLength)
 	//fmt.Println(node.label,node.amtStep,len(pointmsg.Witness))
-	for i := 0; i < node.amtStep; i++ {
+	for i := 0; i < tmpLength; i++ {
 		witness[i] = node.dpc.NewG1()
 		//fmt.Println(witness[i])
 		witness[i].SetCompressedBytes(pointmsg.Witness[i])
@@ -478,7 +481,7 @@ func (node *Node) ClientReadPhase1() {
 }
 
 func (node *Node) Phase1WriteOnBorad() {
-	log.Printf("[node %d] write bulletinboard in phase 3", node.label)
+	log.Printf("[node %d] write bulletinboard in phase 1", node.label)
 	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -495,18 +498,18 @@ func (node *Node) Phase1WriteOnBorad() {
 	//log.Printf("finish~~")
 }
 func (node *Node) Phase1Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
-	log.Printf("[node %d] start verification in phase 3", node.label)
+	log.Printf("[node %d] start verification in phase 1", node.label)
 	node.Phase1Readboard()
 	return &pb.ResponseMsg{}, nil
 }
 
 func (node *Node) Phase1Readboard() {
-	log.Printf("[node %d] read bulletinboard in phase 3", node.label)
+	log.Printf("[node %d] read bulletinboard in phase 1", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream, err := node.boardService.ReadPhase12(ctx, &pb.RequestMsg{})
 	if err != nil {
-		log.Fatalf("client failed to read phase3: %v", err)
+		log.Fatalf("client failed to read phase1: %v", err)
 	}
 	for i := 0; i < node.degree*2+1; i++ {
 		msg, err := stream.Recv()
@@ -886,9 +889,9 @@ func (node *Node) ClientSharePhase3() {
 
 //重建secretShare
 func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.ResponseMsg, error) {
-	for node.amtflag2 == 0 {
-		continue
-	}
+	//for node.amtflag2 == 0 {
+	//	continue
+	//}
 	*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
 	index := msg.GetIndex()
 	Y := msg.GetY()
@@ -896,7 +899,9 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 	witness := msg.GetWitness()
 	//fmt.Println("node index is ",index-1)
 	node.secretShares[index-1].Y.SetBytes(Y)
-	for i := 0; i < node.amtStep; i++ {
+	tmpLength := len(witness)
+	//fmt.Println(node.label,node.amtStep,len(pointmsg.Witness))
+	for i := 0; i < tmpLength; i++ {
 		node.secretShares[index-1].PolyWit[i].SetCompressedBytes(witness[i])
 	}
 	node.mutex.Lock()
@@ -998,6 +1003,14 @@ func (node *Node) Phase3Readboard() {
 	polyp, _ := interpolation.LagrangeInterpolate(node.degree*2, tmpX, tmpY, node.p)
 	//fmt.Println(tmpX,tmpY,node.degree,polyp)
 	node.recPoly.ResetTo(polyp)
+	//store
+	coffes := node.recPoly.GetAllCoeffs()
+	tmpLength := len(coffes)
+	bb := make([][]byte, tmpLength)
+	for j := 0; j < tmpLength; j++ {
+		bb[j] = coffes[j].Bytes()
+	}
+	node.store_secret(node.degree, node.counter, node.secretid, bb)
 	//y := gmp.NewInt(0)
 	//node.recPoly.EvalMod(gmp.NewInt(int64(0)), node.p, y)
 	//fmt.Println(node.label,y)
@@ -1169,6 +1182,11 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	amtPolyCmt := make([]*pbc.Element, (counter+5)<<2)
 	amtBasicPolyCmt := make([]*pbc.Element, (counter+5)<<2)
 	amtStep := 0
+	amtPolycmtSize := 0
+	for (1 << amtPolycmtSize) <= counter+1 {
+		amtPolycmtSize += 1
+	}
+	amtPolycmtSize += 1
 	for i := 0; i < ((counter + 5) << 2); i++ {
 		tmp2Poly, _ := poly.NewPoly(degree)
 		amtPoly[i] = &tmp2Poly
@@ -1249,6 +1267,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 		amtPolyCmt:      amtPolyCmt,
 		amtPoly:         amtPoly,
 		amtBasicPolyCmt: amtBasicPolyCmt,
+		amtPolyCmtSize:  amtPolycmtSize,
 		amtflag1:        amtflag1,
 		amtflag2:        amtflag2,
 	}, nil
@@ -1359,13 +1378,13 @@ func (node *Node) store_secret(degree, counter, secretid int, coeffbyte [][]byte
 	//向数据库中插入新纪录
 
 	for i := 0; i < len(coeffbyte); i++ {
-		data:=coeffbyte[i]
+		data := coeffbyte[i]
 		newSecretshare := model.Secretshare{
 			SecretId: uint(secretid),
 			UnitId:   uint(node.label),
 			Degree:   degree,
 			Counter:  counter,
-			Row: i,
+			Row:      i,
 			Data:     data,
 		}
 		//返回结果
@@ -1385,7 +1404,7 @@ func (node *Node) get_secret(secretid int) {
 	//get secret from mysql
 	db := common.GetDB()
 	var secretshares []model.Secretshare
-	result := db.Where("secret_id =?",secretid).Where("unit_id",node.label).Find(&secretshares)
+	result := db.Where("secret_id =?", secretid).Where("unit_id", node.label).Find(&secretshares)
 	rowNum := result.RowsAffected
 	var newsecretshare model.Secretshare
 	db.Where("secret_id = ? and unit_id = ?", secretid, node.label).First(&newsecretshare)
@@ -1393,9 +1412,9 @@ func (node *Node) get_secret(secretid int) {
 	counter := newsecretshare.Counter
 	//secretid := int(newsecretshare.SecretId)
 	coeff := make([]*gmp.Int, degree+1)
-	for i  := 0; int64(i) < rowNum; i++ {
+	for i := 0; int64(i) < rowNum; i++ {
 		var newsecretshare model.Secretshare
-		db.Where("secret_id = ? and unit_id = ? and row =?", secretid, node.label,i).Find(&newsecretshare)
+		db.Where("secret_id = ? and unit_id = ? and row =?", secretid, node.label, i).Find(&newsecretshare)
 		//Data存放秘密份额,多项式
 		Data := newsecretshare.Data
 
@@ -1518,7 +1537,7 @@ func (node *Node) Set(degree, counter, secretid int, coeff []*gmp.Int) {
 	amtflag1 := 0
 	amtflag2 := 0
 
-	fileName := "./src/metadata/Node_" + strconv.Itoa(node.label) + "_secret" + strconv.Itoa(secretid) + ".logger"
+	fileName := node.metadataPath + strconv.Itoa(node.label) + "_secret" + strconv.Itoa(secretid) + ".logger"
 	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		tmplogger, err = os.Create(fileName)

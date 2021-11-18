@@ -33,12 +33,14 @@ type Controll struct {
 }
 
 var Controller *Controll
+
 //这里写了metadatapath，后面就不需要写了
 var metadatapath = "/home/kzl/Desktop/test/crypto_contest/DCSSmain/src/metadata"
+
 func Initsystem() *Controll {
 	db := common.GetDB()
-	if db!=nil {
-		
+	if db != nil {
+
 	}
 	var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, 100) //get from sql and new
@@ -138,5 +140,15 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		controll.nodeService[i].Initsecret(ctx, &msg)
+	}
+}
+
+func (controll *Controll) Handoff(secretid int) {
+	log.Printf("Start to Handoff")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	_, err := controll.boardService[secretid-1].StartEpoch(ctx, &pb.RequestMsg{})
+	if err != nil {
+		log.Fatalf("Start Handoff Fail:%v", err)
 	}
 }
