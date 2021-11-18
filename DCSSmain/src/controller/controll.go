@@ -32,11 +32,10 @@ type Controll struct {
 }
 
 var Controller *Controll
-
+var metadatapath = "/home/kzl/Desktop/test/crypto_contest/DCSSmain/src/metadata"
 //
 func Initsystem() *Controll {
-	//metadatapath := "./src/metadata"
-	metadatapath := "/home/kzl/Desktop/test/crypto_contest/DCSSmain/src/metadata"
+
 	var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, 100) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, 100)
@@ -69,7 +68,7 @@ func Initsystem() *Controll {
 }
 func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 string) {
 	fmt.Println(controll.bbNum)
-	metadatapath := "./src/metadata"
+
 	fixedRandState := rand.New(rand.NewSource(int64(3)))
 	p := gmp.NewInt(0)
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)

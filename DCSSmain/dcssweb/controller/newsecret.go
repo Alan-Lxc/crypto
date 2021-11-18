@@ -4,12 +4,13 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	reponse "github.com/Alan-Lxc/crypto_contest/dcssweb/response"
+	"github.com/Alan-Lxc/crypto_contest/src/controller"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
 
-var secretid = 0
+
 
 //dic = {}
 //type secret_data struct {
@@ -60,8 +61,7 @@ func NewSecret(ctx *gin.Context) {
 	}
 	db.Create(&newSecret)
 	//newsecret
-
-	//controller.Controller.NewSecret(secretid, degree, counter, secretcontent)
+	controller.Controller.NewSecret(int(newSecret.ID), degree, counter, secretcontent)
 }
 
 func newsecret_check(secretname string) {

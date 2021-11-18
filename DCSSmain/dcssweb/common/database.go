@@ -2,7 +2,8 @@ package common
 
 import (
 	"fmt"
-	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
+	model  "github.com/Alan-Lxc/crypto_contest/dcssweb/model"
+	model1 "github.com/Alan-Lxc/crypto_contest/src/model"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -38,7 +39,7 @@ func InitDB() *gorm.DB {
 
 	err = db.AutoMigrate(&model.User{})
 	err = db.AutoMigrate(&model.Unit{})
-	err = db.AutoMigrate(&model.Secretshare{})
+	err = db.AutoMigrate(&model1.Secretshare{})
 	err = db.AutoMigrate(&model.Secret{})
 	if err != nil {
 		return nil

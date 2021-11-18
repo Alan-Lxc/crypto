@@ -1358,15 +1358,19 @@ func (node *Node) store_secret(degree, counter, secretid int, coeffbyte [][]byte
 	db := common.GetDB()
 	//向数据库中插入新纪录
 
-	newSecretshare := model.Secretshare{
-		SecretId: uint(secretid),
-		UnitId:   uint(node.label),
-		Degree:   degree,
-		Counter:  counter,
-		Data:     coeffbyte,
+	for i := 0; i < len(coeffbyte); i++ {
+		data:=coeffbyte[i]
+		newSecretshare := model.Secretshare{
+			SecretId: uint(secretid),
+			UnitId:   uint(node.label),
+			Degree:   degree,
+			Counter:  counter,
+			Row: i,
+			Data:     data,
+		}
+		//返回结果
+		db.Create(&newSecretshare)
 	}
-	//返回结果
-	db.Create(&newSecretshare)
 	//dc := commitment.DLCommit{}
 	//dc.SetupFix()
 	//dpc := commitment.DLPolyCommit{}
@@ -1380,19 +1384,25 @@ func (node *Node) store_secret(degree, counter, secretid int, coeffbyte [][]byte
 func (node *Node) get_secret(secretid int) {
 	//get secret from mysql
 	db := common.GetDB()
+	var secretshares []model.Secretshare
+	result := db.Where("secret_id =?",secretid).Where("unit_id",node.label).Find(&secretshares)
+	rowNum := result.RowsAffected
 	var newsecretshare model.Secretshare
-
-	db.Where("secretid = ? and unitid = ?", secretid, node.label).Find(&newsecretshare)
-	//Data存放秘密份额,多项式
-	Data := newsecretshare.Data
+	db.Where("secret_id = ? and unit_id = ?", secretid, node.label).First(&newsecretshare)
 	degree := newsecretshare.Degree
 	counter := newsecretshare.Counter
 	//secretid := int(newsecretshare.SecretId)
 	coeff := make([]*gmp.Int, degree+1)
-	for i := 0; i < len(Data); i++ {
+	for i  := 0; int64(i) < rowNum; i++ {
+		var newsecretshare model.Secretshare
+		db.Where("secret_id = ? and unit_id = ? and row =?", secretid, node.label,i).Find(&newsecretshare)
+		//Data存放秘密份额,多项式
+		Data := newsecretshare.Data
+
 		coeff[i] = gmp.NewInt(0)
-		coeff[i].SetBytes(Data[i])
+		coeff[i].SetBytes(Data)
 	}
+
 	node.Set(degree, counter, secretid, coeff)
 	//return newsecretshare
 }

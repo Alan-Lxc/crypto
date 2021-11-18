@@ -71,7 +71,7 @@ export default {
       secretname: "",
       degree: 0,//t值
       counter: 0,//n值
-      userId: 0,
+      userId: 1,
       secret: "",
       description: "",
     });

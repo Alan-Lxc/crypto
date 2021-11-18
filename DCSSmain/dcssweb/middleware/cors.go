@@ -38,7 +38,7 @@ func CORSMiddleware() gin.HandlerFunc {
 		if context.Request.Method == http.MethodOptions {
 			context.AbortWithStatus(200)
 		} else {
-			context.Next()
+			//context.Next()
 		}
 	}
 }
