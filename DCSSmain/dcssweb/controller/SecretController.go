@@ -6,22 +6,42 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/dto"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/response"
+	"github.com/Alan-Lxc/crypto_contest/src/controller"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
 
-var secret model.Secret
-var secrets []model.Secret
 
+
+func HandoffSecret(ctx *gin.Context)  {
+	db:=common.GetDB()
+
+	secretid, err := strconv.Atoi(ctx.Query("secretid"))
+	if err != nil {
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "id错误")
+		return
+	}
+	var secret model.Secret
+	result := db.Where("id = ?", secretid).First(&secret)
+	if result.Error != nil {
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "查询错误")
+		return
+	}
+	controller.Controller.Handoff(int(secret.ID))
+
+	//response
+	response.Success(ctx, gin.H{}, "handoff success")
+}
 func GetSecretList(ctx *gin.Context) {
 	db := common.GetDB()
 
 	userid, err := strconv.Atoi(ctx.Query("userid"))
 	if err != nil {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "查询错误")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "查询错误")
 		return
 	}
+	var secrets []model.Secret
 	db.Where(&model.Secret{UserId: uint(userid)}).Find(&secrets)
 	fmt.Println(secrets)
 	gh := gin.H{}
@@ -29,7 +49,7 @@ func GetSecretList(ctx *gin.Context) {
 		gh[strconv.Itoa(int(v.ID))] = v
 	}
 
-	reponse.Success(
+	response.Success(
 		ctx,
 		gin.H{
 			"total":    len(secrets),
@@ -39,29 +59,46 @@ func GetSecretList(ctx *gin.Context) {
 	)
 
 }
-func  GetSecretById(ctx *gin.Context) {
+func GetSecret(ctx *gin.Context) {
 	db := common.GetDB()
 
 	//	获取参数并进行数据验证
 	secretid, err := strconv.Atoi(ctx.Query("secretid"))
 	if err != nil {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "id错误")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "id错误")
 		return
 	}
 	var secret model.Secret
 	result := db.Where("id = ?", secretid).First(&secret)
 	if result.Error != nil {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "查询错误")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "查询错误")
 		return
 	}
 	//这里写重构秘密，把重构出的秘密
-	reponse.Success(ctx, gin.H{
+	response.Success(ctx, gin.H{
 		"secret": dto.ToGetSecretDto(secret),
 	}, "获取成功")
 }
 
 func ReconstructSecret(ctx *gin.Context) {
-	GetSecretById(ctx)
+	db := common.GetDB()
+
+	//	获取参数并进行数据验证
+	secretid, err := strconv.Atoi(ctx.Query("secretid"))
+	if err != nil {
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "id错误")
+		return
+	}
+	var secret model.Secret
+	result := db.Where("id = ?", secretid).First(&secret)
+	if result.Error != nil {
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "查询错误")
+		return
+	}
+
+	response.Success(ctx, gin.H{
+		"secret": secret.Secret,
+	}, "获取成功")
 }
 func DeleteSecret(ctx *gin.Context) {
 	db := common.GetDB()
@@ -70,7 +107,7 @@ func DeleteSecret(ctx *gin.Context) {
 	//	获取参数并进行数据验证
 	id, err := strconv.Atoi(ctx.PostForm("id"))
 	if err != nil {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "id错误")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "id错误")
 		return
 	}
 
@@ -84,22 +121,25 @@ func UpdateSecretCounter(ctx *gin.Context) {
 	//	获取参数并进行数据验证
 	n, err := strconv.Atoi(ctx.PostForm("counter"))
 	if err != nil {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "counter不符合规范")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "counter不符合规范")
 		return
 	}
-	id, err := strconv.Atoi(ctx.PostForm("id"))
+	secretid, err := strconv.Atoi(ctx.PostForm("secretid"))
 	if err != nil {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "id错误")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "id错误")
 		return
 	}
-
-	db.First(&secret, id)
+	var secret model.Secret
+	db.First(&secret, secretid)
 	secret.Counter = int64(n)
 	db.Save(secret)
 
-	reponse.Success(ctx, gin.H{}, "修改成功")
+	response.Success(ctx, gin.H{
+
+	}, "修改成功")
 
 }
+
 
 //func NewSecret(ctx *gin.Context) {
 //	db := common.GetDB()

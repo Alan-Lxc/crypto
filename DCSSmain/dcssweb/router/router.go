@@ -18,9 +18,10 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	r.POST("/api/secret/newsecret", controller.NewSecret)
 	r.POST("/api/secret/updatesecretcounter", controller.UpdateSecretCounter)
 	r.POST("/api/secret/deletesecret", controller.DeleteSecret)
-	r.GET("/api/secret/getsecret", controller.GetSecretById)
+	r.GET("/api/secret/getsecret", controller.GetSecret)
 	r.GET("/api/secret/reconstructsecret", controller.ReconstructSecret)
 	r.GET("/api/secret/getsecretlist", controller.GetSecretList)
+	r.POST("/api/secret/handoffsecret", controller.HandoffSecret)
 
 	r.GET("/api/unit/getunitlist",controller.GetUnitList)
 	r.GET("/api/unit/getunitlog",controller.GetUnitLog)

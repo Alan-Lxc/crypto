@@ -49,7 +49,7 @@ func Login(ctx *gin.Context) {
 		return
 	}
 	//返回结果
-	reponse.Success(ctx, gin.H{"token": token}, "登录成功")
+	response.Success(ctx, gin.H{"token": token}, "登录成功")
 
 }
 func Register(ctx *gin.Context) {
@@ -60,17 +60,17 @@ func Register(ctx *gin.Context) {
 	password := ctx.PostForm("password")
 	//数据验证
 	if len(telephone) != 11 {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "手机号必须是11位")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "手机号必须是11位")
 		return
 	}
 
 	if len(password) < 6 {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "密码不能少于6位")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "密码不能少于6位")
 		return
 	}
 	//判断手机号是否存在,如果手机号存在，就不许注册
 	if isTelephoneExists(db, telephone) {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "用户已存在")
+		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "用户已存在")
 		return
 	}
 	//如果名称为空，则给一个10位的随机字符串
@@ -80,7 +80,7 @@ func Register(ctx *gin.Context) {
 	//创建用户
 	hashdPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		reponse.Response(ctx, http.StatusUnprocessableEntity, 500, nil, "加密错误")
+		response.Response(ctx, http.StatusUnprocessableEntity, 500, nil, "加密错误")
 		return
 	}
 	newUser := model.User{
@@ -90,10 +90,10 @@ func Register(ctx *gin.Context) {
 	}
 	//向数据库中插入新纪录
 	db.Create(&newUser)
-	reponse.Success(ctx, gin.H{}, "注册成功")
+	response.Success(ctx, gin.H{}, "注册成功")
 	//返回结果
 
-	reponse.Success(ctx, nil, "注册成功")
+	response.Success(ctx, nil, "注册成功")
 }
 func Info(ctx *gin.Context) {
 	user, _ := ctx.Get("user")

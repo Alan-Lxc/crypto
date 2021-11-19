@@ -64,6 +64,7 @@ func NewSecret(ctx *gin.Context) {
 	controller.Controller.NewSecret(int(newSecret.ID), degree, counter, secretcontent)
 }
 
+
 func newsecret_check(secretname string) {
 	//
 
