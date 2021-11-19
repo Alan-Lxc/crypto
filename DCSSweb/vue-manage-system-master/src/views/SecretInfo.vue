@@ -105,16 +105,16 @@ export default {
       //   params: {
       //     "secretid" : secretid,
       //   }
-      // }).then(function (res) {
-      //   console.log(res.data.data.secret);
-      //   arr.secretinfo=res.data.data.secret;
-      // })
+      // }).then()
       axios.get("http://localhost:8080/api/secret/getsecret",{
         params: {
           "secretid": secretid,
         },
       }).then(
-
+          function (res) {
+            console.log(res.data.data.secret);
+            arr.secretinfo=res.data.data.secret;
+          }
       ).catch(err =>{
 
       });
