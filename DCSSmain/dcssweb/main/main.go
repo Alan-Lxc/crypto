@@ -12,7 +12,7 @@ import (
 func main() {
 	common.InitConfig()
 	common.InitDB()
-	controller.Controller = controller.Initsystem()
+	controller.Controller = controller.New()
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 	r = router.CollectRoute(r)

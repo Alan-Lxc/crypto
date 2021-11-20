@@ -118,7 +118,7 @@ type Node struct {
 	amtPolyCmtSize  int
 	amtStep         int
 	// Metrics
-	totMsgSize   *int
+	totMsgSize *int
 	//存ip_list这个文件的地址
 	MetadataPath string
 	// Initialize Flag
@@ -273,7 +273,7 @@ func (node *Node) CreatAmt(ployy poly.Poly, size int) {
 
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (response *pb.ResponseMsg, err error) {
-	
+
 	id := int(msg.GetSecretid())
 	node.get_secret(id)
 	node.secretid = id
@@ -1222,19 +1222,19 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	log := log.New(tmplogger, "", log.LstdFlags)
 	//log.Printf("Node %d new done,ip = %s", label, ipList[label-1])
 	return Node{
-		flag_forweb:  false,
-		MetadataPath: logPath,
-		IpAddress:    ipList,
-		ipOfBoard:    bip,
-		degree:       degree,
-		label:        label,
-		counter:      counter,
-		randState:    randState,
-		dc:           &dc,
-		dpc:          &dpc,
-		p:            p,
-		s0:           s0,
-		lambda:       lambda,
+		flag_forweb:     false,
+		MetadataPath:    logPath,
+		IpAddress:       ipList,
+		ipOfBoard:       bip,
+		degree:          degree,
+		label:           label,
+		counter:         counter,
+		randState:       randState,
+		dc:              &dc,
+		dpc:             &dpc,
+		p:               p,
+		s0:              s0,
+		lambda:          lambda,
 		_0Shares:        _0Shares,
 		_0ShareCount:    &_0ShareCount,
 		_0ShareSum:      _0ShareSum,
@@ -1321,27 +1321,202 @@ func (node *Node) Service() {
 
 	node.Log.Printf("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
 }
-func New_for_web(label int, metadatapath string) (*Node, error) {
+func New_for_web(degree, label, counter int, metadatapath string) (Node, error) {
 	if label < 0 {
-		return &Node{}, errors.New("Label must be a non-negative number!")
-
+		return Node{}, errors.New("Label must be a non-negative number!")
 	}
 	ip_node := ReadIpList(metadatapath + "/ip_list")
 	ip_bulletborad := ReadIpList(metadatapath + "/bulletboard_list")
 	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
-	//dc := commitment.DLCommit{}
-	//dc.SetupFix()
-	//dpc:=commitment.DLPolyCommit{}
-	//dpc.SetupFix(len(ip_node))
+	if label < 0 {
+		return Node{}, errors.New("Label must be a non-negative number!")
+	}
+	//file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
+	//defer file.Close()
+	//ipRaw := ReadIpList(metadatapath)[0 : counter+1]
+	//bip := ipRaw[0]
+	//ipList := ipRaw[1 : counter+1]
+	if counter < 0 {
+		return Node{}, errors.New("Counter must be a non-negative number!")
+	}
+	//fixedRandState := rand.New(rand.NewSource(int64(3)))
+	dc := commitment.DLCommit{}
+	dc.SetupFix()
+	dpc := commitment.DLPolyCommit{}
+	dpc.SetupFix(counter + 1)
+
 	p := gmp.NewInt(0)
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-	return &Node{
-		flag_forweb:  true,
-		MetadataPath: metadatapath,
-		IpAddress:    ip_node,
-		label:        label,
-		randState:    randState,
-		boardList:    ip_bulletborad,
+	lambda := make([]*gmp.Int, counter)
+	// Calculate Lagrange Interpolation
+	denominator := poly.NewConstant(1)
+	tmp, _ := poly.NewPoly(1)
+	tmp.SetCoeffWithInt(1, 1)
+	//fmt.Println(time.Now())
+	for i := 0; i < degree*2+1; i++ {
+		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
+		denominator.MulSelf(tmp)
+	}
+	for i := 0; i < degree*2+1; i++ {
+		lambda[i] = gmp.NewInt(0)
+		deno, _ := poly.NewPoly(0)
+		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
+
+		deno.Divide(denominator, tmp)
+		deno.EvalMod(gmp.NewInt(0), p, lambda[i])
+		inter := gmp.NewInt(0)
+		deno.EvalMod(gmp.NewInt(int64(i+1)), p, inter)
+		interInv := gmp.NewInt(0)
+		interInv.ModInverse(inter, p)
+		lambda[i].Mul(lambda[i], interInv)
+		lambda[i].Mod(lambda[i], p)
+	}
+	//fmt.Println(time.Now())
+
+	_0Shares := make([]*gmp.Int, counter)
+	for i := 0; i < counter; i++ {
+		_0Shares[i] = gmp.NewInt(0)
+	}
+	_0ShareCount := 0
+	_0ShareSum := gmp.NewInt(0)
+
+	recPoint := make([]*point.Point, counter)
+	recCounter := 0
+
+	secretShares := make([]*point.Point, counter)
+	secretShares2 := make([]*point.Point, counter)
+	//tmpPoly, err := poly.NewRand(degree, fixedRandState, p)
+	//tmpPoly, err := poly.NewPoly(len(coeff) - 1)
+	//tmpPoly.SetbyCoeff(coeff)
+	//fmt.Println(tmpPoly.GetDegree())
+	//fmt.Println(tmpPoly)
+	//if err != nil {
+	//	panic("Error initializing random tmpPoly")
+	//}
+
+	//fmt.Println(time.Now())
+	proPoly, _ := poly.NewPoly(degree)
+	recPoly, _ := poly.NewPoly(degree)
+	newPoly, _ := poly.NewPoly(degree)
+	shareCnt := 0
+
+	oldPolyCmt := make([]*pbc.Element, counter)
+	midPolyCmt := make([]*pbc.Element, counter)
+	newPolyCmt := make([]*pbc.Element, counter)
+	for i := 0; i < counter; i++ {
+		oldPolyCmt[i] = dpc.NewG1()
+		midPolyCmt[i] = dpc.NewG1()
+		newPolyCmt[i] = dpc.NewG1()
+	}
+
+	zeroShareCmt := dc.NewG1()
+	zeroPolyCmt := dpc.NewG1()
+	zeroPolyWit := dpc.NewG1()
+
+	zerosumShareCmt := make([]*pbc.Element, counter)
+	zerosumPolyCmt := make([]*pbc.Element, counter)
+	zerosumPolyWit := make([]*pbc.Element, counter)
+
+	for i := 0; i < counter; i++ {
+		zerosumShareCmt[i] = dc.NewG1()
+		zerosumPolyCmt[i] = dpc.NewG1()
+		zerosumPolyWit[i] = dpc.NewG1()
+	}
+	// amt
+	amtPoly := make([]*poly.Poly, (counter+5)<<2)
+	amtPolyCmt := make([]*pbc.Element, (counter+5)<<2)
+	amtBasicPolyCmt := make([]*pbc.Element, (counter+5)<<2)
+	amtStep := 0
+	amtPolycmtSize := 0
+	for (1 << amtPolycmtSize) <= counter+1 {
+		amtPolycmtSize += 1
+	}
+	amtPolycmtSize += 1
+	for i := 0; i < ((counter + 5) << 2); i++ {
+		tmp2Poly, _ := poly.NewPoly(degree)
+		amtPoly[i] = &tmp2Poly
+		amtPolyCmt[i] = dpc.NewG1()
+		amtBasicPolyCmt[i] = dpc.NewG1()
+	}
+
+	totMsgSize := 0
+	s1 := time.Now()
+	e1 := time.Now()
+	s2 := time.Now()
+	e2 := time.Now()
+	s3 := time.Now()
+	e3 := time.Now()
+
+	amtflag1 := 0
+	amtflag2 := 0
+	s0 := gmp.NewInt(0)
+
+	clientConn := make([]*grpc.ClientConn, counter)
+	nodeService := make([]pb.NodeServiceClient, counter)
+
+	iniflag := true
+
+	fileName := "./src/metadata/logOfNode" + strconv.Itoa(label) + ".log"
+	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		tmplogger, err = os.Create(fileName)
+	}
+	os.Truncate(fileName, 0)
+	log := log.New(tmplogger, "", log.LstdFlags)
+	//log.Printf("Node %d new done,ip = %s", label, ipList[label-1])
+	return Node{
+		//ipOfBoard:    bip,
+		degree:          degree,
+		label:           label,
+		counter:         counter,
+		randState:       randState,
+		dc:              &dc,
+		dpc:             &dpc,
+		p:               p,
+		s0:              s0,
+		lambda:          lambda,
+		_0Shares:        _0Shares,
+		_0ShareCount:    &_0ShareCount,
+		_0ShareSum:      _0ShareSum,
+		secretShares:    secretShares,
+		secretShares2:   secretShares2,
+		recPoint:        recPoint,
+		recCounter:      &recCounter,
+		recPoly:         &recPoly,
+		proPoly:         &proPoly,
+		newPoly:         &newPoly,
+		shareCnt:        &shareCnt,
+		oldPolyCmt:      oldPolyCmt,
+		midPolyCmt:      midPolyCmt,
+		newPolyCmt:      newPolyCmt,
+		zeroShareCmt:    zeroShareCmt,
+		zeroPolyCmt:     zeroPolyCmt,
+		zeroPolyWit:     zeroPolyWit,
+		zerosumPolyCmt:  zerosumPolyCmt,
+		zerosumPolyWit:  zerosumPolyWit,
+		zerosumShareCmt: zerosumShareCmt,
+		totMsgSize:      &totMsgSize,
+		s1:              &s1,
+		e1:              &e1,
+		s2:              &s2,
+		e2:              &e2,
+		s3:              &s3,
+		e3:              &e3,
+		clientConn:      clientConn,
+		nodeService:     nodeService,
+		iniflag:         &iniflag,
+		Log:             log,
+		amtStep:         amtStep,
+		amtPolyCmt:      amtPolyCmt,
+		amtPoly:         amtPoly,
+		amtBasicPolyCmt: amtBasicPolyCmt,
+		amtPolyCmtSize:  amtPolycmtSize,
+		amtflag1:        amtflag1,
+		amtflag2:        amtflag2,
+		flag_forweb:     true,
+		MetadataPath:    metadatapath,
+		IpAddress:       ip_node,
+		boardList:       ip_bulletborad,
 	}, nil
 }
 func (node *Node) Connect_for_web() {
@@ -1388,7 +1563,8 @@ func (node *Node) store_secret(degree int, counter int, secretid int, coeffbyte 
 			Degree:   degree,
 			Counter:  counter,
 			Row:      i,
-			Data:     data,
+
+			Data: data,
 		}
 		//返回结果
 		db.Create(&newSecretshare)
@@ -1426,176 +1602,17 @@ func (node *Node) get_secret(secretid int) {
 		coeff[i].SetBytes(Data)
 	}
 
-	node.Set(degree, counter, secretid, coeff)
+	node.Set(coeff)
 	//return newsecretshare
 }
 
-func (node *Node) Set(degree, counter, secretid int, coeff []*gmp.Int) {
-	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
-	//fixedRandState := rand.New(rand.NewSource(int64(3)))
-	dc := commitment.DLCommit{}
-	dc.SetupFix()
-	dpc := commitment.DLPolyCommit{}
-	dpc.SetupFix(counter + 1)
-	p := gmp.NewInt(0)
-	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-	lambda := make([]*gmp.Int, counter)
-	// Calculate Lagrange Interpolation
-	denominator := poly.NewConstant(1)
-	tmp, _ := poly.NewPoly(1)
-	tmp.SetCoeffWithInt(1, 1)
-	//fmt.Println(time.Now())
-	for i := 0; i < degree*2+1; i++ {
-		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
-		denominator.MulSelf(tmp)
-	}
-	for i := 0; i < degree*2+1; i++ {
-		lambda[i] = gmp.NewInt(0)
-		deno, _ := poly.NewPoly(0)
-		tmp.GetPtrtoConstant().Neg(gmp.NewInt(int64(i + 1)))
-
-		deno.Divide(denominator, tmp)
-		deno.EvalMod(gmp.NewInt(0), p, lambda[i])
-		inter := gmp.NewInt(0)
-		deno.EvalMod(gmp.NewInt(int64(i+1)), p, inter)
-		interInv := gmp.NewInt(0)
-		interInv.ModInverse(inter, p)
-		lambda[i].Mul(lambda[i], interInv)
-		lambda[i].Mod(lambda[i], p)
-	}
-	//fmt.Println(time.Now())
-
-	_0Shares := make([]*gmp.Int, counter)
-	for i := 0; i < counter; i++ {
-		_0Shares[i] = gmp.NewInt(0)
-	}
-	_0ShareCount := 0
-	_0ShareSum := gmp.NewInt(0)
-
-	recPoint := make([]*point.Point, counter)
-	recCounter := 0
-
-	secretShares := make([]*point.Point, counter)
-	secretShares2 := make([]*point.Point, counter)
-	//tmpPoly, err := poly.NewRand(degree, fixedRandState, p)
+func (node *Node) Set(coeff []*gmp.Int) {
 	tmpPoly, err := poly.NewPoly(len(coeff) - 1)
 	tmpPoly.SetbyCoeff(coeff)
-	//fmt.Println(tmpPoly.GetDegree())
-	//fmt.Println(tmpPoly)
 	if err != nil {
 		panic("Error initializing random tmpPoly")
 	}
-
-	//fmt.Println(time.Now())
-	proPoly, _ := poly.NewPoly(degree)
-	recPoly, _ := poly.NewPoly(degree)
-	newPoly, _ := poly.NewPoly(degree)
-	shareCnt := 0
-
-	s0 := gmp.NewInt(0)
-	recPoly.ResetTo(tmpPoly)
-	recPoly.EvalMod(gmp.NewInt(0), p, s0)
-
-	oldPolyCmt := make([]*pbc.Element, counter)
-	midPolyCmt := make([]*pbc.Element, counter)
-	newPolyCmt := make([]*pbc.Element, counter)
-	for i := 0; i < counter; i++ {
-		oldPolyCmt[i] = dpc.NewG1()
-		midPolyCmt[i] = dpc.NewG1()
-		newPolyCmt[i] = dpc.NewG1()
-	}
-
-	zeroShareCmt := dc.NewG1()
-	zeroPolyCmt := dpc.NewG1()
-	zeroPolyWit := dpc.NewG1()
-
-	zerosumShareCmt := make([]*pbc.Element, counter)
-	zerosumPolyCmt := make([]*pbc.Element, counter)
-	zerosumPolyWit := make([]*pbc.Element, counter)
-
-	for i := 0; i < counter; i++ {
-		zerosumShareCmt[i] = dc.NewG1()
-		zerosumPolyCmt[i] = dpc.NewG1()
-		zerosumPolyWit[i] = dpc.NewG1()
-	}
-	// amt
-	amtPoly := make([]*poly.Poly, (counter+5)<<2)
-	amtPolyCmt := make([]*pbc.Element, (counter+5)<<2)
-	amtBasicPolyCmt := make([]*pbc.Element, (counter+5)<<2)
-	amtStep := 0
-	for i := 0; i < ((counter + 5) << 2); i++ {
-		tmp2Poly, _ := poly.NewPoly(degree)
-		amtPoly[i] = &tmp2Poly
-		amtPolyCmt[i] = dpc.NewG1()
-		amtBasicPolyCmt[i] = dpc.NewG1()
-	}
-
-	totMsgSize := 0
-	s1 := time.Now()
-	e1 := time.Now()
-	s2 := time.Now()
-	e2 := time.Now()
-	s3 := time.Now()
-	e3 := time.Now()
-
-	amtflag1 := 0
-	amtflag2 := 0
-
-	fileName := node.MetadataPath + "/node"+strconv.Itoa(node.label) + "_secret" + strconv.Itoa(secretid) + ".logger"
-	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
-	if err != nil {
-		tmplogger, err = os.Create(fileName)
-	}
-	os.Truncate(fileName, 0)
-	logger := log.New(tmplogger, "", log.LstdFlags)
-// 		node.MetadataPath= logPath,
-		node.IpAddress=    ipList,
-		node.ipOfBoard=    bip,
-		node.degree=       degree,
-		node.label=        label,
-		node.counter=      counter,
-		node.randState=    randState,
-		node.dc=           &dc,
-		node.dpc=          &dpc,
-		node.p=            p,
-		node.s0=           s0,
-		node.lambda=       lambda,
-		node._0Shares=        _0Shares,
-		node._0ShareCount=    &_0ShareCount,
-		node._0ShareSum=      _0ShareSum,
-		node.secretShares=    secretShares,
-		node.secretShares2=   secretShares2,
-		node.recPoint=        recPoint,
-		node.recCounter=      &recCounter,
-		node.recPoly=         &recPoly,
-		node.proPoly=         &proPoly,
-		node.newPoly=         &newPoly,
-		node.shareCnt=        &shareCnt,
-		node.oldPolyCmt=      oldPolyCmt,
-		node.midPolyCmt=      midPolyCmt,
-		node.newPolyCmt=      newPolyCmt,
-		node.zeroShareCmt=    zeroShareCmt,
-		node.zeroPolyCmt=     zeroPolyCmt,
-		node.zeroPolyWit=     zeroPolyWit,
-		node.zerosumPolyCmt=  zerosumPolyCmt,
-		node.zerosumPolyWit=  zerosumPolyWit,
-		node.zerosumShareCmt= zerosumShareCmt,
-		node.totMsgSize=      &totMsgSize,
-		node.s1=              &s1,
-		node.e1=              &e1,
-		node.s2=              &s2,
-		node.e2=              &e2,
-		node.s3=              &s3,
-		node.e3=              &e3,
-		node.clientConn=      clientConn,
-		node.nodeService=     nodeService,
-		node.iniflag=         &iniflag,
-		node.Log=             log,
-		node.amtStep=         amtStep,
-		node.amtPolyCmt=      amtPolyCmt,
-		node.amtPoly=         amtPoly,
-		node.amtBasicPolyCmt= amtBasicPolyCmt,
-		node.amtPolyCmtSize=  amtPolycmtSize,
-		node.amtflag1=        amtflag1,
-		node.amtflag2=        amtflag2,
+	node.recPoly.ResetTo(tmpPoly)
+	node.recPoly.ResetTo(tmpPoly)
+	node.recPoly.EvalMod(gmp.NewInt(0), node.p, node.s0)
 }
