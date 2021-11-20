@@ -273,11 +273,12 @@ func (node *Node) CreatAmt(ployy poly.Poly, size int) {
 
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (response *pb.ResponseMsg, err error) {
-	node.Log.Printf("[Node %d] Now Get start Phase1", node.label)
-	*node.s1 = time.Now()
+	
 	id := int(msg.GetSecretid())
 	node.get_secret(id)
 	node.secretid = id
+	node.Log.Printf("[Node %d] Now Get start Phase1", node.label)
+	*node.s1 = time.Now()
 	node.CreatAmt(*node.recPoly, node.degree*2+1)
 	node.amtflag1 = 1
 	tmpPoly, _ := poly.NewPoly(node.degree * 2)
