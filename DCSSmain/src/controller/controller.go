@@ -45,6 +45,7 @@ func New() *Controll {
 func (controll *Controll) Initsystem(degree, counter int, metadatapath string, secretid int, polyyy []poly.Poly) {
 	db := common.GetDB()
 	if db != nil {
+
 	}
 	var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, counter) //get from sql and new
