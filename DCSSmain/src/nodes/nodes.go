@@ -1562,7 +1562,7 @@ func (node *Node) store_secret(degree int, counter int, secretid int, coeffbyte 
 			UnitId:   uint(node.label),
 			Degree:   degree,
 			Counter:  counter,
-			Row:      i,
+			RowNum:      i,
 
 			Data: data,
 		}
@@ -1585,8 +1585,8 @@ func (node *Node) get_secret(secretid int) {
 	var secretshares []model.Secretshare
 	result := db.Where("secret_id =?", secretid).Where("unit_id", node.label).Find(&secretshares)
 	rowNum := result.RowsAffected
-	var newsecretshare model.Secretshare
-	db.Where("secret_id = ? and unit_id = ?", secretid, node.label).First(&newsecretshare)
+	//var newsecretshare model.Secretshare
+	//db.Where("secret_id = ? and unit_id = ?", secretid, node.label).First(&newsecretshare)
 	//degree := newsecretshare.Degree
 	//counter := newsecretshare.Counter
 	//secretid := int(newsecretshare.SecretId)

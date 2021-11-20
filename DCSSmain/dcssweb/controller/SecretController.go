@@ -28,7 +28,7 @@ func HandoffSecret(ctx *gin.Context)  {
 		response.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "查询错误")
 		return
 	}
-	controller.Controller.Handoff(int(secret.ID))
+	controller.Controller.Handoff(int(secret.ID), int(secret.Degree), int(secret.Counter))
 	secret.ID=secret.ID
 	db.Save(secret)
 	//response

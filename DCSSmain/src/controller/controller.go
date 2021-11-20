@@ -7,6 +7,7 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/Alan-Lxc/crypto_contest/src/bulletboard"
+	model1 "github.com/Alan-Lxc/crypto_contest/src/model"
 	"github.com/Alan-Lxc/crypto_contest/src/nodes"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
 	"github.com/ncw/gmp"
@@ -60,7 +61,7 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 			//Secretnum: 0,
 		}
 		db.Create(&newunit)
-		nodeConnnect = append(nodeConnnect, node)
+		nodeConnnect = append(nodeConnnect, &node)
 		if err != nil {
 			println(err)
 		}
@@ -94,18 +95,18 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 func (controll *Controll) GetMessageOfNode(secretid, label int) poly.Poly {
 
 	db := common.GetDB()
-	var secretshares []model.Secretshare
+	var secretshares []model1.Secretshare
 	result := db.Where("secret_id =?", secretid).Where("unit_id", label).Find(&secretshares)
 	rowNum := result.RowsAffected
-	var newsecretshare model.Secretshare
-	db.Where("secret_id = ? and unit_id = ?", secretid, label).First(&newsecretshare)
-	degree := newsecretshare.Degree
+	var newsecret model.Secret
+	db.Where("id = ? ", secretid).First(&newsecret)
+	degree := newsecret.Degree
 	//counter := newsecretshare.Counter
 	//secretid := int(newsecretshare.SecretId)
 	coeff := make([]*gmp.Int, degree+1)
 	for i := 0; int64(i) < rowNum; i++ {
-		var newsecretshare model.Secretshare
-		db.Where("secret_id = ? and unit_id = ? and row =?", secretid, node.label, i).Find(&newsecretshare)
+		var newsecretshare model1.Secretshare
+		db.Where("secret_id = ? and unit_id = ? and row =?", secretid, label, i).Find(&newsecretshare)
 		//Data存放秘密份额,多项式
 		Data := newsecretshare.Data
 
