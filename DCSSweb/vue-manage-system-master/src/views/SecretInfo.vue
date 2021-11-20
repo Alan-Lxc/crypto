@@ -31,15 +31,21 @@
     </div>
     <div class="container">
       <div class="form-box">
-        <el-form ref="secretRef" label-width="160px">
+        <el-form ref="secretRef" label-width="160px"  :data="secretinfo">
 
           <el-form-item label="门限阈值" >
             {{secretinfo.degree}}
           </el-form-item>
-          <el-form-item label="委员会成员数" prop="numberOfN">
+          <el-form-item label="委员会成员数" >
             {{secretinfo.counter}}
           </el-form-item>
-          <el-form-item label="秘密描述" prop="secret">
+          <el-form-item label="秘密创建时间" >
+            {{secretinfo.create_time}}
+          </el-form-item>
+          <el-form-item label="上一次交接时间" >
+            {{secretinfo.last_update_time}}
+          </el-form-item>
+          <el-form-item label="秘密描述" >
             {{secretinfo.description}}
           </el-form-item>
         </el-form>
@@ -52,12 +58,12 @@
         :row-class-name="tableRowClassName"
         @row-click="handleClick">
       <el-table-column
-          prop="unit_id"
+          prop="UnitId"
           label="节点ID"
           width="180">
       </el-table-column>
       <el-table-column
-          prop="unit_ip"
+          prop="UnitIp"
           label="节点IP"
           width="300">
       </el-table-column>
@@ -81,13 +87,9 @@ export default {
   name: "SecretInfo",
   data() {
     return {
-      secretinfo: {
-        degree: 0,
-        counter: 0,
-        user_id: 1,
-        description: "",
-      },
+      secretinfo: {      },
       nodelist: [],
+      secretid: this.$route.query.id,
     }
   },
   created() {
@@ -95,25 +97,16 @@ export default {
   },
   methods :{
     getsecretinfoAndUnitList(){
-      let arr= this;
-      let secretid = arr.$route.params.id;
+      let that = this
+      let secretid = that.$route.query.id;
       console.log(secretid);
-      const url = "http://localhost:8080/api/secret/getsecret";
-      // axios({
-      //   methods: 'get',
-      //   url: url ,
-      //   params: {
-      //     "secretid" : secretid,
-      //   }
-      // }).then()
       axios.get("http://localhost:8080/api/secret/getsecret",{
         params: {
           "secretid": secretid,
         },
       }).then(
           function (res) {
-            console.log(res.data.data.secret);
-            arr.secretinfo=res.data.data.secret;
+            that.secretinfo=res.data.data.secret;
           }
       ).catch(err =>{
 
@@ -123,19 +116,20 @@ export default {
           "secretid": secretid,
         }
       }).then(function (res){
-        console.log(res.data.data.nodelist);
-        this.nodelist = res.data.data.unitlist;
-      })
+        console.log(res.data.data.unitlist);
+        that.nodelist = res.data.data.unitlist;
+      });
     },
     handleClick(row){
-      this.$router.push({path:"/unitinfo",query:{userid:row[unit_id],secretid:row[unit_ip]}})
+      this.$router.push({
+        path:"/unitinfo",
+        query:{userid:row[unit_id],secretid:row[unit_ip]}
+      })
     },
     updatesecret(){
-      let secretid = this.$route.params.id;
-      console.log(secretid);
       axios.get("http://localhost:8080/api/secret/updatesecret",{
         params: {
-          "id": secretid,
+          "id": this.secretid,
           "counter":90,
         }
       }).then(
@@ -148,11 +142,10 @@ export default {
 
     },
     handoffsecret(){
-      let secretid = this.$route.params.id;
-      console.log(secretid);
-      axios.get("http://localhost:8080/api/secret/updatesecret",{
+      let that = this;
+      axios.get("http://localhost:8080/api/secret/handoffsecret",{
         params: {
-          "secretid": secretid,
+          "secretid": that.secretid,
         }
       }).then(
           function (res) {
@@ -163,11 +156,9 @@ export default {
 
     },
     reconstructsecret(){
-      let secretid = this.$route.params.id;
-      console.log(secretid);
       axios.get("http://localhost:8080/api/secret/reconstructsecret",{
         params: {
-          "secretid": secretid
+          "secretid": this.secretid
         }
       }).then(
           function (res) {

@@ -89,7 +89,6 @@ export default {
 
       }).then(
           function (res) {
-            // var arr = this;
             arr.tableData = res.data.data.secretlist;
           }
       ).catch(err =>{
@@ -97,7 +96,12 @@ export default {
       })
     },
     handleClick(row){
-      this.$router.push("/secretinfo/?id="+row.ID)
+      this.$router.push({
+        path:"/secretinfo",
+        query:{
+          id : row.ID,
+        }
+      })
     },
     fresh(){
       this.getsecretlist()

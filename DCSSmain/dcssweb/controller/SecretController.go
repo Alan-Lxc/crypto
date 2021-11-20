@@ -29,7 +29,8 @@ func HandoffSecret(ctx *gin.Context)  {
 		return
 	}
 	controller.Controller.Handoff(int(secret.ID))
-
+	secret.ID=secret.ID
+	db.Save(secret)
 	//response
 	response.Success(ctx, gin.H{}, "handoff success")
 }
