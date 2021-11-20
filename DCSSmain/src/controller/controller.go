@@ -134,9 +134,9 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		coeff := polyyy[i].GetAllCoeff()
 		Coeff := make([][]byte, len(coeff))
 		for i := 0; i < len(coeff); i++ {
-			tmp := make([]byte, len(coeff[i].Bytes()))
-			tmp = coeff[i].Bytes()
-			Coeff[i] = tmp
+// 			tmp := make([]byte, len(coeff[i].Bytes()))
+// 			tmp = coeff[i].Bytes()
+			Coeff[i] = coeff[i].Bytes()
 		}
 		msg := pb.InitMsg{
 			Degree:   int32(degree),
