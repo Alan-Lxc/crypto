@@ -1587,8 +1587,8 @@ func (node *Node) get_secret(secretid int) {
 	rowNum := result.RowsAffected
 	var newsecretshare model.Secretshare
 	db.Where("secret_id = ? and unit_id = ?", secretid, node.label).First(&newsecretshare)
-	degree := newsecretshare.Degree
-	counter := newsecretshare.Counter
+	//degree := newsecretshare.Degree
+	//counter := newsecretshare.Counter
 	//secretid := int(newsecretshare.SecretId)
 	// 	assert(rowNum==degree*2+1)
 	coeff := make([]*gmp.Int, rowNum)

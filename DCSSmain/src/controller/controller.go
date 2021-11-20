@@ -51,7 +51,7 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	nodeService := make([]pb.NodeServiceClient, counter)
 	ipList := nodes.ReadIpList(metadatapath + "/ip_list")
 	for i := 0; i < counter; i++ {
-		node, err := nodes.New_for_web(i+1, metadatapath)
+		node, err := nodes.New_for_web(degree, i+1, counter, metadatapath)
 		// here need to change merge NODE
 		newunit := model.Unit{
 			UnitId: node.GetLabel(),
