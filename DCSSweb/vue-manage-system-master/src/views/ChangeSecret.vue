@@ -10,12 +10,12 @@
     </div>
     <div class="container">
       <div class="form-box">
-        <el-form ref="secretRef" :rules="rules" :model="secret" label-width="160px">
+        <el-form ref="secretRef" :rules="rules" :model="newcounter" label-width="160px">
             <el-form-item label="门限阈值" >
-              {{secretinfo.degree}}
+              {{degree}}
             </el-form-item>
-            <el-form-item label="委员会成员数" >
-              {{secretinfo.counter}}
+            <el-form-item label="原委员会成员数" >
+              {{oldcounter}}
             </el-form-item>
             <el-form-item label="新委员会成员数">
               <el-input-number v-model.number="newcounter" :min="1" :max="100"></el-input-number>
@@ -42,19 +42,24 @@ export default {
   data() {
     return {
       newcounter : 1,
-      secretinfo: {      },
-      nodelist: [],
       secretid: this.$route.query.id,
+      oldcounter:this.$route.query.oldcounter,
+      degree:this.$route.query.degree,
     }
   },
   setup() {
 
+    const newcounter = ref(1);
+    const secretid = this.$route.query.id;
+    const oldcounter=this.$route.query.oldcounter;
+    const degree=this.$route.query.degree;
+    const secretRef = ref(null);
     // 提交
     const onSubmit = () => {
       // 表单校验
       secretRef.value.validate((valid) => {
         if (valid) {
-          if (secret.degree*2+1>newcounter){
+          if (degree*2+1>newcounter){
             ElMessage.error("参数不符合规范");
             return false;
           }else {
@@ -71,7 +76,7 @@ export default {
     };
     //检验t,n代数关系
     const checkNum = (rule, value, callback) => {
-      if (secret.degree*2+1>newcounter){
+      if (degree*2+1>newcounter){
         callback(new Error("不对"));
       }else {
         console.log("对不对");
@@ -88,7 +93,6 @@ export default {
     };
     return {
       rules,
-      secret,
       secretRef,
       onSubmit,
       onReset,

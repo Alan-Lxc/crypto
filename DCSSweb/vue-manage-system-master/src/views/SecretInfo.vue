@@ -12,14 +12,8 @@
         <!--        <el-col :span="6"><div class="grid-content bg-purple"><el-button type="">修改门限阈值</el-button></div></el-col>-->
         <el-col :span="8">
           <div class="grid-content bg-purple-light">
-            <router-link to="{
-              path: '/changesecret',
-              query: {
-                id:secretid
-              }
-            }">
+
               <el-button @click="tochangesecret()" type="">修改委员会成员数</el-button>
-            </router-link>
           </div>
         </el-col>
         <el-col :span="8">
@@ -134,9 +128,14 @@ export default {
       })
     },
     tochangesecret(){
+      let that = this
       this.$router.push({
         path:"/changesecret",
-        query:{id:secretid}
+        query:{
+          id:that.secretid,
+          oldcounter:that.secretinfo.counter,
+          degree:that.secretinfo.degree,
+        }
       })
     },
     updatesecret(){

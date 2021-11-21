@@ -36,7 +36,7 @@ const routes = [
                 path: "/changesecret",
                 name: "changesecret",
                 meta: {
-                    title: '变更秘密',
+                    title: '修改委员会成员数',
                 },
                 component: () => import(/* webpackChunkName: "changesecret" */ "../views/ChangeSecret.vue")
             }, {

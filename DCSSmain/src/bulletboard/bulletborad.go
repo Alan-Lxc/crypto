@@ -523,7 +523,7 @@ func New_bulletboard_for_web(degree, counter int, metadataPath string, secretid 
 	totMsgSize := 0
 
 	return BulletinBoard{
-		idNew_bulletboard_for_web: secretid,
+		id: secretid,
 		degree:                    degree,
 		p:                         p,
 		metadataPath:              metadataPath,

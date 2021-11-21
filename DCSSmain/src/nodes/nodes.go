@@ -1522,7 +1522,7 @@ func (node *Node) Serve_for_web() {
 	log.Println("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
 }
 func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.ResponseMsg, error) {
-	fmt.Println("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+	fmt.Println("msg in the function ",msg)
 	degree := int(msg.GetDegree())
 	counter := int(msg.GetCounter())
 	secretid := int(msg.GetSecretid())

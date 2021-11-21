@@ -29,10 +29,11 @@ type Controll struct {
 	boardService pb.BulletinBoardServiceClient
 	//metadatapath
 	ipList          []string
-	bulletboardList []string
+	//bulletboardList []string
 	//bb num
 	bbNum   int
 	nodeNum int
+	nn []*nodes.Node
 }
 
 // FORGOT TO KILL THR THREAD OF CONTROLL !!
@@ -52,14 +53,19 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	//var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, counter) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, counter)
-	ipRaw := nodes.ReadIpList(metadatapath + "/ip_list")[0 : counter+1]
+	ipRaw := nodes.ReadIpList(metadatapath)[0 : counter+1]
 	ipList := ipRaw[1 : counter+1]
+
+	nn := make([]*nodes.Node, counter)
 	for i := 0; i < counter; i++ {
 		node, err := nodes.New_for_web(degree, i+1, counter, metadatapath)
-		// here need to change merge NODE
+
+		time.Sleep(1)
+		//here need to change merge NODE
+		nn[i]=&node
 		newunit := model.Unit{
 			UnitId: node.GetLabel(),
-			UnitIp: node.IpAddress[node.GetLabel()],
+			UnitIp: ipList[node.GetLabel()-1],
 			//Secretnum: 0,
 		}
 		db.Create(&newunit)
@@ -82,12 +88,13 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	boardConn := bconn
 	boardService := pb.NewBulletinBoardServiceClient(bconn)
 
-	boradList := nodes.ReadIpList(metadatapath + "/bulletboard_list")
+	//boradList := nodes.ReadIpList(metadatapath + "/bulletboard_list")
 	//controll := new(Controll)
+	controll.nn = nn
 	controll.ipList = ipList
 	controll.nodeConn = nConn
 	controll.nodeService = nodeService
-	controll.bulletboardList = boradList
+	//controll.bulletboardList = boradList
 	controll.boardConn = boardConn
 	controll.boardService = boardService
 	controll.bbNum = 1
@@ -108,7 +115,7 @@ func (controll *Controll) GetMessageOfNode(secretid, label int) poly.Poly {
 	coeff := make([]*gmp.Int, degree+1)
 	for i := 0; int64(i) < rowNum; i++ {
 		var newsecretshare model1.Secretshare
-		db.Where("secret_id = ? and unit_id = ? and row =?", secretid, label, i).Find(&newsecretshare)
+		db.Where("secret_id = ? and unit_id = ? and row_num =?", secretid, label, i).Find(&newsecretshare)
 		//Data存放秘密份额,多项式
 		Data := newsecretshare.Data
 
@@ -171,8 +178,13 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		go func(i int, msg *pb.InitMsg) {
 			defer wg.Done()
 			ctx, cancel := context.WithCancel(context.Background())
-			controll.nodeService[i].Initsecret(ctx, msg)
 			defer cancel()
+			fmt.Println("1")
+			_, err := controll.nodeService[i].Initsecret(ctx, msg)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 		}(i, msg)
 	}
 	wg.Wait()
