@@ -3,6 +3,7 @@ package nodes
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/src/model"
 
@@ -1538,10 +1539,12 @@ func (node *Node) Serve_for_web() {
 	log.Println("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
 }
 func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.ResponseMsg, error) {
+	fmt.Println("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
 	degree := int(msg.GetDegree())
 	counter := int(msg.GetCounter())
 	secretid := int(msg.GetSecretid())
 	coeffbytes := msg.GetCoeff()
+	fmt.Println("coeffbytes",coeffbytes)
 	//coeff := make([]*gmp.Int, degree+1)
 	//for i := 0; i < degree+1; i++ {
 	//	coeff[i] = gmp.NewInt(0)
@@ -1554,7 +1557,9 @@ func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.Response
 func (node *Node) store_secret(degree int, counter int, secretid int, coeffbyte [][]byte) {
 	db := common.GetDB()
 	//向数据库中插入新纪录
-
+	for _, bytes := range coeffbyte {
+		fmt.Println("bytes:",bytes)
+	}
 	for i := 0; i < len(coeffbyte); i++ {
 		data := coeffbyte[i]
 		newSecretshare := model.Secretshare{

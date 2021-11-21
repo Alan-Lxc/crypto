@@ -8,16 +8,16 @@
     <div class="container">
       <div class="form-box">
         <el-form ref="secretRef" :rules="rules" :model="secret" label-width="160px">
-          <el-form-item label="秘密名称" prop="name">
+          <el-form-item label="秘密名称">
             <el-input v-model="secret.secretname"></el-input>
           </el-form-item>
-          <el-form-item label="门限阈值" prop="numberOfT">
-            <el-input-number v-model.number="secret.degree" :min="1" :max="100" prop="numberOfT"></el-input-number>
+          <el-form-item label="门限阈值" >
+            <el-input-number v-model.number="secret.degree" :min="1" :max="100"></el-input-number>
           </el-form-item>
-          <el-form-item label="委员会成员数" prop="numberOfN">
-            <el-input-number v-model.number="secret.counter" :min="1" :max="100" prop="numberOfN"></el-input-number>
+          <el-form-item label="委员会成员数">
+            <el-input-number v-model.number="secret.counter" :min="1" :max="100" ></el-input-number>
           </el-form-item>
-          <el-form-item label="秘密值" prop="secret">
+          <el-form-item label="秘密值" >
             <el-input v-model.number="secret.secret"></el-input>
             <!--            <div class="content-title">支持拖拽</div>-->
             <!--&lt;!&ndash;            <div class="plugins-tips">&ndash;&gt;-->
@@ -130,19 +130,6 @@ export default {
         callback();
       }
     }
-
-    const validatorNumber = (rule, value, callback) => {
-      if (!value) {
-        return callback(new Error("请输入账户信息"));
-      } else {
-        if (1) {
-          callback();
-        } else {
-          return callback(new Error('账号格式不正确'))
-        }
-      }
-    };
-
     const rules = {
       secretname: [
         { required: true, message: "请输入秘密名称", trigger: "blur"},

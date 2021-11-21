@@ -12,7 +12,14 @@
         <!--        <el-col :span="6"><div class="grid-content bg-purple"><el-button type="">修改门限阈值</el-button></div></el-col>-->
         <el-col :span="8">
           <div class="grid-content bg-purple-light">
-            <el-button @click="updatecounter()" type="">修改委员会成员数</el-button>
+            <router-link to="{
+              path: '/changesecret',
+              query: {
+                id:secretid
+              }
+            }">
+              <el-button @click="tochangesecret()" type="">修改委员会成员数</el-button>
+            </router-link>
           </div>
         </el-col>
         <el-col :span="8">
@@ -42,7 +49,7 @@
           <el-form-item label="秘密创建时间" >
             {{secretinfo.create_time}}
           </el-form-item>
-          <el-form-item label="上一次交接时间" >
+          <el-form-item label="上一次变更时间" >
             {{secretinfo.last_update_time}}
           </el-form-item>
           <el-form-item label="秘密描述" >
@@ -124,6 +131,12 @@ export default {
       this.$router.push({
         path:"/unitinfo",
         query:{userid:row[unit_id],secretid:row[unit_ip]}
+      })
+    },
+    tochangesecret(){
+      this.$router.push({
+        path:"/changesecret",
+        query:{id:secretid}
       })
     },
     updatesecret(){

@@ -11,15 +11,15 @@
     <div class="container">
       <div class="form-box">
         <el-form ref="secretRef" :rules="rules" :model="secret" label-width="160px">
-          <el-form-item label="秘密名称：" >
-            <el-input :readonly="true" v-model="secret.name"></el-input>
-          </el-form-item>
-          <el-form-item label="秘密委员会t值：" prop="numberOfT">
-            <el-input-number v-model.number="secret.numberOfT" :min="1" :max="100" prop="numberOfT"></el-input-number>
-          </el-form-item>
-          <el-form-item label="秘密委员会n值：" prop="numberOfN">
-            <el-input-number v-model.number="secret.numberOfN" :min="1" :max="100" prop="numberOfN"></el-input-number>
-          </el-form-item>
+            <el-form-item label="门限阈值" >
+              {{secretinfo.degree}}
+            </el-form-item>
+            <el-form-item label="委员会成员数" >
+              {{secretinfo.counter}}
+            </el-form-item>
+            <el-form-item label="新委员会成员数">
+              <el-input-number v-model.number="newcounter" :min="1" :max="100"></el-input-number>
+            </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="onSubmit">提交秘密</el-button>
             <el-button type="danger" @click="onReset">重置表单</el-button>
@@ -40,38 +40,28 @@ import { ElMessage } from "element-plus";
 export default {
   name: "ChangeSecret",
   data() {
-
-
+    return {
+      newcounter : 1,
+      secretinfo: {      },
+      nodelist: [],
+      secretid: this.$route.query.id,
+    }
   },
   setup() {
-
-    const secretRef = ref(null);
-    const secret = reactive({
-      name: "abc",
-      numberOfT: 0,
-      numberOfN: 0,
-      test: "",
-
-    });
 
     // 提交
     const onSubmit = () => {
       // 表单校验
-      console.log(secret.numberOfN,secret.numberOfT)
-
       secretRef.value.validate((valid) => {
         if (valid) {
-          if (secret.numberOfT*2+1>secret.numberOfN){
-            // console.log(form);
-            console.log("t*2+1>n");
-            ElMessage.error("t*2+1>n");
+          if (secret.degree*2+1>newcounter){
+            ElMessage.error("参数不符合规范");
             return false;
           }else {
             ElMessage.success("提交成功！");
           }
         } else {
           ElMessage.error("缺少必要的输入项");
-          // return false;
         }
       });
     };
@@ -81,7 +71,7 @@ export default {
     };
     //检验t,n代数关系
     const checkNum = (rule, value, callback) => {
-      if (secret.numberOfN<secret.numberOfT*2+1){
+      if (secret.degree*2+1>newcounter){
         callback(new Error("不对"));
       }else {
         console.log("对不对");
@@ -89,24 +79,10 @@ export default {
       }
     }
 
-    const validatorNumber = (rule, value, callback) => {
-      if (!value) {
-        return callback(new Error("请输入账户信息"));
-      } else {
-        if (1) {
-          callback();
-        } else {
-          return callback(new Error('账号格式不正确'))
-        }
-      }
-    };
 
     const rules = {
-      name: [
-        { required: true, message: "请输入秘密名称", trigger: "blur"},
-      ],
       numberOfN: [
-        {  validator: checkNum, message: "n需要大于2×t+1", trigger: "change"}
+        {  validator: checkNum, message: "委员会成员数需要大于2×门限阈值+1", trigger: "change"}
       ],
 
     };

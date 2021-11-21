@@ -106,7 +106,7 @@ func (controll *Controll) GetMessageOfNode(secretid, label int) poly.Poly {
 	coeff := make([]*gmp.Int, degree+1)
 	for i := 0; int64(i) < rowNum; i++ {
 		var newsecretshare model1.Secretshare
-		db.Where("secret_id = ? and unit_id = ? and row =?", secretid, label, i).Find(&newsecretshare)
+		db.Where("secret_id = ? and unit_id = ? and row_num =?", secretid, label, i).Find(&newsecretshare)
 		//Data存放秘密份额,多项式
 		Data := newsecretshare.Data
 
@@ -114,6 +114,7 @@ func (controll *Controll) GetMessageOfNode(secretid, label int) poly.Poly {
 		coeff[i].SetBytes(Data)
 	}
 	tmpPoly, _ := poly.NewPoly(len(coeff))
+	//fmt.Println(coeff)
 	tmpPoly.SetbyCoeff(coeff)
 	return tmpPoly
 	//	return a poly
@@ -151,11 +152,11 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 	for i := 0; i < counter; i++ {
 		coeff := polyyy[i].GetAllCoeff()
 		Coeff := make([][]byte, len(coeff))
-		for i := 0; i < len(coeff); i++ {
-			tmp := make([]byte, len(coeff[i].Bytes()))
-			tmp = coeff[i].Bytes()
-			Coeff[i] = tmp
+		for j := 0; j < len(coeff); j++ {
+			Coeff[j] = coeff[j].Bytes()
 		}
+		fmt.Println("coeff",coeff)
+		fmt.Println("Coeff",Coeff)
 		msg := pb.InitMsg{
 			Degree:   int32(degree),
 			Counter:  int32(counter),
