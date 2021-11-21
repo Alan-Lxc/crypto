@@ -49,7 +49,7 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	if db != nil {
 
 	}
-	var nodeConnnect []*nodes.Node
+	//var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, counter) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, counter)
 	ipList := nodes.ReadIpList(metadatapath + "/ip_list")
@@ -62,7 +62,7 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 			//Secretnum: 0,
 		}
 		db.Create(&newunit)
-		nodeConnnect = append(nodeConnnect, &node)
+		//nodeConnnect = append(nodeConnnect, &node)
 		if err != nil {
 			println(err)
 		}
@@ -152,23 +152,24 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 	var wg sync.WaitGroup
 	for i := 0; i < counter; i++ {
 		coeff := polyyy[i].GetAllCoeff()
-		Coeff := make([][]byte, len(coeff))
-		for j := 0; j < len(coeff); j++ {
+		tmpLength := len(coeff)
+		Coeff := make([][]byte, tmpLength)
+		for j := 0; j < tmpLength; j++ {
 			Coeff[j] = coeff[j].Bytes()
 		}
-		msg := pb.InitMsg{
+		msg := &pb.InitMsg{
 			Degree:   int32(degree),
 			Counter:  int32(counter),
 			Secretid: int32(secretid),
 			Coeff:    Coeff,
 		}
 		wg.Add(1)
-		go func(i int) {
+		go func(i int, msg *pb.InitMsg) {
 			defer wg.Done()
 			ctx, cancel := context.WithCancel(context.Background())
+			controll.nodeService[i].Initsecret(ctx, msg)
 			defer cancel()
-			controll.nodeService[i].Initsecret(ctx, &msg)
-		}(i)
+		}(i, msg)
 	}
 	wg.Wait()
 }
