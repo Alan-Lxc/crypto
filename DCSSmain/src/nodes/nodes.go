@@ -277,7 +277,6 @@ func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (respons
 
 	id := int(msg.GetSecretid())
 	node.get_secret(id)
-	node.secretid = id
 	node.Log.Printf("[Node %d] Now Get start Phase1", node.label)
 	*node.s1 = time.Now()
 	node.CreatAmt(*node.recPoly, node.degree*2+1)
@@ -310,7 +309,7 @@ func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (respons
 //client
 func (node *Node) SendMsgToNode(secretid int) {
 	if *node.iniflag {
-		node.NodeConnect(secretid)
+		node.NodeConnect()
 		*node.iniflag = false
 	}
 	if node.flag_forweb {
@@ -809,7 +808,7 @@ func (node *Node) ClientReadPhase2() {
 //	}
 //}
 func ReadIpList(metadataPath string) []string {
-	ipData, err := ioutil.ReadFile(metadataPath)
+	ipData, err := ioutil.ReadFile(metadataPath + "/ip_list")
 	if err != nil {
 		log.Fatalf("node failed to read iplist %v\n", err)
 	}
@@ -1018,13 +1017,14 @@ func (node *Node) Phase3Readboard() {
 	//y := gmp.NewInt(0)
 	//node.recPoly.EvalMod(gmp.NewInt(int64(0)), node.p, y)
 	//fmt.Println(node.label,y)
-	node.recPoly.EvalMod(gmp.NewInt(0), node.p, node.s0)
-	node.Phase3WriteOnBorad2()
 
 }
 func (node *Node) Phase3WriteOnBorad2() {
 	node.Log.Printf("[node %d] write bulletinboard in phase 3 2", node.label)
 	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
+
+	node.recPoly.EvalMod(gmp.NewInt(0), node.p, node.s0)
+	node.Phase3WriteOnBorad2()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	C := node.dpc.NewG1()
@@ -1088,8 +1088,10 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	//file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
 	//defer file.Close()
 	ipRaw := ReadIpList(logPath)[0 : counter+1]
+	fmt.Println(":????")
 	bip := ipRaw[0]
 	ipList := ipRaw[1 : counter+1]
+
 	if counter < 0 {
 		return Node{}, errors.New("Counter must be a non-negative number!")
 	}
@@ -1278,23 +1280,14 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 
 }
 
-func (node *Node) NodeConnect(secretid int) {
-	if node.flag_forweb {
-		boardConn, err := grpc.Dial(node.boardList[secretid], grpc.WithInsecure())
-		if err != nil {
-			node.Log.Fatalf("Fail to connect board:%v", err)
-		}
-		node.boardConn = boardConn
-		node.boardService = pb.NewBulletinBoardServiceClient(boardConn)
+func (node *Node) NodeConnect() {
+	boradConn, err := grpc.Dial(node.ipOfBoard, grpc.WithInsecure())
+	if err != nil {
+		node.Log.Fatalf("Fail to connect board:%v", err)
 	}
-	if node.flag_forweb == false {
-		boradConn, err := grpc.Dial(node.ipOfBoard, grpc.WithInsecure())
-		if err != nil {
-			node.Log.Fatalf("Fail to connect board:%v", err)
-		}
-		node.boardConn = boradConn
-		node.boardService = pb.NewBulletinBoardServiceClient(boradConn)
-	}
+	node.boardConn = boradConn
+	node.boardService = pb.NewBulletinBoardServiceClient(boradConn)
+
 	for i := 0; i < node.counter; i++ {
 		if i != node.label-1 {
 			clientconn, err := grpc.Dial(node.IpAddress[i], grpc.WithInsecure())
@@ -1326,20 +1319,17 @@ func New_for_web(degree, label, counter int, metadatapath string) (Node, error) 
 	if label < 0 {
 		return Node{}, errors.New("Label must be a non-negative number!")
 	}
-	ip_node := ReadIpList(metadatapath + "/ip_list")
-	ip_bulletborad := ReadIpList(metadatapath + "/bulletboard_list")
-	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
-	if label < 0 {
-		return Node{}, errors.New("Label must be a non-negative number!")
-	}
 	//file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
 	//defer file.Close()
-	//ipRaw := ReadIpList(metadatapath)[0 : counter+1]
-	//bip := ipRaw[0]
-	//ipList := ipRaw[1 : counter+1]
+	ipRaw := ReadIpList(metadatapath)[0 : counter+1]
+	fmt.Println(":????")
+	bip := ipRaw[0]
+	ipList := ipRaw[1 : counter+1]
+
 	if counter < 0 {
 		return Node{}, errors.New("Counter must be a non-negative number!")
 	}
+	randState := rand.New(rand.NewSource(time.Now().Local().UnixNano()))
 	//fixedRandState := rand.New(rand.NewSource(int64(3)))
 	dc := commitment.DLCommit{}
 	dc.SetupFix()
@@ -1387,19 +1377,14 @@ func New_for_web(degree, label, counter int, metadatapath string) (Node, error) 
 	secretShares := make([]*point.Point, counter)
 	secretShares2 := make([]*point.Point, counter)
 	//tmpPoly, err := poly.NewRand(degree, fixedRandState, p)
-	//tmpPoly, err := poly.NewPoly(len(coeff) - 1)
-	//tmpPoly.SetbyCoeff(coeff)
-	//fmt.Println(tmpPoly.GetDegree())
-	//fmt.Println(tmpPoly)
-	//if err != nil {
-	//	panic("Error initializing random tmpPoly")
-	//}
 
 	//fmt.Println(time.Now())
 	proPoly, _ := poly.NewPoly(degree)
 	recPoly, _ := poly.NewPoly(degree)
 	newPoly, _ := poly.NewPoly(degree)
 	shareCnt := 0
+
+	s0 := gmp.NewInt(0)
 
 	oldPolyCmt := make([]*pbc.Element, counter)
 	midPolyCmt := make([]*pbc.Element, counter)
@@ -1450,7 +1435,6 @@ func New_for_web(degree, label, counter int, metadatapath string) (Node, error) 
 
 	amtflag1 := 0
 	amtflag2 := 0
-	s0 := gmp.NewInt(0)
 
 	clientConn := make([]*grpc.ClientConn, counter)
 	nodeService := make([]pb.NodeServiceClient, counter)
@@ -1466,7 +1450,9 @@ func New_for_web(degree, label, counter int, metadatapath string) (Node, error) 
 	log := log.New(tmplogger, "", log.LstdFlags)
 	//log.Printf("Node %d new done,ip = %s", label, ipList[label-1])
 	return Node{
-		//ipOfBoard:    bip,
+		MetadataPath:    metadatapath,
+		IpAddress:       ipList,
+		ipOfBoard:       bip,
 		degree:          degree,
 		label:           label,
 		counter:         counter,
@@ -1514,11 +1500,8 @@ func New_for_web(degree, label, counter int, metadatapath string) (Node, error) 
 		amtPolyCmtSize:  amtPolycmtSize,
 		amtflag1:        amtflag1,
 		amtflag2:        amtflag2,
-		flag_forweb:     true,
-		MetadataPath:    metadatapath,
-		IpAddress:       ip_node,
-		boardList:       ip_bulletborad,
 	}, nil
+
 }
 func (node *Node) Connect_for_web() {
 
@@ -1567,7 +1550,7 @@ func (node *Node) store_secret(degree int, counter int, secretid int, coeffbyte 
 			UnitId:   uint(node.label),
 			Degree:   degree,
 			Counter:  counter,
-			RowNum:      i,
+			RowNum:   i,
 
 			Data: data,
 		}
@@ -1586,6 +1569,7 @@ func (node *Node) store_secret(degree int, counter int, secretid int, coeffbyte 
 }
 func (node *Node) get_secret(secretid int) {
 	//get secret from mysql
+	node.secretid = secretid
 	db := common.GetDB()
 	var secretshares []model.Secretshare
 	result := db.Where("secret_id =?", secretid).Where("unit_id", node.label).Find(&secretshares)

@@ -466,26 +466,30 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 		log:                    logger,
 	}, nil
 }
-func New_bulletboard_for_web(degree, counter int, metadatapath string, secretid int, Polyyy []poly.Poly) (BulletinBoard, error) {
+func New_bulletboard_for_web(degree, counter int, metadataPath string, secretid int, Polyyy []poly.Poly) (BulletinBoard, error) {
 
-	if counter < 0 {
-		return BulletinBoard{}, errors.New(fmt.Sprintf("counter must be non-negative, got %d", counter))
-	}
-	fileName := metadatapath + "/bulletboard.logger"
+	fileName := metadataPath + "/bulletboard.logger"
 	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		tmplogger, err = os.Create(fileName)
 	}
 	//os.Truncate(fileName, 0)
 	logger := log.New(tmplogger, "", log.LstdFlags)
+
+	if counter < 0 {
+		return BulletinBoard{}, errors.New(fmt.Sprintf("counter must be non-negative, got %d", counter))
+	}
+
 	//fixedRandState := rand.New(rand.NewSource(int64(3)))
 	p := gmp.NewInt(0)
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 	dpc := commitment.DLPolyCommit{}
 	dpc.SetupFix(counter)
-	ipList := ReadIpList(metadatapath + "/ip_list")
-	borad_list := ReadIpList(metadatapath + "/bulletboard_list")
-	nodeiplist := ipList[0 : counter+1]
+
+	ipRaw := ReadIpList(metadataPath + "/ip_list")[0 : counter+1]
+	bip := ipRaw[0]
+	ipList := ipRaw[1 : counter+1]
+
 	proCnt := 0
 	shaCnt := 0
 	secretCnt := 0
@@ -495,6 +499,10 @@ func New_bulletboard_for_web(degree, counter int, metadatapath string, secretid 
 	reconstructionContent4 := make([]*pb.Cmt1Msg, counter)
 	reconstructSecret := make([]*gmp.Int, counter)
 	secret := gmp.NewInt(0)
+	//polyp, err := poly.NewRand(degree, fixedRandState, p)
+	//if err != nil {
+	//	bb.logger.Fatal("Error initializing random poly")
+	//}
 	for i := 0; i < counter; i++ {
 		c := dpc.NewG1()
 		dpc.Commit(c, Polyyy[i])
@@ -513,29 +521,28 @@ func New_bulletboard_for_web(degree, counter int, metadatapath string, secretid 
 	nClient := make([]pb.NodeServiceClient, counter)
 
 	totMsgSize := 0
-	//put bulletinboard into mysql
 
 	return BulletinBoard{
-		id:                     secretid,
-		degree:                 degree,
-		p:                      p,
-		metadataPath:           metadatapath,
-		recontructSecret:       reconstructSecret,
-		counter:                counter,
-		bip:                    borad_list[secretid],
-		ipList:                 nodeiplist,
-		proCnt:                 &proCnt,
-		shaCnt:                 &shaCnt,
-		secretCnt:              &secretCnt,
-		secret:                 secret,
-		reconstructionContent:  reconstructionContent,
-		reconstructionContent2: reconstructionContent2,
-		reconstructionContent3: reconstructionContent3,
-		reconstructionContent4: reconstructionContent4,
-		proactivizationContent: proactivizationContent,
-		nConn:                  nConn,
-		nClient:                nClient,
-		totMsgSize:             &totMsgSize,
-		log:                    logger,
+		idNew_bulletboard_for_web: secretid,
+		degree:                    degree,
+		p:                         p,
+		metadataPath:              metadataPath,
+		recontructSecret:          reconstructSecret,
+		counter:                   counter,
+		bip:                       bip,
+		ipList:                    ipList,
+		proCnt:                    &proCnt,
+		shaCnt:                    &shaCnt,
+		secretCnt:                 &secretCnt,
+		secret:                    secret,
+		reconstructionContent:     reconstructionContent,
+		reconstructionContent2:    reconstructionContent2,
+		reconstructionContent3:    reconstructionContent3,
+		reconstructionContent4:    reconstructionContent4,
+		proactivizationContent:    proactivizationContent,
+		nConn:                     nConn,
+		nClient:                   nClient,
+		totMsgSize:                &totMsgSize,
+		log:                       logger,
 	}, nil
 }
