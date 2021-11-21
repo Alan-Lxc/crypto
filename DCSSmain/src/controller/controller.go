@@ -52,7 +52,7 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	//var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, counter) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, counter)
-	ipRaw := ReadIpList(metadataPath)[0 : counter+1]
+	ipRaw := nodes.ReadIpList(metadatapath + "/ip_list")[0 : counter+1]
 	ipList := ipRaw[1 : counter+1]
 	for i := 0; i < counter; i++ {
 		node, err := nodes.New_for_web(degree, i+1, counter, metadatapath)
