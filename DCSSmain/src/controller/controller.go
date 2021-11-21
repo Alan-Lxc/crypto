@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -113,7 +114,7 @@ func (controll *Controll) GetMessageOfNode(secretid, label int) poly.Poly {
 		coeff[i] = gmp.NewInt(0)
 		coeff[i].SetBytes(Data)
 	}
-	tmpPoly, _ := poly.NewPoly(len(coeff))
+	tmpPoly, _ := poly.NewPoly(len(coeff) - 1)
 	tmpPoly.SetbyCoeff(coeff)
 	return tmpPoly
 	//	return a poly
@@ -148,13 +149,12 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 	}
 	controll.Initsystem(degree, counter, metadatapath, secretid, polyyy)
 
+	var wg sync.WaitGroup
 	for i := 0; i < counter; i++ {
 		coeff := polyyy[i].GetAllCoeff()
 		Coeff := make([][]byte, len(coeff))
-		for i := 0; i < len(coeff); i++ {
-			tmp := make([]byte, len(coeff[i].Bytes()))
-			tmp = coeff[i].Bytes()
-			Coeff[i] = tmp
+		for j := 0; j < len(coeff); j++ {
+			Coeff[j] = coeff[j].Bytes()
 		}
 		msg := pb.InitMsg{
 			Degree:   int32(degree),
@@ -162,10 +162,15 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 			Secretid: int32(secretid),
 			Coeff:    Coeff,
 		}
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		controll.nodeService[i].Initsecret(ctx, &msg)
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			controll.nodeService[i].Initsecret(ctx, &msg)
+		}(i)
 	}
+	wg.Wait()
 }
 
 func (controll *Controll) Handoff(secretid int, degree int, counter int) {
