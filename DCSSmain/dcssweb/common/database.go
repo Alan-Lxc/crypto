@@ -41,9 +41,11 @@ func InitDB() *gorm.DB {
 	err = db.AutoMigrate(&model.Unit{})
 	err = db.AutoMigrate(&srcmodel.Secretshare{})
 	err = db.AutoMigrate(&model.Secret{})
+	err = db.AutoMigrate(&model.SecretUnit{})
 	err = db.Where("1=1").Delete(&model.Unit{}).Error
 	err = db.Where("1=1").Delete(&srcmodel.Secretshare{}).Error
 	err = db.Where("1=1").Delete(&model.Secret{}).Error
+	err = db.Where("1=1").Delete(&model.SecretUnit{}).Error
 	if err != nil {
 		return nil
 	}

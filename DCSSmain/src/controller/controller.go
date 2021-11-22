@@ -45,11 +45,9 @@ var metadatapath = "/home/kzl/Desktop/test/crypto_contest/DCSSmain/src/metadata"
 func New() *Controll {
 	return new(Controll)
 }
-func (controll *Controll) Initsystem(degree, counter int, metadatapath string, secretid int, polyyy []poly.Poly) {
-	db := common.GetDB()
-	if db != nil {
 
-	}
+func (controll *Controll) Initsystem(degree, counter int, metadatapath string, secretid int, polyyy []poly.Poly) {
+
 	//var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, counter) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, counter)
@@ -57,29 +55,25 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	ipList := ipRaw[1 : counter+1]
 
 	nn := make([]*nodes.Node, counter)
+
 	for i := 0; i < counter; i++ {
 		node, err := nodes.New_for_web(degree, i+1, counter, metadatapath)
 
-		time.Sleep(1)
+		go node.Serve_for_web()
+		//time.Sleep(1)
 		//here need to change merge NODE
 		nn[i]=&node
-		newunit := model.Unit{
-			UnitId: node.GetLabel(),
-			UnitIp: ipList[node.GetLabel()-1],
-			//Secretnum: 0,
-		}
-		db.Create(&newunit)
 		//nodeConnnect = append(nodeConnnect, &node)
 		if err != nil {
 			println(err)
 		}
-		go node.Serve_for_web()
 		Conn, err := grpc.Dial(ipList[i], grpc.WithInsecure())
 		if err != nil {
 			log.Fatalf("Fail to connect with %s:%v", ipList[i], err)
 		}
 		nConn[i] = Conn
 		nodeService[i] = pb.NewNodeServiceClient(Conn)
+
 	}
 	bb, _ := bulletboard.New_bulletboard_for_web(degree, counter, metadatapath, secretid, polyyy)
 	go bb.Serve(false)
@@ -91,7 +85,7 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	//boradList := nodes.ReadIpList(metadatapath + "/bulletboard_list")
 	//controll := new(Controll)
 	controll.nn = nn
-	controll.ipList = ipList
+	ipList = ipList
 	controll.nodeConn = nConn
 	controll.nodeService = nodeService
 	//controll.bulletboardList = boradList
@@ -99,7 +93,25 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	controll.boardService = boardService
 	controll.bbNum = 1
 	controll.nodeNum = counter
+
+	var wg sync.WaitGroup
+	for i := 0; i < counter; i++ {
+		msg := &pb.StartMsg{
+		}
+		wg.Add(1)
+		go func(i int, msg *pb.StartMsg) {
+			defer wg.Done()
+			ctx, cancel := context.WithCancel(context.Background())
+			_ , err := controll.nodeService[i].Phase1GetStart(ctx, msg)
+			if err != nil{
+				fmt.Println("I find bug" ,err)
+			}
+			defer cancel()
+		}(i, msg)
+	}
+	wg.Wait()
 	//return controll
+
 }
 func (controll *Controll) GetMessageOfNode(secretid, label int) poly.Poly {
 
@@ -165,9 +177,6 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		for j := 0; j < tmpLength; j++ {
 			Coeff[j] = coeff[j].Bytes()
 		}
-		fmt.Println("coeff",coeff)
-		fmt.Println("Coeff",Coeff)
-		//msg := pb.InitMsg{
 		msg := &pb.InitMsg{
 			Degree:   int32(degree),
 			Counter:  int32(counter),
@@ -178,13 +187,12 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		go func(i int, msg *pb.InitMsg) {
 			defer wg.Done()
 			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			fmt.Println("1")
 			_, err := controll.nodeService[i].Initsecret(ctx, msg)
 			if err != nil {
+				fmt.Println("i find bug")
 				fmt.Println(err)
-				return
 			}
+			defer cancel()
 		}(i, msg)
 	}
 	wg.Wait()

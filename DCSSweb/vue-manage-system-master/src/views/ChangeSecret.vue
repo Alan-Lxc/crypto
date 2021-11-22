@@ -21,9 +21,8 @@
               <el-input-number v-model.number="newcounter" :min="1" :max="100"></el-input-number>
             </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="onSubmit">提交秘密</el-button>
+            <el-button type="primary" @click="onSubmit">确认提交</el-button>
             <el-button type="danger" @click="onReset">重置表单</el-button>
-            <el-button type="danger" @click="cancel">取消</el-button>
           </el-form-item>
 
         </el-form>
@@ -37,6 +36,7 @@
 <script>
 import {ref, reactive} from "vue";
 import { ElMessage } from "element-plus";
+let tmpparams = null;
 export default {
   name: "ChangeSecret",
   data() {
@@ -47,12 +47,14 @@ export default {
       degree:this.$route.query.degree,
     }
   },
-  setup() {
 
+  onLoad(options){
+    console.log('options:',options)
+    tmpparams = options
+  },
+  setup() {
+    console.log('params:',tmpparams)
     const newcounter = ref(1);
-    const secretid = this.$route.query.id;
-    const oldcounter=this.$route.query.oldcounter;
-    const degree=this.$route.query.degree;
     const secretRef = ref(null);
     // 提交
     const onSubmit = () => {

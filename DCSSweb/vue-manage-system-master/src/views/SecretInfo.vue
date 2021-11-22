@@ -23,7 +23,7 @@
         </el-col>
         <el-col :span="8">
           <div class="grid-content bg-purple-light">
-            <el-button @click="reconstructsecret"  type="">重构秘密值</el-button>
+            <el-button @click="reconstructsecret()"  type="">重构秘密值</el-button>
           </div>
         </el-col>
 
@@ -46,9 +46,9 @@
           <el-form-item label="上一次变更时间" >
             {{secretinfo.last_update_time}}
           </el-form-item>
-          <el-form-item label="秘密描述" >
-            {{secretinfo.description}}
-          </el-form-item>
+<!--          <el-form-item label="秘密描述" >-->
+<!--            {{secretinfo.description}}-->
+<!--          </el-form-item>-->
         </el-form>
       </div>
     </div>
@@ -124,7 +124,10 @@ export default {
     handleClick(row){
       this.$router.push({
         path:"/unitinfo",
-        query:{userid:row[unit_id],secretid:row[unit_ip]}
+        // query:{
+        //   userid:row[Unitid],
+        //   secretid:row[Unitip],
+        // }
       })
     },
     tochangesecret(){

@@ -17,12 +17,11 @@
           <div class="radio">
             排序：
             <el-radio-group v-model="reverse">
-              <el-radio :label="true" prop>倒序</el-radio>
-              <el-radio :label="false">正序</el-radio>
+              <el-radio :label="reverse">倒序</el-radio>
+              <el-radio :label="!reverse">正序</el-radio>
             </el-radio-group>
           </div>
         </el-header>
-
         <el-timeline :reverse="reverse">
           <el-timeline-item
               v-for="(log, index) in logs"
@@ -151,7 +150,7 @@ export default {
     }
   },
   created() {
-    this.getloglist()
+    // this.getloglist()
   },
   methods: {
     getloglist(){

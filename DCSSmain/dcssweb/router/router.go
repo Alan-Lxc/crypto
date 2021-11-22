@@ -15,7 +15,7 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	//r.POST("/api/newsecret", controller.NewSecret)
 	//r.GET("/api/getsecretlist", controller.Getsecretlist)
 
-	r.POST("/api/secret/newsecret", controller.NewSecret)
+	r.POST("/api/secret/newsecret", controller.NewSecret2)
 	r.POST("/api/secret/updatesecretcounter", controller.UpdateSecretCounter)
 	r.POST("/api/secret/deletesecret", controller.DeleteSecret)
 	r.GET("/api/secret/getsecret", controller.GetSecret)

@@ -5,7 +5,6 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/dto"
 	model "github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	reponse "github.com/Alan-Lxc/crypto_contest/dcssweb/response"
-	model1 "github.com/Alan-Lxc/crypto_contest/src/model"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
@@ -21,15 +20,14 @@ func GetUnitList(ctx *gin.Context)  {
 		reponse.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "查询错误")
 		return
 	}
-	var secretshares []model1.Secretshare;
+	var secretunits []model.SecretUnit;
 	var units []model.Unit;
-	db.Distinct("unit_id").Where("secret_id=? ",secretid).Find(&secretshares)
-	for i := 0; i < len(secretshares); i++ {
+	db.Distinct("unitid").Where("secretid=? ",secretid).Find(&secretunits)
+	for i := 0; i < len(secretunits); i++ {
 		var newunit = model.Unit{}
-		db.Where("unit_id=?",secretshares[i].UnitId).First(&newunit)
+		db.Where("unit_id=?", secretunits[i].Unitid).First(&newunit)
 		units = append(units, newunit)
 	}
-
 	reponse.Success(
 		ctx,
 		gin.H{
