@@ -126,7 +126,7 @@ func (controll *Controll) GetMessageOfNode(secretid, label int) poly.Poly {
 		db.Where("secret_id = ? and unit_id = ? and row_num =? ", secretid, label, i).Find(&newsecretshare)
 		//Data存放秘密份额,多项式
 		Data := newsecretshare.Data
-		fmt.Println(Data)
+		//fmt.Println(Data)
 		coeff[i] = gmp.NewInt(0)
 		coeff[i].SetBytes(Data)
 	}
@@ -206,61 +206,63 @@ func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 	controll.Release(counter)
 }
 
-//
-//func (controll *Controll) Reconstruct(secretid int, degree int, counter int) string {
-//	log.Printf("Start to Reconstruction")
-//
-//	//get degree, counter, metadatapath, secretid, polyyy
-//	polyyy := controll.Getmessage(secretid, degree, counter)
-//	controll.Initsystem(degree, counter, metadatapath, secretid, polyyy)
-//	ctx, cancel := context.WithCancel(context.Background())
-//	defer cancel()
-//	_, err := controll.boardService.StartReconstruct(ctx, &pb.RequestMsg{})
-//	if err != nil {
-//		log.Fatalf("Start Reconstruction Fail:%v", err)
-//	}
-//	// Set to string
-//	return controll.boardService.gets0()
-//	return "123"
-//}
-//
-//func (controll *Controll) ModifyCommittee(secretid int, degree int, oldn int, newn int) {
-//	log.Printf("Start to ModifyCommittee")
-//
-//	//get degree, counter, metadatapath, secretid, polyyy
-//	counter := 0
-//	if oldn > newn {
-//		counter = oldn
-//	} else {
-//		counter = newn
-//	}
-//	polyyy := controll.Getmessage(secretid, degree, counter)
-//	controll.Initsystem(degree, counter, metadatapath, secretid, polyyy)
-//
-//	var wg sync.WaitGroup
-//	if oldn > newn {
-//		for i := newn; i < counter; i++ {
-//			wg.Add(1)
-//			go func(i int) {
-//				defer wg.Done()
-//				ctx, cancel := context.WithCancel(context.Background())
-//				controll.nodeService[i].DeleteSecret(ctx)
-//				defer cancel()
-//			}(i)
-//		}
-//	} else {
-//		for i := oldn; i < counter; i++ {
-//			wg.Add(1)
-//			go func(i int) {
-//				defer wg.Done()
-//				ctx, cancel := context.WithCancel(context.Background())
-//				controll.nodeService[i].AddSecret(ctx)
-//				defer cancel()
-//			}(i)
-//		}
-//	}
-//	wg.Wait()
-//}
+func (controll *Controll) Reconstruct(secretid int, degree int, counter int) string {
+	log.Printf("Start to Reconstruction")
+
+	//get degree, counter, metadatapath, secretid, polyyy
+	polyyy := controll.Getmessage(secretid, degree, counter)
+	controll.Initsystem(degree, counter, metadatapath, secretid, polyyy)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	_, err := controll.boardService.StartReconstruct(ctx, &pb.RequestMsg{})
+	if err != nil {
+		log.Fatalf("Start Reconstruction Fail:%v", err)
+	}
+	// Set to string
+	Secret := controll.Bulletinboard.Getsecret().String()
+	controll.Release(counter)
+	return Secret
+	//return "123"
+}
+
+func (controll *Controll) ModifyCommittee(secretid int, degree int, oldn int, newn int) {
+	log.Printf("Start to ModifyCommittee")
+
+	//get degree, counter, metadatapath, secretid, polyyy
+	counter := 0
+	if oldn > newn {
+		counter = oldn
+	} else {
+		counter = newn
+	}
+	polyyy := controll.Getmessage(secretid, degree, counter)
+	controll.Initsystem(degree, counter, metadatapath, secretid, polyyy)
+
+	var wg sync.WaitGroup
+	if oldn > newn {
+		for i := newn; i < counter; i++ {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				ctx, cancel := context.WithCancel(context.Background())
+				controll.nodeService[i].DeleteSecret(ctx, &pb.RequestMsg{})
+				defer cancel()
+			}(i)
+		}
+	} else {
+		for i := oldn; i < counter; i++ {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				ctx, cancel := context.WithCancel(context.Background())
+				controll.nodeService[i].AddSecret(ctx, &pb.RequestMsg{})
+				defer cancel()
+			}(i)
+		}
+	}
+	wg.Wait()
+	controll.Release(counter)
+}
 
 //package controller
 //

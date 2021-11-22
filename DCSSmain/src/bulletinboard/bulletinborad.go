@@ -17,6 +17,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -330,8 +331,8 @@ func (bb *BulletinBoard) ClientStartPhase1(secretid int) {
 		bb.Connect()
 	}
 	var wg sync.WaitGroup
+	bb.log.Print("[Bulletinboard] start phase 1")
 	for i := 0; i < bb.counter; i++ {
-		bb.log.Print("[Bulletinboard] start phase 1")
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -346,8 +347,8 @@ func (bb *BulletinBoard) ClientStartPhase1(secretid int) {
 
 func (bb *BulletinBoard) ClientStartVerifPhase2() {
 	var wg sync.WaitGroup
+	bb.log.Print("[Bulletinboard] start verification in phase 2")
 	for i := 0; i < bb.counter; i++ {
-		bb.log.Print("[Bulletinboard] start verification in phase 2")
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -372,8 +373,8 @@ func (bb *BulletinBoard) ClientStartVerifPhase2() {
 //}
 func (bb *BulletinBoard) ClientStartVerifPhase3() {
 	var wg sync.WaitGroup
+	bb.log.Print("[Bulletinboard] start verification in phase 3")
 	for i := 0; i < bb.counter; i++ {
-		bb.log.Print("[Bulletinboard] start verification in phase 3")
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -477,7 +478,7 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 }
 func NewBulletboardForWeb(degree, counter int, metadataPath string, secretid int, Polyyy []poly.Poly) (BulletinBoard, error) {
 
-	fileName := metadataPath + "/Bulletinboard.logger"
+	fileName := metadataPath + "/Secretid" + strconv.Itoa(secretid) + "Bulletinboard.log"
 	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		tmplogger, err = os.Create(fileName)

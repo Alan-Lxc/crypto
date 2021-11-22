@@ -381,7 +381,7 @@ func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (respo
 func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error) {
 	*node.totMsgSize = *node.totMsgSize + proto.Size(pointmsg)
 	index := pointmsg.GetIndex()
-	node.Log.Printf("Phase 1 :[Node %d] receive point message from [Node %d]", node.label, index)
+	node.Log.Printf("[Node %d] receive point message from [Node %d] in phase 1", node.label, index)
 	x := gmp.NewInt(0)
 	x.SetBytes(pointmsg.GetX())
 	y := gmp.NewInt(0)
@@ -1010,8 +1010,8 @@ func (node *Node) Phase3Readboard() {
 	//node.recPoly.EvalMod(gmp.NewInt(int64(0)), node.p, y)
 	//fmt.Println(node.label,y)
 	*node.e3 = time.Now()
-	f, _ := os.OpenFile(node.MetadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	defer f.Close()
+	//f, _ := os.OpenFile(node.MetadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	//defer f.Close()
 	node.Log.Printf("[Node %d] finished handoff", node.label)
 	node.Log.Printf("totMsgSize,%d\n", *node.totMsgSize)
 	node.Log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
@@ -1033,12 +1033,12 @@ func (node *Node) Phase3Readboard() {
 }
 
 func (node *Node) Reconstruct(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
-	node.Log.Printf("[Node %d] start verification in phase 2")
+	node.Log.Printf("[Node %d] start reconstruct in phase 2")
 	node.Phase3Readboard2()
 	return &pb.ResponseMsg{}, nil
 }
 func (node *Node) Phase3Readboard2() {
-	node.Log.Printf("[Node %d] write bulletinboard in phase 3 2", node.label)
+	//node.Log.Printf("[Node %d] write bulletinboard in phase 3 2", node.label)
 	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 
 	node.recPoly.EvalMod(gmp.NewInt(0), node.p, node.s0)
@@ -1437,7 +1437,7 @@ func NewForWeb(degree, label, counter int, metadatapath string, secretid int) (N
 
 	iniflag := true
 
-	fileName := "./src/metadata/logOfNode" + strconv.Itoa(label) + ".log"
+	fileName := metadatapath + "/Screct" + strconv.Itoa(secretid) + "Node" + strconv.Itoa(label) + ".log"
 	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		tmplogger, err = os.Create(fileName)
@@ -1501,6 +1501,7 @@ func NewForWeb(degree, label, counter int, metadatapath string, secretid int) (N
 
 }
 func (node *Node) DeleteServe() {
+	node.Log.Printf("[Node %d] delete serve ", node.label)
 	node.server.Stop()
 }
 func (node *Node) ServeForWeb() {
@@ -1517,7 +1518,7 @@ func (node *Node) ServeForWeb() {
 	if err != nil {
 		log.Fatalf("[Node %d] fail to provide service", node.label)
 	}
-	log.Println("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
+	node.Log.Printf("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
 }
 func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.ResponseMsg, error) {
 	//fmt.Println("msg in the function ", msg)
