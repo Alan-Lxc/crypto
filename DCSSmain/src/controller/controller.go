@@ -6,7 +6,7 @@ import (
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
-	"github.com/Alan-Lxc/crypto_contest/src/bulletboard"
+	"github.com/Alan-Lxc/crypto_contest/src/bulletinboard"
 	model1 "github.com/Alan-Lxc/crypto_contest/src/model"
 	"github.com/Alan-Lxc/crypto_contest/src/nodes"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
@@ -29,8 +29,10 @@ type Controll struct {
 	//boardService
 	boardService pb.BulletinBoardServiceClient
 	//metadatapath
-	ipList          []string
-	bulletboardList []string
+	node              []*nodes.Node
+	Bulletinboard     *Bulletinboard.BulletinBoard
+	ipList            []string
+	BulletinboardList []string
 	//bb num
 	bbNum   int
 	nodeNum int
@@ -40,31 +42,42 @@ type Controll struct {
 var Controller *Controll
 
 //这里写了metadatapath，后面就不需要写了
-var metadatapath = "/home/kzl/Desktop/test/crypto_contest/DCSSmain/src/metadata"
+var metadatapath = "//home/gary/GolandProjects/crypto_contest4/DCSSmain/src/metadata"
 
 func New() *Controll {
 	return new(Controll)
 }
+func (controll *Controll) Release(counter int) {
+	for i := 0; i < counter; i++ {
+		controll.node[i].DeleteServe()
+	}
+	controll.Bulletinboard.DeleteServe()
+	controll.node = nil
+	controll.Bulletinboard = nil
+}
+
 func (controll *Controll) Initsystem(degree, counter int, metadatapath string, secretid int, polyyy []poly.Poly) {
-	//db := common.GetDB()
-	//if db != nil {
-	//
-	//}
+	db := common.GetDB()
+	if db != nil {
+
+	}
 	//var nodeConnnect []*nodes.Node
 	nConn := make([]*grpc.ClientConn, counter) //get from sql and new
 	nodeService := make([]pb.NodeServiceClient, counter)
-	ipRaw := nodes.ReadIpList(metadatapath + "/ip_list")[0 : counter+1]
+	ipRaw := nodes.ReadIpList(metadatapath)[0 : counter+1]
 	ipList := ipRaw[1 : counter+1]
+	nn := make([]*nodes.Node, counter)
 	for i := 0; i < counter; i++ {
-		node, err := nodes.New_for_web(degree, i+1, counter, metadatapath, secretid)
-		go node.Serve_for_web()
+		node, err := nodes.NewForWeb(degree, i+1, counter, metadatapath, secretid)
+		go node.ServeForWeb()
 		// here need to change merge NODE
-		//newunit := model.Unit{
-		//	UnitId: node.GetLabel(),
-		//	UnitIp: node.ipList[node.GetLabel()],
-		//	//Secretnum: 0,
-		//}
-		//db.Create(&newunit)
+		newunit := model.Unit{
+			UnitId: node.GetLabel(),
+			UnitIp: ipList[node.GetLabel()-1],
+			//Secretnum: 0,
+		}
+		db.Create(&newunit)
+		nn[i] = &node
 		//nodeConnnect = append(nodeConnnect, &node)
 		if err != nil {
 			println(err)
@@ -76,7 +89,7 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 		nConn[i] = Conn
 		nodeService[i] = pb.NewNodeServiceClient(Conn)
 	}
-	bb, _ := bulletboard.New_bulletboard_for_web(degree, counter, metadatapath, secretid, polyyy)
+	bb, _ := Bulletinboard.NewBulletboardForWeb(degree, counter, metadatapath, secretid, polyyy)
 	go bb.Serve(false)
 	time.Sleep(2)
 	bconn, _ := grpc.Dial(bb.Getbip(), grpc.WithInsecure())
@@ -87,9 +100,11 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	controll.ipList = ipList
 	controll.nodeConn = nConn
 	controll.nodeService = nodeService
-	//controll.bulletboardList = boradList
+	//controll.BulletinboardList = boradList
 	controll.boardConn = boardConn
 	controll.boardService = boardService
+	controll.node = nn
+	controll.Bulletinboard = &bb
 	//controll.bbNum = 1
 	//controll.nodeNum = counter
 	//return controll
@@ -108,10 +123,10 @@ func (controll *Controll) GetMessageOfNode(secretid, label int) poly.Poly {
 	coeff := make([]*gmp.Int, 2*degree+1)
 	for i := 0; int64(i) < rowNum; i++ {
 		var newsecretshare model1.Secretshare
-		db.Where("secret_id = ? and unit_id = ? and row =?", secretid, label, i).Find(&newsecretshare)
+		db.Where("secret_id = ? and unit_id = ? and row_num =? ", secretid, label, i).Find(&newsecretshare)
 		//Data存放秘密份额,多项式
 		Data := newsecretshare.Data
-
+		fmt.Println(Data)
 		coeff[i] = gmp.NewInt(0)
 		coeff[i].SetBytes(Data)
 	}
@@ -173,6 +188,7 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		}(i, msg)
 	}
 	wg.Wait()
+	controll.Release(counter)
 }
 
 func (controll *Controll) Handoff(secretid int, degree int, counter int) {
@@ -187,6 +203,7 @@ func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 	if err != nil {
 		log.Fatalf("Start Handoff Fail:%v", err)
 	}
+	controll.Release(counter)
 }
 
 //
@@ -253,7 +270,7 @@ func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 //	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 //	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 //	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
-//	"github.com/Alan-Lxc/crypto_contest/src/bulletboard"
+//	"github.com/Alan-Lxc/crypto_contest/src/Bulletinboard"
 //	"github.com/Alan-Lxc/crypto_contest/src/nodes"
 //	pb "github.com/Alan-Lxc/crypto_contest/src/service"
 //	"github.com/ncw/gmp"
@@ -274,7 +291,7 @@ func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 //	boardService []pb.BulletinBoardServiceClient
 //	//metadatapath
 //	ipList          []string
-//	bulletboardList []string
+//	BulletinboardList []string
 //	//bb num
 //	bbNum   int
 //	nodeNum int
@@ -314,12 +331,12 @@ func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 //		nConn[i] = Conn
 //		nodeService[i] = pb.NewNodeServiceClient(Conn)
 //	}
-//	boradList := nodes.ReadIpList(metadatapath + "/bulletboard_list")
+//	boradList := nodes.ReadIpList(metadatapath + "/Bulletinboard_list")
 //	controll := new(Controll)
 //	controll.ipList = ipList
 //	controll.nodeConn = nConn
 //	controll.nodeService = nodeService
-//	controll.bulletboardList = boradList
+//	controll.BulletinboardList = boradList
 //	controll.boardConn = make([]*grpc.ClientConn, 10)
 //	controll.boardService = make([]pb.BulletinBoardServiceClient, 10)
 //	controll.bbNum = 10
@@ -345,12 +362,12 @@ func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 //		polyyy[i], _ = poly.NewRand(degree*2, fixedRandState, p)
 //		polyyy[i].SetCoeffWithGmp(0, y)
 //	}
-//	bb, _ := bulletboard.New_bulletboard_for_web(degree, counter, metadatapath, secretid, polyyy)
+//	bb, _ := Bulletinboard.New_Bulletinboard_for_web(degree, counter, metadatapath, secretid, polyyy)
 //	go bb.Serve(false)
 //	time.Sleep(2)
 //	bconn, err := grpc.Dial(bb.Getbip(), grpc.WithInsecure())
 //	if err != nil {
-//		log.Fatalf("System could not connect to bulletboard %d", secretid)
+//		log.Fatalf("System could not connect to Bulletinboard %d", secretid)
 //	}
 //	if secretid > controll.bbNum {
 //		tmp1 := make([]*grpc.ClientConn, secretid-controll.bbNum)

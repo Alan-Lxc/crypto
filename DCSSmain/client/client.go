@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
-	"github.com/Alan-Lxc/crypto_contest/src/bulletboard"
+	"github.com/Alan-Lxc/crypto_contest/src/bulletinboard"
 	"github.com/Alan-Lxc/crypto_contest/src/control"
 	"github.com/Alan-Lxc/crypto_contest/src/nodes"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
@@ -54,7 +54,7 @@ func ReadIpList(metadataPath string) []string {
 	return strings.Split(string(ipData), "\n")
 }
 func newClient(degree, counter int, metadataPath string, ip string) (client, error) {
-	fileName := metadataPath + "/bulletboard.log"
+	fileName := metadataPath + "/Bulletinboard.log"
 	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		tmplogger, err = os.Create(fileName)
@@ -115,7 +115,7 @@ func (c *client) InitandConnect(s0 string) {
 	time.Sleep(6)
 	bconn, err := grpc.Dial(c.ipBorad, grpc.WithInsecure())
 	if err != nil {
-		c.log.Fatalf("Client could not connect to bulletboard")
+		c.log.Fatalf("Client could not connect to Bulletinboard")
 	}
 	c.boardConn = bconn
 	c.boardService = pb.NewBulletinBoardServiceClient(bconn)
@@ -154,7 +154,7 @@ func (c *client) InitandConnect(s0 string) {
 	c.control.StartHandoff()
 }
 func newBoard(degree int, ccounter int, metadataPath string, polyyy []poly.Poly) {
-	bb, _ := bulletboard.New(degree, ccounter, metadataPath, polyyy)
+	bb, _ := Bulletinboard.New(degree, ccounter, metadataPath, polyyy)
 	//fmt.Println(metadataPath)
 	bb.Serve(false)
 }
