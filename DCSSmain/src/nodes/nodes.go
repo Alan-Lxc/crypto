@@ -275,8 +275,8 @@ func (node *Node) CreatAmt(ployy poly.Poly, size int) {
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (response *pb.ResponseMsg, err error) {
 
-	id := int(msg.GetSecretid())
-	node.get_secret(id)
+	//id := int(msg.GetSecretid())
+	node.get_secret(node.secretid)
 	node.Log.Printf("[Node %d] Now Get start Phase1", node.label)
 	*node.s1 = time.Now()
 	node.CreatAmt(*node.recPoly, node.degree*2+1)
@@ -312,16 +312,7 @@ func (node *Node) SendMsgToNode(secretid int) {
 		node.NodeConnect()
 		*node.iniflag = false
 	}
-	if node.flag_forweb {
-		if node.counter > len(node.nodeService) {
-			add := node.counter - len(node.nodeService)
-			tmp1 := make([]*grpc.ClientConn, add)
-			tmp2 := make([]pb.NodeServiceClient, add)
-			node.clientConn = append(node.clientConn, tmp1...)
-			node.nodeService = append(node.nodeService, tmp2...)
 
-		}
-	}
 	if node.label > node.degree*2+1 {
 		return
 	}
@@ -1019,24 +1010,29 @@ func (node *Node) Phase3Readboard() {
 	//fmt.Println(node.label,y)
 
 }
-func (node *Node) Phase3WriteOnBorad2() {
+
+//func (node *Node) Reconstruct(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
+//	node.Log.Printf("[Node %d] start verification in phase 2")
+//	node.Phase3Readboard2()
+//	return &pb.ResponseMsg{}, nil
+//}
+func (node *Node) Phase3Readboard2() {
 	node.Log.Printf("[node %d] write bulletinboard in phase 3 2", node.label)
 	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 
 	node.recPoly.EvalMod(gmp.NewInt(0), node.p, node.s0)
-	node.Phase3WriteOnBorad2()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	C := node.dpc.NewG1()
-	node.dpc.Commit(C, *node.recPoly)
-	//fmt.Println(node.label,C)
-	//fmt.Println(node.label,"22")
-	msg := &pb.Cmt1Msg{
-		Index:   int32(node.label),
-		Polycmt: C.CompressedBytes(),
-	}
-
-	node.boardService.WritePhase32(ctx, msg)
+	//C := node.dpc.NewG1()
+	//node.dpc.Commit(C, *node.recPoly)
+	////fmt.Println(node.label,C)
+	////fmt.Println(node.label,"22")
+	//msg := &pb.Cmt1Msg{
+	//	Index:   int32(node.label),
+	//	Polycmt: C.CompressedBytes(),
+	//}
+	//
+	//node.boardService.WritePhase32(ctx, msg)
 	tmpPoly, _ := poly.NewPoly(node.degree * 2)
 	tmpPoly.ResetTo(*node.recPoly)
 	YY := gmp.NewInt(0)
@@ -1088,7 +1084,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 	//file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
 	//defer file.Close()
 	ipRaw := ReadIpList(logPath)[0 : counter+1]
-	fmt.Println(":????")
+	//fmt.Println(":????")
 	bip := ipRaw[0]
 	ipList := ipRaw[1 : counter+1]
 
@@ -1315,14 +1311,14 @@ func (node *Node) Service() {
 
 	node.Log.Printf("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
 }
-func New_for_web(degree, label, counter int, metadatapath string) (Node, error) {
+func New_for_web(degree, label, counter int, metadatapath string, secretid int) (Node, error) {
 	if label < 0 {
 		return Node{}, errors.New("Label must be a non-negative number!")
 	}
 	//file, _ := os.Create(logPath + "/log" + strconv.Itoa(label))
 	//defer file.Close()
 	ipRaw := ReadIpList(metadatapath)[0 : counter+1]
-	fmt.Println(":????")
+	//fmt.Println(":????")
 	bip := ipRaw[0]
 	ipList := ipRaw[1 : counter+1]
 
@@ -1450,6 +1446,7 @@ func New_for_web(degree, label, counter int, metadatapath string) (Node, error) 
 	log := log.New(tmplogger, "", log.LstdFlags)
 	//log.Printf("Node %d new done,ip = %s", label, ipList[label-1])
 	return Node{
+		secretid:        secretid,
 		MetadataPath:    metadatapath,
 		IpAddress:       ipList,
 		ipOfBoard:       bip,
@@ -1522,12 +1519,12 @@ func (node *Node) Serve_for_web() {
 	log.Println("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
 }
 func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.ResponseMsg, error) {
-	fmt.Println("msg in the function ",msg)
+	fmt.Println("msg in the function ", msg)
 	degree := int(msg.GetDegree())
 	counter := int(msg.GetCounter())
 	secretid := int(msg.GetSecretid())
 	coeffbytes := msg.GetCoeff()
-	fmt.Println("coeffbytes",coeffbytes)
+	fmt.Println("coeffbytes", coeffbytes)
 	//coeff := make([]*gmp.Int, degree+1)
 	//for i := 0; i < degree+1; i++ {
 	//	coeff[i] = gmp.NewInt(0)
@@ -1541,7 +1538,7 @@ func (node *Node) store_secret(degree int, counter int, secretid int, coeffbyte 
 	db := common.GetDB()
 	//向数据库中插入新纪录
 	for _, bytes := range coeffbyte {
-		fmt.Println("bytes:",bytes)
+		fmt.Println("bytes:", bytes)
 	}
 	for i := 0; i < len(coeffbyte); i++ {
 		data := coeffbyte[i]
@@ -1569,7 +1566,7 @@ func (node *Node) store_secret(degree int, counter int, secretid int, coeffbyte 
 }
 func (node *Node) get_secret(secretid int) {
 	//get secret from mysql
-	node.secretid = secretid
+	//node.secretid = secretid
 	db := common.GetDB()
 	var secretshares []model.Secretshare
 	result := db.Where("secret_id =?", secretid).Where("unit_id", node.label).Find(&secretshares)
@@ -1605,3 +1602,12 @@ func (node *Node) Set(coeff []*gmp.Int) {
 	node.recPoly.ResetTo(tmpPoly)
 	node.recPoly.EvalMod(gmp.NewInt(0), node.p, node.s0)
 }
+
+//func (node *Node) AddSecret(ctx context.Context) (*pb.ResponseMsg, error) {
+//	db := common.GetDB()
+//	return &pb.ResponseMsg{}, nil
+//}
+//func (node *Node) Delecret(ctx context.Context) (*pb.ResponseMsg, error) {
+//	db := common.GetDB()
+//	return &pb.ResponseMsg{}, nil
+//}

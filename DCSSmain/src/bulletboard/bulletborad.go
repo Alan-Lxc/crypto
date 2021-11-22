@@ -77,6 +77,9 @@ type BulletinBoard struct {
 func (bb *BulletinBoard) Getbip() string {
 	return bb.bip
 }
+func (bb *BulletinBoard) Getsecret() *gmp.Int {
+	return bb.secret
+}
 
 //func (bb *BulletinBoard) GetCoeffofNodeSecretShares2(ctx context.Context, msg *pb.RequestMsg) (*pb.CoeffMsg, error) {
 //
@@ -241,16 +244,16 @@ func (bb *BulletinBoard) SecretPrint() {
 		X[i] = gmp.NewInt(int64(i + 1))
 	}
 	//bb.log.Println(bb.recontructSecret)
-	flg := 1
-	for flg == 1 {
-		flg = 0
-		for i := 0; i < bb.degree*2+1; i++ {
-			if bb.recontructSecret[i] == nil {
-				flg = 1
-				break
-			}
-		}
-	}
+	//flg := 1
+	//for flg == 1 {
+	//	flg = 0
+	//	for i := 0; i < bb.degree*2+1; i++ {
+	//		if bb.recontructSecret[i] == nil {
+	//			flg = 1
+	//			break
+	//		}
+	//	}
+	//}
 	polytmp, _ := interpolation.LagrangeInterpolate(bb.degree, X, bb.recontructSecret[:bb.degree*2+1], bb.p)
 	polytmp.EvalMod(gmp.NewInt(0), bb.p, bb.secret)
 	bb.log.Print("[bulletinboard] the secret is ", bb.secret)
@@ -523,26 +526,41 @@ func New_bulletboard_for_web(degree, counter int, metadataPath string, secretid 
 	totMsgSize := 0
 
 	return BulletinBoard{
-		id: secretid,
-		degree:                    degree,
-		p:                         p,
-		metadataPath:              metadataPath,
-		recontructSecret:          reconstructSecret,
-		counter:                   counter,
-		bip:                       bip,
-		ipList:                    ipList,
-		proCnt:                    &proCnt,
-		shaCnt:                    &shaCnt,
-		secretCnt:                 &secretCnt,
-		secret:                    secret,
-		reconstructionContent:     reconstructionContent,
-		reconstructionContent2:    reconstructionContent2,
-		reconstructionContent3:    reconstructionContent3,
-		reconstructionContent4:    reconstructionContent4,
-		proactivizationContent:    proactivizationContent,
-		nConn:                     nConn,
-		nClient:                   nClient,
-		totMsgSize:                &totMsgSize,
-		log:                       logger,
+		id:                     secretid,
+		degree:                 degree,
+		p:                      p,
+		metadataPath:           metadataPath,
+		recontructSecret:       reconstructSecret,
+		counter:                counter,
+		bip:                    bip,
+		ipList:                 ipList,
+		proCnt:                 &proCnt,
+		shaCnt:                 &shaCnt,
+		secretCnt:              &secretCnt,
+		secret:                 secret,
+		reconstructionContent:  reconstructionContent,
+		reconstructionContent2: reconstructionContent2,
+		reconstructionContent3: reconstructionContent3,
+		reconstructionContent4: reconstructionContent4,
+		proactivizationContent: proactivizationContent,
+		nConn:                  nConn,
+		nClient:                nClient,
+		totMsgSize:             &totMsgSize,
+		log:                    logger,
 	}, nil
 }
+
+//func (bb *BulletinBoard) StartReconstruct(ctx context.Context, in *pb.RequestMsg) (*pb.ResponseMsg, error) {
+//	var wg sync.WaitGroup
+//	for i := 0; i < bb.counter; i++ {
+//		bb.log.Print("[bulletinboard] start verification in phase 3")
+//		wg.Add(1)
+//		go func(i int) {
+//			defer wg.Done()
+//			ctx, cancel := context.WithCancel(context.Background())
+//			defer cancel()
+//			bb.nClient[i].Reconstruct(ctx, &pb.RequestMsg{})
+//		}(i)
+//	}
+//	wg.Wait()
+//}
