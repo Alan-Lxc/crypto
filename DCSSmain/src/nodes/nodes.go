@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/src/model"
-
 	//"fmt"
 	"io/ioutil"
 	"strings"
@@ -139,6 +138,7 @@ type Node struct {
 	t2          int64
 	t3          int64
 	Loglocation string
+	finish      bool
 }
 
 func (node *Node) GetLabel() int {
@@ -167,6 +167,7 @@ func (node *Node) CreatAmtPoly(pos, l, r int) {
 
 	//f pos =f lspos * rspos
 	node.amtPoly[pos].Multiply(*node.amtPoly[pos<<1], *node.amtPoly[pos<<1|1])
+	return
 }
 func (node *Node) CreatAmtPolyMod(pos, l, r int) {
 	node.amtPoly[pos].Mod(node.p)
@@ -176,6 +177,7 @@ func (node *Node) CreatAmtPolyMod(pos, l, r int) {
 	mid := (l + r) >> 1
 	node.CreatAmtPolyMod(pos<<1, l, mid)
 	node.CreatAmtPolyMod(pos<<1|1, mid+1, r)
+	return
 }
 func (node *Node) CreatAmtPolyCmt(pos, l, r, step int) {
 	node.dpc.Commit(node.amtPolyCmt[step], *node.amtPoly[pos])
@@ -190,6 +192,7 @@ func (node *Node) CreatAmtPolyCmt(pos, l, r, step int) {
 	} else {
 		node.CreatAmtPolyCmt(pos<<1|1, mid+1, r, step+1)
 	}
+	return
 }
 func (node *Node) CreatAmtWitness(pos, l, r int, basicPoly poly.Poly) {
 
@@ -230,6 +233,7 @@ func (node *Node) CreatAmtWitness(pos, l, r int, basicPoly poly.Poly) {
 	mid := (l + r) >> 1
 	node.CreatAmtWitness(pos<<1, l, mid, rPoly)
 	node.CreatAmtWitness(pos<<1|1, mid+1, r, rPoly)
+	return
 
 }
 func (node *Node) GroupAmtWitness(id, size int) []*pbc.Element {
@@ -271,13 +275,13 @@ func (node *Node) CreatAmt(ployy poly.Poly, size int) {
 	}
 	//fmt.Println("ggggggggggggggg")
 
+	return
 }
 
 //Server Handler
 func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (response *pb.ResponseMsg, err error) {
 
 	//id := int(msg.GetSecretid())
-	node.get_secret(node.secretid)
 	node.Log.Printf("[Node %d] Now Get start Phase1", node.label)
 	*node.s1 = time.Now()
 	node.CreatAmt(*node.recPoly, node.degree*2+1)
@@ -309,10 +313,10 @@ func (node *Node) Phase1GetStart(ctx context.Context, msg *pb.StartMsg) (respons
 
 //client
 func (node *Node) SendMsgToNode(secretid int) {
-	if *node.iniflag {
-		node.NodeConnect()
-		*node.iniflag = false
-	}
+	//if *node.iniflag {
+	//	node.NodeConnect()
+	//	*node.iniflag = false
+	//}
 
 	if node.label > node.degree*2+1 {
 		return
@@ -369,13 +373,17 @@ func (node *Node) SendMsgToNode(secretid int) {
 		}
 	}
 	wg.Wait()
+	return
 }
-func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (response *pb.ResponseMsg, err error) {
+func (node *Node) Phase1ReceiveMsg(ctx context.Context, msg *pb.PointMsg) (*pb.ResponseMsg, error) {
 	//for node.amtflag1 == 0 {
 	//	continue
 	//}
-	node.GetMsgFromNode(msg)
-	return &pb.ResponseMsg{}, nil
+	_, err := node.GetMsgFromNode(msg)
+	//if err!=nil{
+	//	panic(err)
+	//}
+	return &pb.ResponseMsg{}, err
 }
 
 func (node *Node) GetMsgFromNode(pointmsg *pb.PointMsg) (*pb.ResponseMsg, error) {
@@ -472,11 +480,15 @@ func (node *Node) ClientReadPhase1() {
 	polyp, _ := interpolation.LagrangeInterpolate(node.degree, x, y, node.p)
 
 	node.recPoly.ResetTo(polyp)
-	node.Phase1WriteOnBorad()
+	err = node.Phase1WriteOnBorad()
+	if err != nil {
+		panic(err)
+	}
+	return
 }
 
-func (node *Node) Phase1WriteOnBorad() {
-	log.Printf("[Node %d] write bulletinboard in phase 1", node.label)
+func (node *Node) Phase1WriteOnBorad() error {
+	node.Log.Printf("[Node %d] write bulletinboard in phase 1", node.label)
 	//fmt.Println(node.label, "poly's len is", node.newPoly.GetDegree(), node.newPoly)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -488,18 +500,19 @@ func (node *Node) Phase1WriteOnBorad() {
 		Index:   int32(node.label),
 		Polycmt: C.CompressedBytes(),
 	}
-	node.boardService.WritePhase1(ctx, msg)
+	_, err := node.boardService.WritePhase1(ctx, msg)
 	//fmt.Println(node.label,C)
 	//log.Printf("finish~~")
+	return err
 }
 func (node *Node) Phase1Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
-	log.Printf("[Node %d] start verification in phase 1", node.label)
+	node.Log.Printf("[Node %d] start verification in phase 1", node.label)
 	node.Phase1Readboard()
 	return &pb.ResponseMsg{}, nil
 }
 
 func (node *Node) Phase1Readboard() {
-	log.Printf("[Node %d] read bulletinboard in phase 1", node.label)
+	node.Log.Printf("[Node %d] read bulletinboard in phase 1", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream, err := node.boardService.ReadPhase12(ctx, &pb.RequestMsg{})
@@ -521,6 +534,7 @@ func (node *Node) Phase1Readboard() {
 	if node.label <= node.degree*2+1 {
 		node.ClientSharePhase2()
 	}
+	return
 }
 
 //phase2
@@ -625,6 +639,7 @@ func (node *Node) ClientSharePhase2() {
 		}
 	}
 	wg.Wait()
+	return
 }
 func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.ResponseMsg, error) {
 	*node.totMsgSize = *node.totMsgSize + proto.Size(msg)
@@ -660,11 +675,14 @@ func (node *Node) Phase2Share(ctx context.Context, msg *pb.ZeroMsg) (*pb.Respons
 		polyTmp.SetCoeffWithGmp(0, node._0ShareSum)
 		node.proPoly.ResetTo(polyTmp.DeepCopy())
 
-		node.Phase2Write()
+		err := node.Phase2Write()
+		if err != nil {
+			panic(err)
+		}
 	}
 	return &pb.ResponseMsg{}, nil
 }
-func (node *Node) Phase2Write() {
+func (node *Node) Phase2Write() error {
 	node.Log.Printf("[Node %d] write bulletinboard in phase 2", node.label)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Commitment and Witness from BulletinBoard
@@ -675,7 +693,8 @@ func (node *Node) Phase2Write() {
 		ZeroWitness: node.zeroPolyWit.CompressedBytes(),
 	}
 	//fmt.Println("t1 ",int32(node.label),node._0ShareSum,node.zeroShareCmt)
-	node.boardService.WritePhase2(ctx, msg)
+	_, err := node.boardService.WritePhase2(ctx, msg)
+	return err
 }
 func (node *Node) Phase2Verify(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
 	node.Log.Printf("[Node %d] start verification in phase 2", node.label)
@@ -713,6 +732,7 @@ func (node *Node) ClientReadPhase2() {
 
 	}
 	exponentSum := node.dc.NewG1()
+	//fmt.Println(exponentSum)
 	exponentSum.Set1()
 	//fmt.Println("times ans iss ",exponentSum.Mul(exponentSum,node.dc.NewG1().PowBig(node.zerosumShareCmt[1],big.NewInt(0))))
 	for i := 0; i < node.degree*2+1; i++ {
@@ -725,10 +745,7 @@ func (node *Node) ClientReadPhase2() {
 		exponentSum.Mul(exponentSum, tmp)
 		//fmt.Println(i+1, " 's cmt is", node.zerosumShareCmt[i], "Hey!!! exponentsun be ", exponentSum)
 	}
-	log.Printf("%d exponentSum: %s", node.label, exponentSum.String())
-	if !exponentSum.Is1() {
-		panic("Proactivization Verification 1 failed")
-	}
+
 	flag := true
 	for i := 0; i < node.degree*2+1; i++ {
 		if !node.dpc.VerifyEval(node.zerosumPolyCmt[i], gmp.NewInt(0), gmp.NewInt(0), node.zerosumPolyWit[i]) {
@@ -738,67 +755,20 @@ func (node *Node) ClientReadPhase2() {
 	if !flag {
 		panic("Proactivization Verification 2 failed")
 	}
+	log.Printf("%d exponentSum: %s", node.label, exponentSum.String())
+	if !exponentSum.Is1() {
+		panic("Proactivization Verification 1 failed")
+	}
 	*node.e2 = time.Now()
 	*node.s3 = time.Now()
 	//fmt.Println("hhh")
 	//if node.label <= node.degree*2+1 {
 	node.ClientSharePhase3()
 	//}
+	return
+	//}
 }
 
-//
-//func (node *Node) NodeConnect() {
-//	boradConn, err := grpc.Dial(node.ipOfBoard, grpc.WithInsecure())
-//	if err != nil {
-//		node.log.Fatalf("Fail to connect board:%v", err)
-//	}
-//	node.boardConn = boradConn
-//	node.boardService = pb.NewBulletinBoardServiceClient(boradConn)
-//	for i := 0; i < node.counter; i++ {
-//		if i != node.label-1 {
-//			clientconn, err := grpc.Dial(node.ipAddress[i], grpc.WithInsecure())
-//			if err != nil {
-//				node.log.Fatalf("[Node %d] Fail to connect to other node:%v", node.label, err)
-//			}
-//			node.clientConn[i] = clientconn
-//			node.nodeService[i] = pb.NewNodeServiceClient(clientconn)
-//		}
-//	}
-//}
-//func (node *Node) Service() {
-//	port := node.ipAddress[node.label-1]
-//	listener, err := net.Listen("tcp", port)
-//	if err != nil {
-//		node.log.Fatalf("[Node %d] fail to listen:%v", node.label, err)
-//	}
-//	server := grpc.NewServer()
-//	pb.RegisterNodeServiceServer(server, node)
-//	reflection.Register(server)
-//	err = server.Serve(listener)
-//	if err != nil {
-//		node.log.Fatalf("[Node %d] fail to provide service", node.label)
-//	}
-//
-//	node.log.Printf("[Node %d] now serve on %s", node.label, node.ipAddress[node.label-1])
-//}
-
-//func (node *Node) Serve(aws bool) {
-//	port := node.ipAddress[node.label-1]
-//	if aws {
-//		port = "0.0.0.0:12001"
-//	}
-//	lis, err := net.Listen("tcp", port)
-//	if err != nil {
-//		node.log.Fatalf("node failed to listen %v", err)
-//	}
-//	s := grpc.NewServer()
-//	pb.RegisterNodeServiceServer(s, node)
-//	reflection.Register(s)
-//	node.log.Printf("[Node %d] serve on %s", node.label, port)
-//	if err := s.Serve(lis); err != nil {
-//		node.log.Fatalf("node failed to serve %v", err)
-//	}
-//}
 func ReadIpList(metadataPath string) []string {
 	ipData, err := ioutil.ReadFile(metadataPath + "/ip_list")
 	if err != nil {
@@ -880,6 +850,8 @@ func (node *Node) ClientSharePhase3() {
 			}
 		}
 	}
+
+	return
 }
 
 //重建secretShare
@@ -906,7 +878,9 @@ func (node *Node) Phase3SendMsg(ctx context.Context, msg *pb.PointMsg) (*pb.Resp
 	if flag {
 		node.Log.Printf("[Node %d] has finish sharePhase3", node.label)
 		*node.shareCnt = 0
-		node.Phase3WriteOnBorad()
+		if node.label <= node.degree*2+1 {
+			node.Phase3WriteOnBorad()
+		}
 	}
 	return &pb.ResponseMsg{}, nil
 }
@@ -924,9 +898,15 @@ func (node *Node) Phase3WriteOnBorad() {
 		Index:   int32(node.label),
 		Polycmt: C.CompressedBytes(),
 	}
-	node.boardService.WritePhase3(ctx, msg)
+	//err := new(error)
+	_, err := node.boardService.WritePhase3(ctx, msg)
+	for err != nil {
+		panic(err)
+		//panic(err)
+	}
 	//fmt.Println(node.label,C)
 	//log.Printf("finish~~")
+	return
 }
 func (node *Node) Phase3Verify(ctx context.Context, msg *pb.RequestMsg) (*pb.ResponseMsg, error) {
 	node.Log.Printf("[Node %d] start verification in phase 3", node.label)
@@ -1030,10 +1010,12 @@ func (node *Node) Phase3Readboard() {
 	node._0ShareSum.SetInt64(0)
 	node.amtflag2 = 0
 	node.amtflag1 = 0
+	node.finish = true
+	return
 }
 
 func (node *Node) Reconstruct(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
-	node.Log.Printf("[Node %d] start reconstruct in phase 2")
+	node.Log.Printf("[Node %d] start reconstruct ", node.label)
 	node.Phase3Readboard2()
 	return &pb.ResponseMsg{}, nil
 }
@@ -1073,8 +1055,11 @@ func (node *Node) Phase3Readboard2() {
 		Y:       YY.Bytes(),
 		Witness: bb,
 	}
-	node.boardService.ReconstructSecret(ctx, msg2)
-
+	_, err := node.boardService.ReconstructSecret(ctx, msg2)
+	if err != nil {
+		panic(err)
+	}
+	return
 }
 
 func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (Node, error) {
@@ -1277,6 +1262,7 @@ func New(degree int, label int, counter int, logPath string, coeff []*gmp.Int) (
 }
 
 func (node *Node) NodeConnect() {
+	//fmt.Println(node.label,"connect!!")
 	boradConn, err := grpc.Dial(node.ipOfBoard, grpc.WithInsecure())
 	if err != nil {
 		node.Log.Fatalf("Fail to connect board:%v", err)
@@ -1294,6 +1280,7 @@ func (node *Node) NodeConnect() {
 			node.nodeService[i] = pb.NewNodeServiceClient(clientconn)
 		}
 	}
+	return
 }
 func (node *Node) Service() {
 	port := node.IpAddress[node.label-1]
@@ -1308,8 +1295,9 @@ func (node *Node) Service() {
 	if err != nil {
 		node.Log.Fatalf("[Node %d] fail to provide service", node.label)
 	}
-
 	node.Log.Printf("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
+
+	return
 }
 func NewForWeb(degree, label, counter int, metadatapath string, secretid int) (Node, error) {
 	if label < 0 {
@@ -1442,8 +1430,10 @@ func NewForWeb(degree, label, counter int, metadatapath string, secretid int) (N
 	if err != nil {
 		tmplogger, err = os.Create(fileName)
 	}
-	os.Truncate(fileName, 0)
+	//os.Truncate(fileName, 0)
 	log := log.New(tmplogger, "", log.LstdFlags)
+	finish := false
+	//log.
 	//log.Printf("[Node %d] new done,ip = %s", label, ipList[label-1])
 	return Node{
 		secretid:        secretid,
@@ -1497,12 +1487,14 @@ func NewForWeb(degree, label, counter int, metadatapath string, secretid int) (N
 		amtPolyCmtSize:  amtPolycmtSize,
 		amtflag1:        amtflag1,
 		amtflag2:        amtflag2,
+		finish:          finish,
 	}, nil
 
 }
 func (node *Node) DeleteServe() {
 	node.Log.Printf("[Node %d] delete serve ", node.label)
 	node.server.Stop()
+	return
 }
 func (node *Node) ServeForWeb() {
 	port := node.IpAddress[node.label-1]
@@ -1510,6 +1502,7 @@ func (node *Node) ServeForWeb() {
 	if err != nil {
 		log.Fatalf("[Node %d] fail to listen:%v", node.label, err)
 	}
+	node.Log.Printf("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
 	server := grpc.NewServer()
 	pb.RegisterNodeServiceServer(server, node)
 	reflection.Register(server)
@@ -1518,7 +1511,7 @@ func (node *Node) ServeForWeb() {
 	if err != nil {
 		log.Fatalf("[Node %d] fail to provide service", node.label)
 	}
-	node.Log.Printf("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
+	return
 }
 func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.ResponseMsg, error) {
 	//fmt.Println("msg in the function ", msg)
@@ -1550,8 +1543,7 @@ func (node *Node) store_secret(degree int, counter int, secretid int, coeffbyte 
 			Degree:   degree,
 			Counter:  counter,
 			RowNum:   i,
-
-			Data: data,
+			Data:     data,
 		}
 		//返回结果
 		db.Create(&newSecretshare)
@@ -1564,6 +1556,7 @@ func (node *Node) store_secret(degree int, counter int, secretid int, coeffbyte 
 	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 
 	//store to mysql
+	return
 
 }
 func (node *Node) save_secret(degree int, counter int, secretid int, coeffbyte [][]byte) {
@@ -1578,19 +1571,14 @@ func (node *Node) save_secret(degree int, counter int, secretid int, coeffbyte [
 		newsecretshare.Data = coeffbyte[i]
 		db.Save(newsecretshare)
 	}
-	//dc := commitment.DLCommit{}
-	//dc.SetupFix()
-	//dpc := commitment.DLPolyCommit{}
-	//dpc.SetupFix(counter)
-	//p := gmp.NewInt(0)
-	//p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
-
+	return
 	//store to mysql
 
 }
-func (node *Node) get_secret(secretid int) {
+func (node *Node) SetSecret() {
 	//get secret from mysql
 	//node.secretid = secretid
+	secretid := node.secretid
 	db := common.GetDB()
 	var secretshares []model.Secretshare
 	result := db.Where("secret_id =?", secretid).Where("unit_id", node.label).Find(&secretshares)
@@ -1613,6 +1601,7 @@ func (node *Node) get_secret(secretid int) {
 	}
 
 	node.Set(coeff)
+	return
 	//return newsecretshare
 }
 
@@ -1637,6 +1626,7 @@ func (node *Node) AddSecret(ctx context.Context, msg *pb.RequestMsg) (*pb.Respon
 			Degree:   node.degree,
 			Counter:  node.counter,
 			RowNum:   i,
+			Data:     gmp.NewInt(0).Bytes(),
 		}
 		//返回结果
 		db.Create(&newSecretshare)

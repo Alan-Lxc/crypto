@@ -9,12 +9,23 @@
     </div>
 
     <div class="container">
-      <el-header height="40px" >
-        <router-link to="/newsecret">
-          <el-button @click="" type="mini" bgcolor="bule" >新建秘密</el-button>
-        </router-link>
-        <el-button @click="fresh" type="mini" >Refresh</el-button>
-      </el-header>
+      <el-row>
+<!--        <el-col :span="7"></el-col>-->
+<!--        <el-col :span="8">-->
+<!--          <div class="grid-content bg-purple-light">-->
+
+<!--            <el-button @click="tonewsecret()" type="">新建秘密</el-button>-->
+<!--          </div>-->
+<!--        </el-col>-->
+        <el-col :span="21"></el-col>
+        <el-col :span="3">
+          <div class="grid-content bg-purple-light">
+            <el-button @click="fresh" type="" >Refresh</el-button>
+          </div>
+        </el-col>
+      </el-row>
+    </div>
+    <div class="container">
       <el-table
           :data="tableData"
           style="width: 100%"
@@ -75,7 +86,7 @@ export default {
       } else if (rowIndex === 3) {
         return 'success-row';
       }
-      return '';
+      return '';rules
     },
     getsecretlist(){
       let arr = this;
@@ -105,7 +116,13 @@ export default {
     },
     fresh(){
       this.getsecretlist()
-    }
+    },
+    tonewsecret(){
+      let that = this
+      this.$router.push({
+        path:"/newsecret",
+      })
+    },
   },
 }
 

@@ -150,7 +150,7 @@ export default {
     }
   },
   created() {
-    // this.getloglist()
+    this.getloglist()
   },
   methods: {
     getloglist(){
@@ -167,7 +167,6 @@ export default {
         },
       }).then(
           function (res) {
-            // var arr = this;
             arr.logs = res.data.data.logs;
           }
       ).catch(err =>{

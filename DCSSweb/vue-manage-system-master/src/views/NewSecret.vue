@@ -8,13 +8,13 @@
     <div class="container">
       <div class="form-box">
         <el-form ref="secretRef" :rules="rules" :model="secret" label-width="160px">
-          <el-form-item label="秘密名称">
+          <el-form-item label="秘密名称" prop="secretname">
             <el-input v-model="secret.secretname"></el-input>
           </el-form-item>
           <el-form-item label="门限阈值" >
             <el-input-number v-model.number="secret.degree" :min="1" :max="100"></el-input-number>
           </el-form-item>
-          <el-form-item label="委员会成员数">
+          <el-form-item label="委员会成员数" prop="counter">
             <el-input-number v-model.number="secret.counter" :min="1" :max="100" ></el-input-number>
           </el-form-item>
           <el-form-item label="秘密值" >
@@ -76,11 +76,10 @@ export default {
       description: "",
     });
 
-    // 提交
+    // 提交:model="newcounter"
     const onSubmit = () => {
       // 表单校验
       console.log(secret.degree,secret.counter)
-      let arr = this;
       const api = "http://localhost:8080/api/secret/newsecret"
       secretRef.value.validate((valid) => {
         //验证输入的数据符合格式规范
@@ -123,7 +122,7 @@ export default {
     };
     //检验t,n代数关系
     const checkNum = (rule, value, callback) => {
-      if (secret.degree<secret.counter*2+1){
+      if (secret.counter<secret.degree*2+1){
         callback(new Error("不对"));
       }else {
         console.log("对不对");

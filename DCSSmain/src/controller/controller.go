@@ -2,12 +2,11 @@ package controller
 
 import (
 	"context"
-	"fmt"
+	"encoding/hex"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
 	"github.com/Alan-Lxc/crypto_contest/src/bulletinboard"
-	model1 "github.com/Alan-Lxc/crypto_contest/src/model"
 	"github.com/Alan-Lxc/crypto_contest/src/nodes"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
 	"github.com/ncw/gmp"
@@ -56,7 +55,19 @@ func (controll *Controll) Release(counter int) {
 	controll.Bulletinboard = nil
 }
 
-func (controll *Controll) Initsystem(degree, counter int, metadatapath string, secretid int, polyyy []poly.Poly) {
+func (controll *Controll) Connect(counter int) {
+	for i := 0; i < counter; i++ {
+		controll.node[i].NodeConnect()
+	}
+	controll.Bulletinboard.Connect()
+}
+func (controll *Controll) SetSecret(counter int) {
+	for i := 0; i < counter; i++ {
+		controll.node[i].SetSecret()
+	}
+	controll.Bulletinboard.SetSecret()
+}
+func (controll *Controll) Initsystem(degree, counter int, metadatapath string, secretid int) {
 	db := common.GetDB()
 	if db != nil {
 
@@ -89,9 +100,9 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 		nConn[i] = Conn
 		nodeService[i] = pb.NewNodeServiceClient(Conn)
 	}
-	bb, _ := Bulletinboard.NewBulletboardForWeb(degree, counter, metadatapath, secretid, polyyy)
+	bb, _ := Bulletinboard.NewBulletboardForWeb(degree, counter, metadatapath, secretid)
 	go bb.Serve(false)
-	time.Sleep(2)
+	time.Sleep(3)
 	bconn, _ := grpc.Dial(bb.Getbip(), grpc.WithInsecure())
 	boardConn := bconn
 	boardService := pb.NewBulletinBoardServiceClient(bconn)
@@ -109,49 +120,15 @@ func (controll *Controll) Initsystem(degree, counter int, metadatapath string, s
 	//controll.nodeNum = counter
 	//return controll
 }
-func (controll *Controll) GetMessageOfNode(secretid, label int) poly.Poly {
-
-	db := common.GetDB()
-	var secretshares []model1.Secretshare
-	result := db.Where("secret_id =?", secretid).Where("unit_id", label).Find(&secretshares)
-	rowNum := result.RowsAffected
-	var newsecret model.Secret
-	db.Where("id = ? ", secretid).First(&newsecret)
-	degree := newsecret.Degree
-	//counter := newsecretshare.Counter
-	//secretid := int(newsecretshare.SecretId)
-	coeff := make([]*gmp.Int, 2*degree+1)
-	for i := 0; int64(i) < rowNum; i++ {
-		var newsecretshare model1.Secretshare
-		db.Where("secret_id = ? and unit_id = ? and row_num =? ", secretid, label, i).Find(&newsecretshare)
-		//Data存放秘密份额,多项式
-		Data := newsecretshare.Data
-		//fmt.Println(Data)
-		coeff[i] = gmp.NewInt(0)
-		coeff[i].SetBytes(Data)
-	}
-	tmpPoly, _ := poly.NewPoly(len(coeff) - 1)
-	tmpPoly.SetbyCoeff(coeff)
-	return tmpPoly
-	//	return a poly
-}
-func (controll *Controll) Getmessage(secretid int, degree int, counter int) []poly.Poly {
-
-	polyyy := make([]poly.Poly, counter)
-	for i := 0; i < counter; i++ {
-		polyyy[i] = controll.GetMessageOfNode(secretid, i+1)
-	}
-	return polyyy
-}
 func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 string) {
 
-	fmt.Println(controll.bbNum)
+	//fmt.Println(controll.bbNum)
 	fixedRandState := rand.New(rand.NewSource(int64(3)))
 	p := gmp.NewInt(0)
 	p.SetString("57896044618658097711785492504343953926634992332820282019728792006155588075521", 10)
 	tmp := gmp.NewInt(0)
 	//tmp.SetString(s0, 10)
-	tmp.SetString(s0, 10)
+	tmp.SetString(s0, 16)
 	polyy, _ := poly.NewRand(degree, fixedRandState, p)
 	polyy.SetCoeffWithGmp(0, tmp)
 	polyyy := make([]poly.Poly, counter)
@@ -163,7 +140,7 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		polyyy[i], _ = poly.NewRand(degree*2, fixedRandState, p)
 		polyyy[i].SetCoeffWithGmp(0, y)
 	}
-	controll.Initsystem(degree, counter, metadatapath, secretid, polyyy)
+	controll.Initsystem(degree, counter, metadatapath, secretid)
 
 	var wg sync.WaitGroup
 	for i := 0; i < counter; i++ {
@@ -194,15 +171,18 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 
 	log.Printf("Start to Handoff")
-	polyyy := controll.Getmessage(secretid, degree, counter)
+	//polyyy := controll.Getmessage(secretid, degree, counter)
 	//get degree, counter, metadatapath, secretid, polyyy
-	controll.Initsystem(degree, counter, metadatapath, secretid, polyyy)
+	controll.Initsystem(degree, counter, metadatapath, secretid)
+	controll.Connect(counter)
+	controll.SetSecret(counter)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	_, err := controll.boardService.StartEpoch(ctx, &pb.RequestMsg{})
 	if err != nil {
 		log.Fatalf("Start Handoff Fail:%v", err)
 	}
+	//time.Sleep(5*time.Second)
 	controll.Release(counter)
 }
 
@@ -210,8 +190,10 @@ func (controll *Controll) Reconstruct(secretid int, degree int, counter int) str
 	log.Printf("Start to Reconstruction")
 
 	//get degree, counter, metadatapath, secretid, polyyy
-	polyyy := controll.Getmessage(secretid, degree, counter)
-	controll.Initsystem(degree, counter, metadatapath, secretid, polyyy)
+	//polyyy := controll.Getmessage(secretid, degree, counter)
+	controll.Initsystem(degree, counter, metadatapath, secretid)
+	controll.Connect(counter)
+	controll.SetSecret(counter)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	_, err := controll.boardService.StartReconstruct(ctx, &pb.RequestMsg{})
@@ -219,7 +201,9 @@ func (controll *Controll) Reconstruct(secretid int, degree int, counter int) str
 		log.Fatalf("Start Reconstruction Fail:%v", err)
 	}
 	// Set to string
-	Secret := controll.Bulletinboard.Getsecret().String()
+	Secret := hex.EncodeToString(controll.Bulletinboard.GetReconstructSecret().Bytes())
+
+	//Secret
 	controll.Release(counter)
 	return Secret
 	//return "123"
@@ -235,9 +219,9 @@ func (controll *Controll) ModifyCommittee(secretid int, degree int, oldn int, ne
 	} else {
 		counter = newn
 	}
-	polyyy := controll.Getmessage(secretid, degree, counter)
-	controll.Initsystem(degree, counter, metadatapath, secretid, polyyy)
-
+	//polyyy := controll.Getmessage(secretid, degree, counter)
+	controll.Initsystem(degree, counter, metadatapath, secretid)
+	controll.Connect(counter)
 	var wg sync.WaitGroup
 	if oldn > newn {
 		for i := newn; i < counter; i++ {

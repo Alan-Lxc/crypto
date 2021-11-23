@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	model  "github.com/Alan-Lxc/crypto_contest/dcssweb/model"
+	model "github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	srcmodel "github.com/Alan-Lxc/crypto_contest/src/model"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
@@ -41,11 +41,10 @@ func InitDB() *gorm.DB {
 	err = db.AutoMigrate(&model.Unit{})
 	err = db.AutoMigrate(&srcmodel.Secretshare{})
 	err = db.AutoMigrate(&model.Secret{})
-	err = db.AutoMigrate(&model.SecretUnit{})
-	err = db.Where("1=1").Delete(&model.Unit{}).Error
-	err = db.Where("1=1").Delete(&srcmodel.Secretshare{}).Error
-	err = db.Where("1=1").Delete(&model.Secret{}).Error
-	err = db.Where("1=1").Delete(&model.SecretUnit{}).Error
+	//err = db.AutoMigrate(&model.Secretshare{})
+	//err = db.Where("1=1").Delete(&model.Unit{}).Error
+	//err = db.Where("1=1").Delete(&srcmodel.Secretshare{}).Error
+	//err = db.Where("1=1").Delete(&model.Secret{}).Error
 	if err != nil {
 		return nil
 	}

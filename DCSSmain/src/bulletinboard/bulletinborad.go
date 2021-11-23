@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
+	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/commitment"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/interpolation"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
+	model1 "github.com/Alan-Lxc/crypto_contest/src/model"
 	pb "github.com/Alan-Lxc/crypto_contest/src/service"
 	"github.com/golang/protobuf/proto"
 	"github.com/ncw/gmp"
@@ -74,12 +77,14 @@ type BulletinBoard struct {
 	randPoly *poly.Poly
 	//logger file pointer
 	log *log.Logger
+	dc  *commitment.DLCommit
+	dpc *commitment.DLPolyCommit
 }
 
 func (bb *BulletinBoard) Getbip() string {
 	return bb.bip
 }
-func (bb *BulletinBoard) Getsecret() *gmp.Int {
+func (bb *BulletinBoard) GetReconstructSecret() *gmp.Int {
 	return bb.secret
 }
 
@@ -148,7 +153,8 @@ func (bb *BulletinBoard) ClientStartVerifPhase1() {
 		}(i)
 	}
 	wg.Wait()
-	*bb.totMsgSize = 0
+	//*bb.totMsgSize = 0
+	return
 }
 
 func (bb *BulletinBoard) ReadPhase12(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase12Server) error {
@@ -191,12 +197,12 @@ func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardSe
 func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
 	//fmt.Println("written index is xxxx")
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
-	bb.log.Print("[Bulletinboard] is being written in phase 3")
 	index := msg.GetIndex()
+	bb.log.Print("[Bulletinboard] is being written in phase 3", index)
 	bb.reconstructionContent3[index-1] = msg
 	bb.mutex.Lock()
 	*bb.shaCnt = *bb.shaCnt + 1
-	flag := (*bb.shaCnt == bb.counter)
+	flag := (*bb.shaCnt == bb.degree*2+1)
 	bb.mutex.Unlock()
 	if flag {
 		*bb.shaCnt = 0
@@ -213,7 +219,7 @@ func (bb *BulletinBoard) WritePhase32(ctx context.Context, msg *pb.Cmt1Msg) (*pb
 	bb.reconstructionContent4[index-1] = msg
 	bb.mutex.Lock()
 	*bb.shaCnt = *bb.shaCnt + 1
-	flag := (*bb.shaCnt == bb.degree*2+1)
+	flag := (*bb.shaCnt == bb.counter)
 	bb.mutex.Unlock()
 	if flag {
 		*bb.shaCnt = 0
@@ -267,6 +273,7 @@ func (bb *BulletinBoard) SecretPrint() {
 	polytmp, _ := interpolation.LagrangeInterpolate(bb.degree, X, bb.recontructSecret[:bb.degree*2+1], bb.p)
 	polytmp.EvalMod(gmp.NewInt(0), bb.p, bb.secret)
 	bb.log.Print("[Bulletinboard] the secret is ", bb.secret)
+	return
 }
 func (bb *BulletinBoard) ReadPhase3(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase3Server) error {
 	bb.log.Print("[Bulletinboard] is being read in phase 3")
@@ -288,23 +295,28 @@ func (bb *BulletinBoard) Connect() {
 		bb.nConn[i] = nConn
 		bb.nClient[i] = pb.NewNodeServiceClient(nConn)
 	}
+	return
 }
 
 func (bb *BulletinBoard) Disconnect() {
 	for i := 0; i < bb.counter; i++ {
 		bb.nConn[i].Close()
 	}
+	return
 }
 
 func (bb *BulletinBoard) DeleteServe() {
 	bb.log.Printf("[Bulletinboard] delete serve on " + bb.bip)
 	bb.server.Stop()
+
+	return
 }
 func (bb *BulletinBoard) Serve(aws bool) {
 	port := bb.bip
 	if aws {
 		port = "0.0.0.0:12001"
 	}
+	bb.log.Printf("[Bulletinboard] serve on " + bb.bip)
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		bb.log.Fatalf("[Bulletinboard] failed to listen %v", err)
@@ -313,7 +325,6 @@ func (bb *BulletinBoard) Serve(aws bool) {
 	pb.RegisterBulletinBoardServiceServer(s, bb)
 	reflection.Register(s)
 	bb.server = s
-	bb.log.Printf("[Bulletinboard] serve on " + bb.bip)
 	//bb.log.Printf("hello\n")
 	//if err := s.Serve(lis); err != nil {
 	//	bb.log.Fatalf("[Bulletinboard] failed to serve %v", err)
@@ -324,12 +335,9 @@ func (bb *BulletinBoard) Serve(aws bool) {
 	if err != nil {
 		bb.log.Fatalf("[Bulletinboard] failed to serve %v", err)
 	}
+	return
 }
-
 func (bb *BulletinBoard) ClientStartPhase1(secretid int) {
-	if bb.nConn[0] == nil {
-		bb.Connect()
-	}
 	var wg sync.WaitGroup
 	bb.log.Print("[Bulletinboard] start phase 1")
 	for i := 0; i < bb.counter; i++ {
@@ -339,10 +347,14 @@ func (bb *BulletinBoard) ClientStartPhase1(secretid int) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			msg := pb.StartMsg{Secretid: int32(secretid)}
-			bb.nClient[i].Phase1GetStart(ctx, &msg)
+			_, err := bb.nClient[i].Phase1GetStart(ctx, &msg)
+			if err != nil {
+				return
+			}
 		}(i)
 	}
 	wg.Wait()
+	return
 }
 
 func (bb *BulletinBoard) ClientStartVerifPhase2() {
@@ -358,19 +370,9 @@ func (bb *BulletinBoard) ClientStartVerifPhase2() {
 		}(i)
 	}
 	wg.Wait()
+	return
 }
 
-//func GetCoeffFromMsg(msg *pb.CoeffMsg) []*gmp.Int {
-//	tmp := msg.GetCoeff()
-//	l := len(tmp)
-//	res := make([]*gmp.Int, l)
-//	for i := 0; i < l; i++ {
-//		n := gmp.NewInt(0)
-//		n.SetBytes(tmp[i])
-//		res[i] = n
-//	}
-//	return res
-//}
 func (bb *BulletinBoard) ClientStartVerifPhase3() {
 	var wg sync.WaitGroup
 	bb.log.Print("[Bulletinboard] start verification in phase 3")
@@ -384,6 +386,7 @@ func (bb *BulletinBoard) ClientStartVerifPhase3() {
 		}(i)
 	}
 	wg.Wait()
+	return
 }
 
 func ReadIpList(metadataPath string) []string {
@@ -476,7 +479,58 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 		log:                    logger,
 	}, nil
 }
-func NewBulletboardForWeb(degree, counter int, metadataPath string, secretid int, Polyyy []poly.Poly) (BulletinBoard, error) {
+func (bb *BulletinBoard) GetMessageOfNode(secretid, label int) poly.Poly {
+
+	db := common.GetDB()
+	var secretshares []model1.Secretshare
+	result := db.Where("secret_id =?", secretid).Where("unit_id", label).Find(&secretshares)
+	rowNum := result.RowsAffected
+	var newsecret model.Secret
+	db.Where("id = ? ", secretid).First(&newsecret)
+	degree := newsecret.Degree
+	//counter := newsecretshare.Counter
+	//secretid := int(newsecretshare.SecretId)
+	coeff := make([]*gmp.Int, 2*degree+1)
+	for i := 0; int64(i) < rowNum; i++ {
+		var newsecretshare model1.Secretshare
+		db.Where("secret_id = ? and unit_id = ? and row_num =? ", secretid, label, i).Find(&newsecretshare)
+		//Data存放秘密份额,多项式
+		Data := newsecretshare.Data
+		//fmt.Println(Data)
+		coeff[i] = gmp.NewInt(0)
+		coeff[i].SetBytes(Data)
+	}
+	tmpPoly, _ := poly.NewPoly(len(coeff) - 1)
+	tmpPoly.SetbyCoeff(coeff)
+	return tmpPoly
+	//	return a poly
+}
+func (bb *BulletinBoard) Getmessage(secretid int, degree int, counter int) []poly.Poly {
+
+	polyyy := make([]poly.Poly, counter)
+	for i := 0; i < counter; i++ {
+		polyyy[i] = bb.GetMessageOfNode(secretid, i+1)
+	}
+	return polyyy
+}
+func (bb *BulletinBoard) SetSecret() {
+	Polyyy := bb.Getmessage(bb.id, bb.degree, bb.counter)
+	for i := 0; i < bb.counter; i++ {
+		c := bb.dpc.NewG1()
+		bb.dpc.Commit(c, Polyyy[i])
+		//fmt.Println(i+1,"witness is ",c)
+		//fmt.Println(Polyyy[i].GetDegree())
+		cBytes := c.CompressedBytes()
+		msg := &pb.Cmt1Msg{
+			Index:   int32(i + 1),
+			Polycmt: cBytes,
+		}
+		bb.reconstructionContent4[i] = msg
+	}
+	return
+
+}
+func NewBulletboardForWeb(degree, counter int, metadataPath string, secretid int) (BulletinBoard, error) {
 
 	fileName := metadataPath + "/Secretid" + strconv.Itoa(secretid) + "Bulletinboard.log"
 	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
@@ -513,18 +567,7 @@ func NewBulletboardForWeb(degree, counter int, metadataPath string, secretid int
 	//if err != nil {
 	//	bb.logger.Fatal("Error initializing random poly")
 	//}
-	for i := 0; i < counter; i++ {
-		c := dpc.NewG1()
-		dpc.Commit(c, Polyyy[i])
-		//fmt.Println(i+1,"witness is ",c)
-		//fmt.Println(Polyyy[i].GetDegree())
-		cBytes := c.CompressedBytes()
-		msg := &pb.Cmt1Msg{
-			Index:   int32(i + 1),
-			Polycmt: cBytes,
-		}
-		reconstructionContent4[i] = msg
-	}
+
 	proactivizationContent := make([]*pb.CommitMsg, counter)
 
 	nConn := make([]*grpc.ClientConn, counter)
@@ -554,6 +597,7 @@ func NewBulletboardForWeb(degree, counter int, metadataPath string, secretid int
 		nClient:                nClient,
 		totMsgSize:             &totMsgSize,
 		log:                    logger,
+		dpc:                    &dpc,
 	}, nil
 }
 

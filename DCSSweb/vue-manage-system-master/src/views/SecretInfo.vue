@@ -10,21 +10,27 @@
     <div class="container">
       <el-row>
         <!--        <el-col :span="6"><div class="grid-content bg-purple"><el-button type="">修改门限阈值</el-button></div></el-col>-->
-        <el-col :span="8">
+        <el-col :span="6">
           <div class="grid-content bg-purple-light">
 
               <el-button @click="tochangesecret()" type="">修改委员会成员数</el-button>
           </div>
         </el-col>
-        <el-col :span="8">
+        <el-col :span="6">
           <div class="grid-content bg-purple">
             <el-button @click="handoffsecret()" type="">交接秘密</el-button>
           </div>
         </el-col>
-        <el-col :span="8">
+        <el-col :span="6">
           <div class="grid-content bg-purple-light">
             <el-button @click="reconstructsecret()"  type="">重构秘密值</el-button>
           </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="grid-content bg-purple-light">
+            <el-button @click="deletesecret()"  type="">删除秘密</el-button>
+          </div>
+
         </el-col>
 
 
@@ -71,6 +77,7 @@
       <el-table-column>
 
       </el-table-column>
+
 
 
     </el-table>
@@ -122,12 +129,14 @@ export default {
       });
     },
     handleClick(row){
+      let that = this
+      let secretid = that.$route.query.id;
       this.$router.push({
         path:"/unitinfo",
-        // query:{
-        //   userid:row[Unitid],
-        //   secretid:row[Unitip],
-        // }
+        query:{
+          unitid:row.UnitId,
+          secretid:secretid,
+        }
       })
     },
     tochangesecret(){
@@ -141,21 +150,22 @@ export default {
         }
       })
     },
-    updatesecret(){
-      axios.get("http://localhost:8080/api/secret/updatesecret",{
-        params: {
-          "id": this.secretid,
-          "counter":90,
-        }
-      }).then(
-          function (res) {
-            console.log(res.data.data.secret);
-          }
-      ).catch(err =>{
-
-      });
-
-    },
+    // updatesecret(){
+    //   let that  = this;
+    //   axios.get("http://localhost:8080/api/secret/updatesecret",{
+    //     params: {
+    //       "id": that.secretid,
+    //       "counter":90,
+    //     }
+    //   }).then(
+    //       function (res) {
+    //         console.log(res.data.data.secret);
+    //       }
+    //   ).catch(err =>{
+    //
+    //   });
+    //
+    // },
     handoffsecret(){
       let that = this;
       axios.get("http://localhost:8080/api/secret/handoffsecret",{
@@ -164,21 +174,38 @@ export default {
         }
       }).then(
           function (res) {
-            console.log(res.data.data.secret);
-            alert("秘密值"+res.data.data.secret)
+            alert("交接成功")
           }
       ).catch(err =>{});
 
     },
     reconstructsecret(){
+      let that = this;
       axios.get("http://localhost:8080/api/secret/reconstructsecret",{
         params: {
-          "secretid": this.secretid
+          "secretid": that.secretid
         }
       }).then(
           function (res) {
             console.log(res.data.data.secret);
             alert("秘密值"+res.data.data.secret)
+          }
+      ).catch(err =>{});
+    },
+    deletesecret(){
+      let that = this;
+      axios.get("http://localhost:8080/api/secret/deletesecret",{
+        params: {
+          "secretid": that.secretid
+        }
+      }).then(
+          function (res) {
+            if (res.status===200){
+              ElMessage.success("删除成功");
+            }else {
+              ElMessage.error("删除失败")
+            }
+            console.log(res.data.data.secret);
           }
       ).catch(err =>{});
     }
