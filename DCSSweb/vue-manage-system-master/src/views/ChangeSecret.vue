@@ -21,7 +21,7 @@
               <el-input-number v-model.number="newcounter" :min="1" :max="100"></el-input-number>
             </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="onSubmit">确认提交</el-button>
+            <el-button type="primary" @click="submit()">确认提交</el-button>
             <el-button type="danger" @click="onReset">重置表单</el-button>
           </el-form-item>
 
@@ -43,17 +43,30 @@ export default {
     return {
       newcounter : 1,
       secretid: this.$route.query.id,
-      oldcounter:this.$route.query.oldcounter,
-      degree:this.$route.query.degree,
+      oldcounter: this.$route.query.oldcounter,
+      degree: this.$route.query.degree,
     }
   },
 
-  onLoad(options){
-    console.log('options:',options)
-    tmpparams = options
+
+  methods: {
+    submit(){
+      let that = this;
+      if (that.degree*2+1>that.newcounter){
+        ElMessage.error("参数不符合规范");
+        return false;
+      }else {
+        ElMessage.success("提交成功！");
+        axios.get('http://localhost:8080/api/secret/updatesecretcounter',{
+          params:{
+            secretid:that.secretid,
+            newcounter:that.newcounter,
+          }
+        })
+      }
+    }
   },
   setup() {
-    console.log('params:',tmpparams)
     const newcounter = ref(1);
     const secretRef = ref(null);
     // 提交
@@ -85,8 +98,6 @@ export default {
         callback();
       }
     }
-
-
     const rules = {
       numberOfN: [
         {  validator: checkNum, message: "委员会成员数需要大于2×门限阈值+1", trigger: "change"}
