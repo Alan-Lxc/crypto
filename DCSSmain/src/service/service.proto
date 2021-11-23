@@ -10,8 +10,11 @@ service NodeService{
     rpc Phase2Share(ZeroMsg)    returns(ResponseMsg){};
     rpc Phase2Verify(RequestMsg) returns(ResponseMsg){};
     rpc Phase3SendMsg(PointMsg) returns(ResponseMsg){};
-    rpc Phase3Verify(RequestMsg)returns(ResponseMsg){};
+    rpc Phase3Verify(RequestMsg) returns(ResponseMsg){};
     rpc Sendtestmsg(RequestMsg) returns(testMsg){}
+    rpc DeleteSecret(RequestMsg) returns(ResponseMsg){}
+    rpc AddSecret(RequestMsg) returns(ResponseMsg){}
+    rpc Reconstruct(RequestMsg) returns(ResponseMsg){}
 }
 service BulletinBoardService {
     // Start a epoch
@@ -28,6 +31,7 @@ service BulletinBoardService {
     rpc WritePhase32(Cmt1Msg) returns (ResponseMsg) {};
     rpc ReconstructSecret(PointMsg) returns (ResponseMsg) {};
     rpc ReadPhase3(RequestMsg) returns (stream Cmt1Msg) {};
+    rpc StartReconstruct(RequestMsg) returns(ResponseMsg){}
 }
 
 message RequestMsg{}

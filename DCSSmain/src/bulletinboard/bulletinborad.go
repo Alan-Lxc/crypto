@@ -1,4 +1,4 @@
-package bulletboard
+package Bulletinboard
 
 import (
 	"context"
@@ -17,6 +17,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -62,7 +63,8 @@ type BulletinBoard struct {
 	secret *gmp.Int
 	// Mutexes
 	mutex sync.Mutex
-
+	//Server
+	server  *grpc.Server
 	nConn   []*grpc.ClientConn
 	nClient []pb.NodeServiceClient
 
@@ -96,7 +98,7 @@ func (bb *BulletinBoard) Getsecret() *gmp.Int {
 //}
 
 func (bb *BulletinBoard) StartEpoch(ctx context.Context, in *pb.RequestMsg) (*pb.ResponseMsg, error) {
-	bb.log.Print("[bulletinboard] start epoch")
+	bb.log.Print("[Bulletinboard] start epoch")
 	for i := 0; i < bb.counter; i++ {
 		bb.reconstructionContent[i] = bb.reconstructionContent4[i]
 	}
@@ -106,10 +108,10 @@ func (bb *BulletinBoard) StartEpoch(ctx context.Context, in *pb.RequestMsg) (*pb
 }
 
 func (bb *BulletinBoard) ReadPhase1(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase1Server) error {
-	bb.log.Print("[bulletinboard] is being read in phase 1")
+	bb.log.Print("[Bulletinboard] is being read in phase 1")
 	for i := 0; i < bb.degree*2+1; i++ {
 		if err := stream.Send(bb.reconstructionContent[i]); err != nil {
-			bb.log.Fatalf("bulletinboard failed to read phase1: %v", err)
+			bb.log.Fatalf("[Bulletinboard] failed to read phase1: %v", err)
 			return err
 		}
 	}
@@ -119,7 +121,7 @@ func (bb *BulletinBoard) ReadPhase1(in *pb.RequestMsg, stream pb.BulletinBoardSe
 func (bb *BulletinBoard) WritePhase1(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
 	//fmt.Println("written index is xxxx")
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
-	bb.log.Print("[bulletinboard] is being writcommitmentten in phase 3")
+	bb.log.Print("[Bulletinboard] is being writcommitmentten in phase 3")
 	index := msg.GetIndex()
 	bb.reconstructionContent2[index-1] = msg
 	bb.mutex.Lock()
@@ -136,7 +138,7 @@ func (bb *BulletinBoard) WritePhase1(ctx context.Context, msg *pb.Cmt1Msg) (*pb.
 func (bb *BulletinBoard) ClientStartVerifPhase1() {
 	var wg sync.WaitGroup
 	for i := 0; i < bb.counter; i++ {
-		bb.log.Print("[bulletinboard] start verification in phase 3")
+		bb.log.Print("[Bulletinboard] start verification in phase 3")
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -150,10 +152,10 @@ func (bb *BulletinBoard) ClientStartVerifPhase1() {
 }
 
 func (bb *BulletinBoard) ReadPhase12(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase12Server) error {
-	bb.log.Print("[bulletinboard] is being read in phase 1 2")
+	bb.log.Print("[Bulletinboard] is being read in phase 1 2")
 	for i := 0; i < bb.degree*2+1; i++ {
 		if err := stream.Send(bb.reconstructionContent2[i]); err != nil {
-			bb.log.Fatalf("bulletinboard failed to read phase1: %v", err)
+			bb.log.Fatalf("[Bulletinboard] failed to read phase1: %v", err)
 			return err
 		}
 	}
@@ -161,7 +163,7 @@ func (bb *BulletinBoard) ReadPhase12(in *pb.RequestMsg, stream pb.BulletinBoardS
 }
 func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.CommitMsg) (*pb.ResponseMsg, error) {
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
-	bb.log.Print("[bulletinboard] is being written in phase 2")
+	bb.log.Print("[Bulletinboard] is being written in phase 2")
 	index := msg.GetIndex()
 	bb.proactivizationContent[index-1] = msg
 	bb.mutex.Lock()
@@ -176,10 +178,10 @@ func (bb *BulletinBoard) WritePhase2(ctx context.Context, msg *pb.CommitMsg) (*p
 }
 
 func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase2Server) error {
-	bb.log.Print("[bulletinboard] is being read in phase 2")
+	bb.log.Print("[Bulletinboard] is being read in phase 2")
 	for i := 0; i < bb.degree*2+1; i++ {
 		if err := stream.Send(bb.proactivizationContent[i]); err != nil {
-			bb.log.Fatalf("bulletinboard failed to read phase2: %v", err)
+			bb.log.Fatalf("[Bulletinboard] failed to read phase2: %v", err)
 			return err
 		}
 	}
@@ -189,7 +191,7 @@ func (bb *BulletinBoard) ReadPhase2(in *pb.RequestMsg, stream pb.BulletinBoardSe
 func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
 	//fmt.Println("written index is xxxx")
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
-	bb.log.Print("[bulletinboard] is being written in phase 3")
+	bb.log.Print("[Bulletinboard] is being written in phase 3")
 	index := msg.GetIndex()
 	bb.reconstructionContent3[index-1] = msg
 	bb.mutex.Lock()
@@ -206,7 +208,7 @@ func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.
 func (bb *BulletinBoard) WritePhase32(ctx context.Context, msg *pb.Cmt1Msg) (*pb.ResponseMsg, error) {
 	//fmt.Println("written index is xxxx")
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
-	bb.log.Print("[bulletinboard] is being written in phase 3 2")
+	bb.log.Print("[Bulletinboard] is being written in phase 3 2")
 	index := msg.GetIndex()
 	bb.reconstructionContent4[index-1] = msg
 	bb.mutex.Lock()
@@ -216,12 +218,20 @@ func (bb *BulletinBoard) WritePhase32(ctx context.Context, msg *pb.Cmt1Msg) (*pb
 	if flag {
 		*bb.shaCnt = 0
 	}
+
+	*bb.proCnt = 0
+	*bb.shaCnt = 0
+	//f, _ := os.OpenFile(bb.metadataPath+"/log0", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	//defer f.Close()
+	bb.log.Printf("totMsgSize,%d\n", *bb.totMsgSize)
+	fmt.Println("[Bulletinboard] totmsgsize is %d", *bb.totMsgSize)
+	*bb.totMsgSize = 0
 	return &pb.ResponseMsg{}, nil
 }
 
 func (bb *BulletinBoard) ReconstructSecret(ctx context.Context, msg *pb.PointMsg) (*pb.ResponseMsg, error) {
 	*bb.totMsgSize = *bb.totMsgSize + proto.Size(msg)
-	bb.log.Print("[bulletinboard] reconstruct secret")
+	bb.log.Print("[Bulletinboard] reconstruct secret")
 	index := msg.GetIndex()
 	Y := gmp.NewInt(0).SetBytes(msg.GetY())
 	//fmt.Println(len(bb.recontructSecret),bb.recontructSecret)
@@ -256,21 +266,13 @@ func (bb *BulletinBoard) SecretPrint() {
 	//}
 	polytmp, _ := interpolation.LagrangeInterpolate(bb.degree, X, bb.recontructSecret[:bb.degree*2+1], bb.p)
 	polytmp.EvalMod(gmp.NewInt(0), bb.p, bb.secret)
-	bb.log.Print("[bulletinboard] the secret is ", bb.secret)
-
-	*bb.proCnt = 0
-	*bb.shaCnt = 0
-	//f, _ := os.OpenFile(bb.metadataPath+"/log0", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	//defer f.Close()
-	bb.log.Printf("totMsgSize,%d\n", *bb.totMsgSize)
-	fmt.Println("[bulletinboard] totmsgsize is %d", *bb.totMsgSize)
-	*bb.totMsgSize = 0
+	bb.log.Print("[Bulletinboard] the secret is ", bb.secret)
 }
 func (bb *BulletinBoard) ReadPhase3(in *pb.RequestMsg, stream pb.BulletinBoardService_ReadPhase3Server) error {
-	bb.log.Print("[bulletinboard] is being read in phase 3")
+	bb.log.Print("[Bulletinboard] is being read in phase 3")
 	for i := 0; i < bb.degree*2+1; i++ {
 		if err := stream.Send(bb.reconstructionContent3[i]); err != nil {
-			bb.log.Fatalf("bulletinboard failed to read phase2: %v", err)
+			bb.log.Fatalf("[Bulletinboard] failed to read phase2: %v", err)
 			return err
 		}
 	}
@@ -281,7 +283,7 @@ func (bb *BulletinBoard) Connect() {
 	for i := 0; i < bb.counter; i++ {
 		nConn, err := grpc.Dial(bb.ipList[i], grpc.WithInsecure())
 		if err != nil {
-			bb.log.Fatalf("bulletinboard did not connect: %v", err)
+			bb.log.Fatalf("[Bulletinboard] did not connect: %v", err)
 		}
 		bb.nConn[i] = nConn
 		bb.nClient[i] = pb.NewNodeServiceClient(nConn)
@@ -294,6 +296,10 @@ func (bb *BulletinBoard) Disconnect() {
 	}
 }
 
+func (bb *BulletinBoard) DeleteServe() {
+	bb.log.Printf("[Bulletinboard] delete serve on " + bb.bip)
+	bb.server.Stop()
+}
 func (bb *BulletinBoard) Serve(aws bool) {
 	port := bb.bip
 	if aws {
@@ -301,21 +307,22 @@ func (bb *BulletinBoard) Serve(aws bool) {
 	}
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		bb.log.Fatalf("bulletinboard failed to listen %v", err)
+		bb.log.Fatalf("[Bulletinboard] failed to listen %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterBulletinBoardServiceServer(s, bb)
 	reflection.Register(s)
-	bb.log.Printf("bulletinboard serve on " + bb.bip)
+	bb.server = s
+	bb.log.Printf("[Bulletinboard] serve on " + bb.bip)
 	//bb.log.Printf("hello\n")
 	//if err := s.Serve(lis); err != nil {
-	//	bb.log.Fatalf("bulletinboard failed to serve %v", err)
+	//	bb.log.Fatalf("[Bulletinboard] failed to serve %v", err)
 	//}
 	//bb.log.Printf("hello")
 	err = s.Serve(lis)
-	bb.log.Printf("[bulletboard]hello")
+	bb.log.Printf("[Bulletinboard] hello")
 	if err != nil {
-		bb.log.Fatalf("bulletinboard failed to serve %v", err)
+		bb.log.Fatalf("[Bulletinboard] failed to serve %v", err)
 	}
 }
 
@@ -324,8 +331,8 @@ func (bb *BulletinBoard) ClientStartPhase1(secretid int) {
 		bb.Connect()
 	}
 	var wg sync.WaitGroup
+	bb.log.Print("[Bulletinboard] start phase 1")
 	for i := 0; i < bb.counter; i++ {
-		bb.log.Print("[bulletinboard] start phase 1")
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -340,8 +347,8 @@ func (bb *BulletinBoard) ClientStartPhase1(secretid int) {
 
 func (bb *BulletinBoard) ClientStartVerifPhase2() {
 	var wg sync.WaitGroup
+	bb.log.Print("[Bulletinboard] start verification in phase 2")
 	for i := 0; i < bb.counter; i++ {
-		bb.log.Print("[bulletinboard] start verification in phase 2")
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -366,8 +373,8 @@ func (bb *BulletinBoard) ClientStartVerifPhase2() {
 //}
 func (bb *BulletinBoard) ClientStartVerifPhase3() {
 	var wg sync.WaitGroup
+	bb.log.Print("[Bulletinboard] start verification in phase 3")
 	for i := 0; i < bb.counter; i++ {
-		bb.log.Print("[bulletinboard] start verification in phase 3")
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -382,7 +389,7 @@ func (bb *BulletinBoard) ClientStartVerifPhase3() {
 func ReadIpList(metadataPath string) []string {
 	ipData, err := ioutil.ReadFile(metadataPath)
 	if err != nil {
-		log.Fatalf("bulletinboard failed to read iplist: %v", err)
+		log.Fatalf("[Bulletinboard] failed to read iplist: %v", err)
 	}
 	return strings.Split(string(ipData), "\n")
 }
@@ -392,7 +399,7 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 	//f, _ := os.Create(metadataPath + "/log0")
 	//defer f.Close()
 
-	fileName := metadataPath + "/bulletboard.logger"
+	fileName := metadataPath + "/Bulletinboard.logger"
 	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		tmplogger, err = os.Create(fileName)
@@ -469,9 +476,9 @@ func New(degree int, counter int, metadataPath string, Polyyy []poly.Poly) (Bull
 		log:                    logger,
 	}, nil
 }
-func New_bulletboard_for_web(degree, counter int, metadataPath string, secretid int, Polyyy []poly.Poly) (BulletinBoard, error) {
+func NewBulletboardForWeb(degree, counter int, metadataPath string, secretid int, Polyyy []poly.Poly) (BulletinBoard, error) {
 
-	fileName := metadataPath + "/bulletboard.logger"
+	fileName := metadataPath + "/Secretid" + strconv.Itoa(secretid) + "Bulletinboard.log"
 	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		tmplogger, err = os.Create(fileName)
@@ -550,17 +557,19 @@ func New_bulletboard_for_web(degree, counter int, metadataPath string, secretid 
 	}, nil
 }
 
-//func (bb *BulletinBoard) StartReconstruct(ctx context.Context, in *pb.RequestMsg) (*pb.ResponseMsg, error) {
-//	var wg sync.WaitGroup
-//	for i := 0; i < bb.counter; i++ {
-//		bb.log.Print("[bulletinboard] start verification in phase 3")
-//		wg.Add(1)
-//		go func(i int) {
-//			defer wg.Done()
-//			ctx, cancel := context.WithCancel(context.Background())
-//			defer cancel()
-//			bb.nClient[i].Reconstruct(ctx, &pb.RequestMsg{})
-//		}(i)
-//	}
-//	wg.Wait()
-//}
+func (bb *BulletinBoard) StartReconstruct(ctx context.Context, in *pb.RequestMsg) (*pb.ResponseMsg, error) {
+
+	bb.log.Print("[Bulletinboard] start reconstruction")
+	var wg sync.WaitGroup
+	for i := 0; i < bb.counter; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			bb.nClient[i].Reconstruct(ctx, &pb.RequestMsg{})
+		}(i)
+	}
+	wg.Wait()
+	return &pb.ResponseMsg{}, nil
+}

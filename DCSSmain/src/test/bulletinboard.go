@@ -33,6 +33,6 @@ func main() {
 	//	polyyy[i], _ = poly.NewRand(*degree, fixedRandState, p)
 	//	polyyy[i].SetCoeffWithGmp(0, y)
 	//}
-	//bb, _ := bulletboard.New(*degree, *cnt, *metadataPath, polyyy)
+	//bb, _ := Bulletinboard.New(*degree, *cnt, *metadataPath, polyyy)
 	//bb.Serve(*aws)
 }
