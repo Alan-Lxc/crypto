@@ -31,6 +31,7 @@
                     其他<el-progress :percentage="13.7"></el-progress>
                     JSON<el-progress :percentage="5.9" color="#f56c6c"></el-progress>
                 </el-card>
+
             </el-col>
             <el-col :span="16">
                 <el-row :gutter="20" class="mgb20">
@@ -39,7 +40,7 @@
                             <div class="grid-content grid-con-1">
                                 <i class="el-icon-user-solid grid-con-icon"></i>
                                 <div class="grid-cont-right">
-                                    <div class="grid-num">5</div>
+                                    <div class="grid-num" >{{currentSecretNum}}</div>
                                     <div>存储秘密数</div>
                                 </div>
                             </div>
@@ -68,7 +69,7 @@
 <!--                        </el-card>-->
 <!--                    </el-col>-->
                 </el-row>
-                <el-card shadow="hover" style="height:403px;">
+                <el-card shadow="hover" style="height:200px;">
                     <template #header>
                         <div class="clearfix">
                             <span>最新消息</span>
@@ -97,6 +98,19 @@
                         </el-table-column>
                     </el-table>
                 </el-card>
+              <el-card shadow="hover" style="height:500px;">
+                <div class="rightullidiv">
+                  <img
+                      src="../assets/img/indexpage1.png"
+                      alt=""
+                      class="rightulliimg"
+                  >
+                </div>
+
+
+
+
+              </el-card>
             </el-col>
         </el-row>
 <!--        <el-row :gutter="20">-->
@@ -116,11 +130,44 @@
 
 <script>
 import Schart from "vue-schart";
-import { reactive } from "vue";
+import {reactive, ref} from "vue";
+import axios from "axios";
 export default {
     name: "dashboard",
     components: { Schart },
-    setup() {
+  data(){
+      return{
+        currentSecretNum : 0,
+      }
+  },
+
+  created() {
+      this.getCurrentSecretNum();
+    },
+    methods:{
+      getCurrentSecretNum(){
+        let that = this
+        const url = "http://localhost:8080/api/secret/getsecretlist";
+        axios({
+          methods: 'get',
+          url:url,
+          params: {
+            "userid": 1,
+          },
+
+        }).then(
+            function (res) {
+              console.log(res.data.data.total)
+              that.currentSecretNum = res.data.data.total;
+              console.log(that.currentSecretNum);
+            }
+        ).catch(err =>{
+          console.log(err);
+        })
+      },
+    },
+
+  setup() {
         const name = localStorage.getItem("ms_username");
         const role = name === "admin" ? "超级管理员" : "普通用户";
 
@@ -177,25 +224,7 @@ export default {
             ],
         };
         const options2 = {
-            type: "line",
-            title: {
-                text: "最近几个月各品类销售趋势图",
-            },
-            labels: ["6月", "7月", "8月", "9月", "10月"],
-            datasets: [
-                {
-                    label: "家电",
-                    data: [234, 278, 270, 190, 230],
-                },
-                {
-                    label: "百货",
-                    data: [164, 178, 150, 135, 160],
-                },
-                {
-                    label: "食品",
-                    data: [74, 118, 200, 235, 90],
-                },
-            ],
+
         };
         const todoList = reactive([
             {
@@ -207,6 +236,9 @@ export default {
             },
 
         ]);
+
+
+
 
         return {
             name,
@@ -221,6 +253,21 @@ export default {
 </script>
 
 <style scoped>
+.rightullidiv {
+  width: 100%;
+  height:100%;
+  background: #f2f2f2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.rightulliimg {
+  max-width: 100%;
+  max-height: 100%;
+}
+
 .el-row {
     margin-bottom: 20px;
 }

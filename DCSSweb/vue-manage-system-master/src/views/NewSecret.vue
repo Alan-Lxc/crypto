@@ -18,7 +18,7 @@
             <el-input-number v-model.number="secret.counter" :min="1" :max="100" ></el-input-number>
           </el-form-item>
           <el-form-item label="秘密值" >
-            <el-input v-model.number="secret.secret"></el-input>
+            <el-input v-model.number="secret.secret"> </el-input>
             <!--            <div class="content-title">支持拖拽</div>-->
             <!--&lt;!&ndash;            <div class="plugins-tips">&ndash;&gt;-->
             <!--&lt;!&ndash;              Element UI自带上传组件。&ndash;&gt;-->
@@ -35,6 +35,10 @@
             <!--&lt;!&ndash;                <div class="el-upload__tip">只能上传 jpg/png 文件，且不超过 500kb</div>&ndash;&gt;-->
             <!--&lt;!&ndash;              </template>&ndash;&gt;-->
             <!--            </el-upload>-->
+          </el-form-item>
+          <el-form-item  label="秘密描述">
+            <el-input v-model="secret.description"></el-input>
+
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="onSubmit">提交秘密</el-button>

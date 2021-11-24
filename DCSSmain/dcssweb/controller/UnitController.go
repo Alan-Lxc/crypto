@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/dto"
 	model "github.com/Alan-Lxc/crypto_contest/dcssweb/model"
@@ -24,7 +25,9 @@ func GetUnitList(ctx *gin.Context) {
 	}
 	var secretunits []model1.Secretshare
 	var units []model.Unit
-	db.Distinct("unit_id").Where("secret_id=? ", secretid).Find(&secretunits)
+	db.Distinct("unit_id").Where("secret_id=? ", secretid).Order("unit_id").Find(&secretunits) //
+
+	fmt.Println(secretunits)
 	for i := 0; i < len(secretunits); i++ {
 		var newunit = model.Unit{}
 		db.Where("unit_id=?", secretunits[i].UnitId).First(&newunit)

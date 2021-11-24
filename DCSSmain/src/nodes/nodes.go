@@ -901,7 +901,7 @@ func (node *Node) Phase3WriteOnBorad() {
 	//err := new(error)
 	_, err := node.boardService.WritePhase3(ctx, msg)
 	for err != nil {
-		panic(err)
+		//panic(err)
 		//panic(err)
 	}
 	//fmt.Println(node.label,C)
@@ -993,16 +993,16 @@ func (node *Node) Phase3Readboard() {
 	//f, _ := os.OpenFile(node.MetadataPath+"/log"+strconv.Itoa(node.label), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	//defer f.Close()
 	node.Log.Printf("[Node %d] finished handoff", node.label)
-	node.Log.Printf("totMsgSize,%d\n", *node.totMsgSize)
-	node.Log.Printf("epochLatency,%d\n", node.e3.Sub(*node.s1).Nanoseconds())
-	node.Log.Printf("reconstructionLatency,%d\n", node.e1.Sub(*node.s1).Nanoseconds())
-	node.Log.Printf("proactivizationLatency,%d\n", node.e2.Sub(*node.s2).Nanoseconds())
-	node.Log.Printf("sharedistLatency,%d\n", node.e3.Sub(*node.s3).Nanoseconds())
+	node.Log.Printf("[Node %d] totMsgSize,%d\n", node.label, *node.totMsgSize)
+	node.Log.Printf("[Node %d] epochLatency,%d\n", node.label, node.e3.Sub(*node.s1).Nanoseconds())
+	node.Log.Printf("[Node %d] reconstructionLatency,%d\n", node.label, node.e1.Sub(*node.s1).Nanoseconds())
+	node.Log.Printf("[Node %d] proactivizationLatency,%d\n", node.label, node.e2.Sub(*node.s2).Nanoseconds())
+	node.Log.Printf("[Node %d] sharedistLatency,%d\n", node.label, node.e3.Sub(*node.s3).Nanoseconds())
 	node.tott = (node.e3.Sub(*node.s1).Nanoseconds())
 	node.t1 = (node.e1.Sub(*node.s1).Nanoseconds())
 	node.t2 = (node.e2.Sub(*node.s2).Nanoseconds())
 	node.t3 = (node.e3.Sub(*node.s3).Nanoseconds())
-	node.Log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
+	//node.Log.Printf("the secret for reconstruction is ,%s\n", node.s0.String())
 	//*node.totMsgSize = 0
 	for i := 0; i < node.degree*2+1; i++ {
 		node._0Shares[i].SetInt64(0)
@@ -1014,6 +1014,9 @@ func (node *Node) Phase3Readboard() {
 	return
 }
 
+func (node *Node) Finish() bool {
+	return node.finish
+}
 func (node *Node) Reconstruct(ctx context.Context, request *pb.RequestMsg) (response *pb.ResponseMsg, err error) {
 	node.Log.Printf("[Node %d] start reconstruct ", node.label)
 	node.Phase3Readboard2()
@@ -1514,6 +1517,7 @@ func (node *Node) ServeForWeb() {
 	return
 }
 func (node *Node) Initsecret(ctx context.Context, msg *pb.InitMsg) (*pb.ResponseMsg, error) {
+	node.Log.Printf("[Node %d] get initial polynomial", node.label)
 	//fmt.Println("msg in the function ", msg)
 	degree := int(msg.GetDegree())
 	counter := int(msg.GetCounter())

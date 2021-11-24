@@ -10,14 +10,18 @@
 
     <div class="container">
       <el-row>
-<!--        <el-col :span="7"></el-col>-->
-<!--        <el-col :span="8">-->
-<!--          <div class="grid-content bg-purple-light">-->
+        <el-col :span="13">
+          <div >
+            秘密总数：{{total}}
 
-<!--            <el-button @click="tonewsecret()" type="">新建秘密</el-button>-->
-<!--          </div>-->
-<!--        </el-col>-->
-        <el-col :span="21"></el-col>
+          </div>
+        </el-col>
+        <el-col :span="8">
+          <div class="grid-content bg-purple-light">
+
+            <el-button @click="tonewsecret()" type="">新建秘密</el-button>
+          </div>
+        </el-col>
         <el-col :span="3">
           <div class="grid-content bg-purple-light">
             <el-button @click="fresh" type="" >Refresh</el-button>
@@ -101,6 +105,7 @@ export default {
       }).then(
           function (res) {
             arr.tableData = res.data.data.secretlist;
+            arr.total = res.data.data.total;
           }
       ).catch(err =>{
         console.log(err);

@@ -1,6 +1,9 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 //type Secret struct {
 //	secretname string `form:"secretname" json:"secretname" binding:"required"`
@@ -10,10 +13,11 @@ import "gorm.io/gorm"
 //}
 type Secret struct {
 	gorm.Model
-	Degree      int64  `gorm:"type:int;not null"`
-	Counter     int64  `gorm:"type:int;not null"`
-	UserId      uint   `gorm:"type:int;not null"`
-	Description string `gorm:"type:varchar(2000);not null"`
-	Secretname  string `gorm:"type:varchar(200);"`
-	Secret      string `gorm:"type:varchar(200)"`
+	Degree        int64  `gorm:"type:int;not null"`
+	Counter       int64  `gorm:"type:int;not null"`
+	UserId        uint   `gorm:"type:int;not null"`
+	Description   string `gorm:"type:varchar(2000);not null"`
+	Secretname    string `gorm:"type:varchar(200);"`
+	Secret        string `gorm:"type:varchar(200)"`
+	LastHandoffAt time.Time
 }

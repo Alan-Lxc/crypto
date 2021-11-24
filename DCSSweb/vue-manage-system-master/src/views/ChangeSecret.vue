@@ -22,7 +22,7 @@
             </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="onSubmit">确认提交</el-button>
-            <el-button type="danger" @click="onReset">表单</el-button>
+            <el-button type="danger" @click="onReset">重置表单</el-button>
           </el-form-item>
 
         </el-form>
@@ -74,9 +74,11 @@ export default {
               console.log(res)
               if (res.status === 200){
                 ElMessage.success("提交成功！");
+                // route.go(-1);
+
               }else {
 
-                ElMessage.error("failed");
+                ElMessage.error("提交失败");
               }
             })
           }
@@ -100,7 +102,7 @@ export default {
     }
     const rules = {
       newcounter: [
-        {  validator: checkNum, message: "委员会成员数需要大于2×门限阈值+1", trigger: "change"}
+        {  validator: checkNum, message: "委员会成员数需要大于2倍的门限阈值", trigger: "change"}
       ],
 
     };

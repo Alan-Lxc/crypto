@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/dto"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
@@ -10,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func HandoffSecret(ctx *gin.Context) {
@@ -28,6 +30,7 @@ func HandoffSecret(ctx *gin.Context) {
 	}
 	controller.Controller.Handoff(int(secret.ID), int(secret.Degree), int(secret.Counter))
 	secret.ID = secret.ID
+	secret.LastHandoffAt = time.Now()
 	db.Save(secret)
 	//response
 	response.Success(ctx, gin.H{}, "handoff success")
@@ -94,6 +97,7 @@ func ReconstructSecret(ctx *gin.Context) {
 		return
 	}
 	secretValue := controller.Controller.Reconstruct(int(secret.ID), int(secret.Degree), int(secret.Counter))
+	fmt.Println(secretValue)
 	response.Success(ctx, gin.H{
 		"secret": secretValue,
 	}, "获取成功")

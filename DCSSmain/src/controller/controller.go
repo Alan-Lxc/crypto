@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/model"
 	"github.com/Alan-Lxc/crypto_contest/src/basic/poly"
@@ -47,6 +48,7 @@ func New() *Controll {
 	return new(Controll)
 }
 func (controll *Controll) Release(counter int) {
+
 	for i := 0; i < counter; i++ {
 		controll.node[i].DeleteServe()
 	}
@@ -183,6 +185,19 @@ func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 		log.Fatalf("Start Handoff Fail:%v", err)
 	}
 	//time.Sleep(5*time.Second)
+	for {
+		i := 0
+		for i = 0; i < counter; i++ {
+			if controll.node[i].Finish() == false {
+				time.Sleep(500 * time.Millisecond)
+				break
+			}
+		}
+
+		if i == counter {
+			break
+		}
+	}
 	controll.Release(counter)
 }
 
@@ -202,7 +217,7 @@ func (controll *Controll) Reconstruct(secretid int, degree int, counter int) str
 	}
 	// Set to string
 	Secret := hex.EncodeToString(controll.Bulletinboard.GetReconstructSecret().Bytes())
-
+	fmt.Println(Secret)
 	//Secret
 	controll.Release(counter)
 	return Secret

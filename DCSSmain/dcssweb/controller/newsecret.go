@@ -8,9 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"time"
 )
-
-
 
 //dic = {}
 //type secret_data struct {
@@ -52,18 +51,18 @@ func NewSecret(ctx *gin.Context) {
 	secretcontent := ctx.PostForm("secret")
 	//创建秘密
 	newSecret := model.Secret{
-		Secretname:  secretname,
-		Degree:      int64(degree),
-		Counter:     int64(counter),
-		UserId:      uint(userId),
-		Description: Description,
-		Secret:      secretcontent,
+		Secretname:    secretname,
+		Degree:        int64(degree),
+		Counter:       int64(counter),
+		UserId:        uint(userId),
+		Description:   Description,
+		LastHandoffAt: time.Now(),
+		Secret:        secretcontent,
 	}
 	db.Create(&newSecret)
 	//newsecret
 	controller.Controller.NewSecret(int(newSecret.ID), degree, counter, secretcontent)
 }
-
 
 func newsecret_check(secretname string) {
 	//

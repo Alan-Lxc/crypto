@@ -37,24 +37,60 @@
       </el-row>
     </div>
     <div class="container">
-      <div class="form-box">
+      <div tyle="width: 100%">
         <el-form ref="secretRef" label-width="160px"  :data="secretinfo">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="秘密名称">
+                {{secretinfo.name}}
 
-          <el-form-item label="门限阈值" >
-            {{secretinfo.degree}}
-          </el-form-item>
-          <el-form-item label="委员会成员数" >
-            {{secretinfo.counter}}
-          </el-form-item>
-          <el-form-item label="秘密创建时间" >
-            {{secretinfo.create_time}}
-          </el-form-item>
-          <el-form-item label="上一次变更时间" >
-            {{secretinfo.last_update_time}}
-          </el-form-item>
-<!--          <el-form-item label="秘密描述" >-->
-<!--            {{secretinfo.description}}-->
-<!--          </el-form-item>-->
+              </el-form-item>
+            </el-col>
+
+            <el-col :span="12">
+              <el-form-item label="秘密创建时间" >
+                {{secretinfo.create_time}}
+              </el-form-item>
+
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item  label="门限阈值" >
+                {{secretinfo.degree}}
+              </el-form-item>
+            </el-col>
+
+            <el-col :span="12">
+              <el-form-item label="上一次变更时间" >
+                {{secretinfo.last_update_time}}
+              </el-form-item>
+
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="委员会成员数" >
+                {{secretinfo.counter}}
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="上一次秘密交接时间">
+                {{secretinfo.last_handoff_time}}
+
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-form-item label="秘密描述">
+              {{secretinfo.description}}
+
+            </el-form-item>
+
+          </el-row>
+
+
+
         </el-form>
       </div>
     </div>
@@ -65,9 +101,14 @@
         :row-class-name="tableRowClassName"
         @row-click="handleClick">
       <el-table-column
+        width="150">
+
+      </el-table-column>
+      <el-table-column
+
           prop="UnitId"
           label="节点ID"
-          width="180">
+          width="300">
       </el-table-column>
       <el-table-column
           prop="UnitIp"
@@ -188,7 +229,7 @@ export default {
       }).then(
           function (res) {
             console.log(res.data.data.secret);
-            alert("秘密值"+res.data.data.secret)
+            alert("秘密值: "+res.data.data.secret)
           }
       ).catch(err =>{});
     },
