@@ -1298,7 +1298,7 @@ func (node *Node) Service() {
 	if err != nil {
 		node.Log.Fatalf("[Node %d] fail to provide service", node.label)
 	}
-	node.Log.Printf("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
+	node.Log.Printf("[Node %d] now serve on %s    ", node.label, node.IpAddress[node.label-1])
 
 	return
 }
@@ -1505,7 +1505,7 @@ func (node *Node) ServeForWeb() {
 	if err != nil {
 		log.Fatalf("[Node %d] fail to listen:%v", node.label, err)
 	}
-	node.Log.Printf("[Node %d] now serve on %s", node.label, node.IpAddress[node.label-1])
+	node.Log.Printf("[Node %d] now serve on %s   ", node.label, node.IpAddress[node.label-1])
 	server := grpc.NewServer()
 	pb.RegisterNodeServiceServer(server, node)
 	reflection.Register(server)

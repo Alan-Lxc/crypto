@@ -18,7 +18,7 @@
         </el-col>
         <el-col :span="6">
           <div class="grid-content bg-purple">
-            <el-button @click="handoffsecret()" type="">交接秘密</el-button>
+            <el-button @click="handoffsecret()" type="">委员会交接</el-button>
           </div>
         </el-col>
         <el-col :span="6">
@@ -106,14 +106,20 @@
       </el-table-column>
       <el-table-column
 
-          prop="UnitId"
+          prop="unit_id"
           label="节点ID"
           width="300">
       </el-table-column>
       <el-table-column
-          prop="UnitIp"
+          prop="unit_ip"
           label="节点IP"
           width="300">
+      </el-table-column>
+      <el-table-column
+          prop="secretshare_content"
+          label="部分秘密份额"
+          width="300">
+
       </el-table-column>
       <el-table-column>
 
@@ -132,8 +138,11 @@ import { ref, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { fetchData } from "../api/index";
 import axios from "axios";
+import {useRouter} from "vue-router";
+import router from "../router";
 export default {
   name: "SecretInfo",
+
   data() {
     return {
       secretinfo: {      },
@@ -175,7 +184,7 @@ export default {
       this.$router.push({
         path:"/unitinfo",
         query:{
-          unitid:row.UnitId,
+          unitid:row.unit_id,
           secretid:secretid,
         }
       })
@@ -247,6 +256,8 @@ export default {
               ElMessage.error("删除失败")
             }
             console.log(res.data.data.secret);
+            router = useRouter();
+            router.push('/secretlist');
           }
       ).catch(err =>{});
     }

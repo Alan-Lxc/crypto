@@ -143,7 +143,7 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		polyyy[i].SetCoeffWithGmp(0, y)
 	}
 	controll.Initsystem(degree, counter, metadatapath, secretid)
-
+	time.Sleep(500 * time.Millisecond)
 	var wg sync.WaitGroup
 	for i := 0; i < counter; i++ {
 		coeff := polyyy[i].GetAllCoeff()
@@ -167,6 +167,7 @@ func (controll *Controll) NewSecret(secretid int, degree int, counter int, s0 st
 		}(i, msg)
 	}
 	wg.Wait()
+	time.Sleep(1000 * time.Millisecond)
 	controll.Release(counter)
 }
 
@@ -178,6 +179,7 @@ func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 	controll.Initsystem(degree, counter, metadatapath, secretid)
 	controll.Connect(counter)
 	controll.SetSecret(counter)
+	time.Sleep(500 * time.Millisecond)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	_, err := controll.boardService.StartEpoch(ctx, &pb.RequestMsg{})
@@ -192,8 +194,12 @@ func (controll *Controll) Handoff(secretid int, degree int, counter int) {
 				time.Sleep(500 * time.Millisecond)
 				break
 			}
-		}
 
+		}
+		if controll.Bulletinboard.Getfinish() == false {
+			time.Sleep(500 * time.Millisecond)
+			break
+		}
 		if i == counter {
 			break
 		}
@@ -209,6 +215,7 @@ func (controll *Controll) Reconstruct(secretid int, degree int, counter int) str
 	controll.Initsystem(degree, counter, metadatapath, secretid)
 	controll.Connect(counter)
 	controll.SetSecret(counter)
+	time.Sleep(500 * time.Millisecond)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	_, err := controll.boardService.StartReconstruct(ctx, &pb.RequestMsg{})
@@ -219,6 +226,7 @@ func (controll *Controll) Reconstruct(secretid int, degree int, counter int) str
 	Secret := hex.EncodeToString(controll.Bulletinboard.GetReconstructSecret().Bytes())
 	fmt.Println(Secret)
 	//Secret
+	time.Sleep(1000 * time.Millisecond)
 	controll.Release(counter)
 	return Secret
 	//return "123"
@@ -237,6 +245,7 @@ func (controll *Controll) ModifyCommittee(secretid int, degree int, oldn int, ne
 	//polyyy := controll.Getmessage(secretid, degree, counter)
 	controll.Initsystem(degree, counter, metadatapath, secretid)
 	controll.Connect(counter)
+	time.Sleep(500 * time.Millisecond)
 	var wg sync.WaitGroup
 	if oldn > newn {
 		for i := newn; i < counter; i++ {
@@ -260,6 +269,7 @@ func (controll *Controll) ModifyCommittee(secretid int, degree int, oldn int, ne
 		}
 	}
 	wg.Wait()
+	time.Sleep(1000 * time.Millisecond)
 	controll.Release(counter)
 }
 

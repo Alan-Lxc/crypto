@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"fmt"
+	"encoding/hex"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/common"
 	"github.com/Alan-Lxc/crypto_contest/dcssweb/dto"
 	model "github.com/Alan-Lxc/crypto_contest/dcssweb/model"
@@ -15,6 +15,13 @@ import (
 
 var metadatapath = "/home/gary/GolandProjects/crypto_contest4/DCSSmain/src/metadata"
 
+func max(a, b int) int {
+	//fmt.Println(a,b)
+	if a < b {
+		return b
+	}
+	return a
+}
 func GetUnitList(ctx *gin.Context) {
 	db := common.GetDB()
 
@@ -24,20 +31,30 @@ func GetUnitList(ctx *gin.Context) {
 		return
 	}
 	var secretunits []model1.Secretshare
-	var units []model.Unit
-	db.Distinct("unit_id").Where("secret_id=? ", secretid).Order("unit_id").Find(&secretunits) //
+	var list []dto.UnitListDto
+	db.Where("secret_id=? and row_num=0", secretid).Order("unit_id").Find(&secretunits) //
 
-	fmt.Println(secretunits)
+	//fmt.Println(secretunits)
 	for i := 0; i < len(secretunits); i++ {
 		var newunit = model.Unit{}
 		db.Where("unit_id=?", secretunits[i].UnitId).First(&newunit)
-		units = append(units, newunit)
+		//fmt.Println(len(secretunits[i].Data),secretunits[i].Data)
+		tmpString := hex.EncodeToString(secretunits[i].Data[max(0, len(secretunits[i].Data)-2):len(secretunits[i].Data)])
+		for len(tmpString) < 4 {
+			tmpString = "0" + tmpString
+		}
+		newUnitListDto := dto.UnitListDto{
+			UnitId:             newunit.UnitId,
+			UnitIp:             newunit.UnitIp,
+			SecretshareContent: tmpString,
+		}
+		list = append(list, newUnitListDto)
 	}
 	reponse.Success(
 		ctx,
 		gin.H{
-			"total":    len(units),
-			"unitlist": units,
+			"total":    len(list),
+			"unitlist": list,
 		},
 		"获取成功",
 	)

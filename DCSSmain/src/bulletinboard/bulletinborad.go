@@ -76,11 +76,15 @@ type BulletinBoard struct {
 	//poly
 	randPoly *poly.Poly
 	//logger file pointer
-	log *log.Logger
-	dc  *commitment.DLCommit
-	dpc *commitment.DLPolyCommit
+	log    *log.Logger
+	dc     *commitment.DLCommit
+	dpc    *commitment.DLPolyCommit
+	finish bool
 }
 
+func (bb *BulletinBoard) Getfinish() bool {
+	return bb.finish
+}
 func (bb *BulletinBoard) Getbip() string {
 	return bb.bip
 }
@@ -208,6 +212,7 @@ func (bb *BulletinBoard) WritePhase3(ctx context.Context, msg *pb.Cmt1Msg) (*pb.
 		*bb.shaCnt = 0
 		bb.ClientStartVerifPhase3()
 	}
+	bb.finish = true
 	return &pb.ResponseMsg{}, nil
 }
 
@@ -534,6 +539,7 @@ func NewBulletboardForWeb(degree, counter int, metadataPath string, secretid int
 
 	fileName := metadataPath + "/Secretid" + strconv.Itoa(secretid) + "Bulletinboard.log"
 	tmplogger, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	tmplogger = os.Stdout
 	if err != nil {
 		tmplogger, err = os.Create(fileName)
 	}
@@ -574,6 +580,7 @@ func NewBulletboardForWeb(degree, counter int, metadataPath string, secretid int
 	nClient := make([]pb.NodeServiceClient, counter)
 
 	totMsgSize := 0
+	finish := false
 
 	return BulletinBoard{
 		id:                     secretid,
@@ -598,6 +605,7 @@ func NewBulletboardForWeb(degree, counter int, metadataPath string, secretid int
 		totMsgSize:             &totMsgSize,
 		log:                    logger,
 		dpc:                    &dpc,
+		finish:                 finish,
 	}, nil
 }
 

@@ -19,89 +19,41 @@
                         <span>北京</span>
                     </div>
                 </el-card>
-                <el-card shadow="hover" style="height:252px;">
-                    <template #header>
-                        <div class="clearfix">
-                            <span>秘密类型</span>
-                        </div>
-                    </template>
+              <el-row :gutter="20" class="mgb20">
+                <el-col :span="24">
+                  <el-card shadow="hover" :body-style="{ padding: '0px' }">
+                    <div class="grid-content grid-con-1">
+                      <i class="el-icon-user-solid grid-con-icon"></i>
+                      <div class="grid-cont-right">
+                        <div class="grid-num" >{{currentSecretNum}}</div>
+                        <div>存储秘密数</div>
+                      </div>
+                    </div>
+                  </el-card>
+                </el-col>
 
-                    文件<el-progress :percentage="71.3" color="#42b983"></el-progress>
-                    口令<el-progress :percentage="24.1" color="#f1e05a"></el-progress>
-                    其他<el-progress :percentage="13.7"></el-progress>
-                    JSON<el-progress :percentage="5.9" color="#f56c6c"></el-progress>
-                </el-card>
+                <!--                    <el-col :span="8">-->
+                <!--                        <el-card shadow="hover" :body-style="{ padding: '0px' }">-->
+                <!--                            <div class="grid-content grid-con-3">-->
+                <!--                                <i class="el-icon-s-goods grid-con-icon"></i>-->
+                <!--                                <div class="grid-cont-right">-->
+                <!--                                    <div class="grid-num">5000</div>-->
+                <!--                                    <div>数量</div>-->
+                <!--                                </div>-->
+                <!--                            </div>-->
+                <!--                        </el-card>-->
+                <!--                    </el-col>-->
+              </el-row>
+
 
             </el-col>
             <el-col :span="16">
-                <el-row :gutter="20" class="mgb20">
-                    <el-col :span="8">
-                        <el-card shadow="hover" :body-style="{ padding: '0px' }">
-                            <div class="grid-content grid-con-1">
-                                <i class="el-icon-user-solid grid-con-icon"></i>
-                                <div class="grid-cont-right">
-                                    <div class="grid-num" >{{currentSecretNum}}</div>
-                                    <div>存储秘密数</div>
-                                </div>
-                            </div>
-                        </el-card>
-                    </el-col>
-                    <el-col :span="8">
-                        <el-card shadow="hover" :body-style="{ padding: '0px' }">
-                            <div class="grid-content grid-con-2">
-                                <i class="el-icon-message-solid grid-con-icon"></i>
-                                <div class="grid-cont-right">
-                                    <div class="grid-num">2</div>
-                                    <div>系统消息</div>
-                                </div>
-                            </div>
-                        </el-card>
-                    </el-col>
-<!--                    <el-col :span="8">-->
-<!--                        <el-card shadow="hover" :body-style="{ padding: '0px' }">-->
-<!--                            <div class="grid-content grid-con-3">-->
-<!--                                <i class="el-icon-s-goods grid-con-icon"></i>-->
-<!--                                <div class="grid-cont-right">-->
-<!--                                    <div class="grid-num">5000</div>-->
-<!--                                    <div>数量</div>-->
-<!--                                </div>-->
-<!--                            </div>-->
-<!--                        </el-card>-->
-<!--                    </el-col>-->
-                </el-row>
-                <el-card shadow="hover" style="height:200px;">
-                    <template #header>
-                        <div class="clearfix">
-                            <span>最新消息</span>
-                            <el-button style="float: right; padding: 3px 0" type="text">添加</el-button>
-                        </div>
-                    </template>
 
-                    <el-table :show-header="false" :data="todoList" style="width:100%;">
-                        <el-table-column width="40">
-                            <template #default="scope">
-                                <el-checkbox v-model="scope.row.status"></el-checkbox>
-                            </template>
-                        </el-table-column>
-                        <el-table-column>
-                            <template #default="scope">
-                                <div class="todo-item" :class="{
-                                        'todo-item-del': scope.row.status,
-                                    }">{{ scope.row.title }}</div>
-                            </template>
-                        </el-table-column>
-                        <el-table-column width="60">
-                            <template>
-                                <i class="el-icon-edit"></i>
-                                <i class="el-icon-delete"></i>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </el-card>
+
               <el-card shadow="hover" style="height:500px;">
                 <div class="rightullidiv">
                   <img
-                      src="../assets/img/indexpage1.png"
+                      src="../assets/img/indexpage.png"
                       alt=""
                       class="rightulliimg"
                   >
